@@ -11,7 +11,12 @@ variable "region" {
 #------------------------------------------------------------------------------
 variable "friendly_name_prefix" {
   type        = string
-  description = "Friendly name prefix used for uniquely naming all AWS resources."
+  description = "Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod') a team name, or a project name."
+
+  validation {
+    condition     = !strcontains(lower(var.friendly_name_prefix), "tfe")
+    error_message = "Value must not contain the substring 'tfe' to avoid redundancy in resource naming."
+  }
 }
 
 variable "common_tags" {
