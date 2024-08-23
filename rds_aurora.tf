@@ -2,8 +2,8 @@
 # RDS password - AWS Secrets Manager secret lookup
 #------------------------------------------------------------------------------
 data "aws_secretsmanager_secret_version" "tfe_database_password" {
-  secret_id  = var.tfe_database_password_secret_arn
-  version_id = "AWSCURRENT"
+  secret_id     = var.tfe_database_password_secret_arn
+  version_stage = "AWSCURRENT"
 }
 
 #------------------------------------------------------------------------------
