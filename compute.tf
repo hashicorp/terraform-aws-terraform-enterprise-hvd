@@ -111,8 +111,8 @@ locals {
     tfe_vault_disable_mlock = var.tfe_vault_disable_mlock
 
     # Docker driver settings
-    tfe_run_pipeline_docker_network     = var.tfe_run_pipeline_docker_network == null ? "" : var.tfe_run_pipeline_docker_network
-    tfe_hairpin_addressing              = var.tfe_hairpin_addressing
+    tfe_run_pipeline_docker_network = var.tfe_run_pipeline_docker_network == null ? "" : var.tfe_run_pipeline_docker_network
+    tfe_hairpin_addressing          = var.tfe_hairpin_addressing
     #tfe_run_pipeline_docker_extra_hosts = "" # computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
     # Network bootstrap settings

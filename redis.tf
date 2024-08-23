@@ -1,4 +1,14 @@
 #------------------------------------------------------------------------------
+# Redis password - AWS Secrets Manager secret lookup
+#------------------------------------------------------------------------------
+data "aws_secretsmanager_secret_version" "tfe_redis_password" {
+  count = var.tfe_operational_mode == "active-active" && var.tfe_redis_password_secret_arn != null ? 1 : 0
+
+  secret_id     = var.tfe_redis_password_secret_arn
+  version_stage = "AWSCURRENT"
+}
+
+#------------------------------------------------------------------------------
 # Redis (ElastiCache) subnet group
 #------------------------------------------------------------------------------
 resource "aws_elasticache_subnet_group" "tfe" {
@@ -6,16 +16,6 @@ resource "aws_elasticache_subnet_group" "tfe" {
 
   name       = "${var.friendly_name_prefix}-tfe-redis-subnet-group"
   subnet_ids = var.redis_subnet_ids
-}
-
-#------------------------------------------------------------------------------
-# Redis password
-#------------------------------------------------------------------------------
-data "aws_secretsmanager_secret_version" "tfe_redis_password" {
-  count = var.tfe_operational_mode == "active-active" && var.tfe_redis_password_secret_arn != null ? 1 : 0
-
-  secret_id     = var.tfe_redis_password_secret_arn
-  version_stage = "AWSCURRENT"
 }
 
 #------------------------------------------------------------------------------

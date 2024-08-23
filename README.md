@@ -25,13 +25,15 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
   - Redis subnet IDs (can be the same as RDS subnets if desirable)
 - (Optional) S3 VPC endpoint configured within VPC
 - (Optional) AWS Route53 hosted zone for TFE DNS record creation
-- Chosen fully qualified domain name (FQDN) for TFE (_e.g._ `tfe.aws.example.com`)
+- Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.aws.example.com`)
+
+>📝 Note: It is recommended to specify a minimum of two subnets for each subnet input to enable high availability.
 
 #### Security groups
 
 - This module will automatically create the necessary security groups and attach them to the applicable resources
 - Identify CIDR range(s) that will need to access the TFE application (managed via [cidr_allow_ingress_tfe_443](#input_cidr_allow_ingress_tfe_443) input variable)
-- Identify CIDR range(s) that will need to access the TFE EC2 instances (managed via [cidr_allow_ingress_ec2_ssh](#input_cidr_allow_ingress_ec2_ssh) input variable)
+- Identify CIDR range(s) that will need to access the shell of the TFE EC2 instances (managed via [cidr_allow_ingress_ec2_ssh](#input_cidr_allow_ingress_ec2_ssh) input variable)
 - Be familiar with the [TFE ingress requirements](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/requirements/network#ingress)
 - Be familiar with the [TFE egress requirements](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/requirements/network#egress)
 
@@ -48,15 +50,15 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### Secrets management
 
-The following "bootstrap" secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment/install:
+The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment and installation:
 
-  - **TFE license file** - raw contents of license file stored as a plaintext secret (_e.g._ `cat terraform.hclic`)
-  - **TFE encryption password** - random characters stored as a plaintext secret (used to protect internally-managed Vault unseal key and root token)
-  - **RDS (PostgreSQL) database password** - random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain '@', '\"', or '/' characters
-  - **Redis password** - random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain '@', '\"', or '/' characters
-  - **TFE TLS certificate** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
-  - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
-  - **TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
+- **TFE license file** - raw contents of license file stored as a plaintext secret (_e.g._ `cat terraform.hclic`)
+- **TFE encryption password** - random characters stored as a plaintext secret (used to protect internally-managed Vault unseal key and root token)
+- **TFE database password** - used to create RDS Aurora (PostgreSQL) database cluster; random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain '@', '\"', or '/' characters
+- **TFE Redis password** - used to create Redis (Elasticache Replication Group) cluster; random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain '@', '\"', or '/' characters
+- **TFE TLS certificate** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
+- **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
+- **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
 >📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for an example snippet of these secrets stored in AWS Secrets Manager.
 
@@ -64,16 +66,16 @@ The following "bootstrap" secrets stored in **AWS Secrets Manager** in order to 
 
 One of the following mechanisms for shell access to TFE EC2 instances:
 
-  - EC2 SSH key pair
-  - AWS SSM (supported via [ec2_allow_ssm](#input_ec2_allow_ssm) boolean input variable)
+- EC2 SSH key pair
+- AWS SSM (supported via [ec2_allow_ssm](#input_ec2_allow_ssm) boolean input variable)
 
 ### Log forwarding (optional)
 
 One of the following logging destinations:
 
-  - AWS CloudWatch log group
-  - AWS S3 bucket
-  - A custom fluent bit configuration that will forward logs to custom destination
+- AWS CloudWatch log group
+- AWS S3 bucket
+- A custom fluent bit configuration that will forward logs to custom destination
 
 ---
 
