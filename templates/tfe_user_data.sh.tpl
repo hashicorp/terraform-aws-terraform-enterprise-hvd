@@ -245,8 +245,8 @@ services:
       TFE_METRICS_HTTPS_PORT: ${tfe_metrics_https_port}
 
       # Docker driver settings
-      TFE_DISK_CACHE_PATH: ${tfe_disk_cache_path}
-      TFE_DISK_CACHE_VOLUME_NAME: ${tfe_disk_cache_volume_name}
+      TFE_DISK_CACHE_PATH: /var/cache/tfe-task-worker
+      TFE_DISK_CACHE_VOLUME_NAME: terraform-enterprise-cache
       TFE_RUN_PIPELINE_DOCKER_NETWORK: ${tfe_run_pipeline_docker_network}
 %{ if tfe_hairpin_addressing ~}
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
@@ -297,6 +297,7 @@ services:
         target: /var/cache/tfe-task-worker/terraform
 volumes:
   terraform-enterprise-cache:
+    name: terraform-enterprise-cache
 EOF
 }
 

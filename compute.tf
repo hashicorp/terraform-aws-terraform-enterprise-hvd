@@ -96,8 +96,8 @@ locals {
     tfe_tls_key_file       = "/etc/ssl/private/terraform-enterprise/key.pem"
     tfe_tls_ca_bundle_file = "/etc/ssl/private/terraform-enterprise/bundle.pem"
     tfe_tls_enforce        = var.tfe_tls_enforce
-    tfe_tls_ciphers        = ""
-    tfe_tls_version        = ""
+    tfe_tls_ciphers        = "" # Leave blank to use the default ciphers
+    tfe_tls_version        = "" # Leave blank to use both TLS v1.2 and TLS v1.3
 
     # Observability settings
     tfe_log_forwarding_enabled = var.tfe_log_forwarding_enabled
@@ -111,11 +111,9 @@ locals {
     tfe_vault_disable_mlock = var.tfe_vault_disable_mlock
 
     # Docker driver settings
-    tfe_run_pipeline_docker_extra_hosts = "" # computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
     tfe_run_pipeline_docker_network     = var.tfe_run_pipeline_docker_network == null ? "" : var.tfe_run_pipeline_docker_network
-    tfe_disk_cache_path                 = "/var/cache/tfe-task-worker"
-    tfe_disk_cache_volume_name          = "tfe_terraform-enterprise-cache"
     tfe_hairpin_addressing              = var.tfe_hairpin_addressing
+    #tfe_run_pipeline_docker_extra_hosts = "" # computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
     # Network bootstrap settings
     tfe_iact_subnets         = ""
