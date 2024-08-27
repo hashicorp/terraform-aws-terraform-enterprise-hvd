@@ -139,7 +139,7 @@ locals {
     var.ec2_ami_id,
     join("", data.aws_ami.ubuntu.*.image_id),
     join("", data.aws_ami.rhel.*.image_id),
-    join("", data.aws_ami.amzn2023.*.image_id),
+    join("", data.aws_ami.al2023.*.image_id),
   ])
 }
 

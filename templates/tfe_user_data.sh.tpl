@@ -32,7 +32,7 @@ function detect_os_distro {
       OS_DISTRO_DETECTED="rhel"
       ;;
     "Amazon Linux"*)
-      OS_DISTRO_DETECTED="amzn2023"
+      OS_DISTRO_DETECTED="al2023"
       ;;
     *)
       log "ERROR" "'$OS_DISTRO_NAME' is not a supported Linux OS distro for this TFE module."
@@ -60,7 +60,7 @@ function install_awscli {
       if [[ "$OS_DISTRO" == "ubuntu" || "$OS_DISTRO" == "debian" ]]; then
         apt-get update -y
         apt-get install unzip -y
-      elif [[ "$OS_DISTRO" == "centos" || "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "amzn2023" ]]; then
+      elif [[ "$OS_DISTRO" == "centos" || "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "al2023" ]]; then
         yum install unzip -y
       else
         log "ERROR" "Unable to install required 'unzip' utility. Exiting."
@@ -97,7 +97,7 @@ function install_docker {
       yum install -y yum-utils
       yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
       yum install -y docker-ce-3:$DOCKER_VERSION docker-ce-cli-1:$DOCKER_VERSION containerd.io docker-compose-plugin
-    elif [[ "$OS_DISTRO" == "amzn2023" ]]; then
+    elif [[ "$OS_DISTRO" == "al2023" ]]; then
       yum install -y docker containerd
       mkdir -p /usr/local/lib/docker/cli-plugins
       curl -sL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-"$(uname -m)" -o /usr/local/lib/docker/cli-plugins/docker-compose

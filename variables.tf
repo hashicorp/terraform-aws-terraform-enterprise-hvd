@@ -337,12 +337,12 @@ variable "route53_tfe_hosted_zone_is_private" {
 #------------------------------------------------------------------------------
 variable "ec2_os_distro" {
   type        = string
-  description = "Linux OS distribution type for TFE EC2 instance. Choose from `amzn2023`, `ubuntu`, `rhel`, `centos`."
+  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`."
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["ubuntu", "rhel", "amzn2023", "centos"], var.ec2_os_distro)
-    error_message = "Valid values are `ubuntu`, `rhel`, `amzn2023`, or `centos`."
+    condition     = contains(["ubuntu", "rhel", "al2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `al2023`, or `centos`."
   }
 }
 
@@ -357,14 +357,14 @@ variable "container_runtime" {
   }
 
   validation {
-    condition     = var.ec2_os_distro == "amzn2023" ? var.container_runtime != "podman" : true
-    error_message = "Value cannot be `podman` when `ec2_os_distro` is `amzn2023`. Currently, only `docker` is supported for `amzn2023`."
+    condition     = var.ec2_os_distro == "al2023" ? var.container_runtime != "podman" : true
+    error_message = "Value cannot be `podman` when `ec2_os_distro` is `al2023`. Currently, only `docker` is supported for `al2023`."
   }
 }
 
 variable "docker_version" {
   type        = string
-  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `amzn2023`)."
+  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
   default     = "24.0.9"
 }
 

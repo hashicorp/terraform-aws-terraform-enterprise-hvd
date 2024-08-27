@@ -69,8 +69,8 @@ data "aws_ami" "rhel" {
   }
 }
 
-data "aws_ami" "amzn2023" {
-  count = var.ec2_os_distro == "amzn2023" && var.ec2_ami_id == null ? 1 : 0
+data "aws_ami" "al2023" {
+  count = var.ec2_os_distro == "al2023" && var.ec2_ami_id == null ? 1 : 0
 
   owners      = ["amazon"]
   most_recent = true
