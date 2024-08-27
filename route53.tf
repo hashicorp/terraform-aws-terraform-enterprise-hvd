@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "aws_route53_zone" "tfe" {
   count = var.create_route53_tfe_dns_record && var.route53_tfe_hosted_zone_name != null ? 1 : 0
 
