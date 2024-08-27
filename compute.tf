@@ -113,13 +113,17 @@ locals {
     # Docker driver settings
     tfe_run_pipeline_docker_network = var.tfe_run_pipeline_docker_network == null ? "" : var.tfe_run_pipeline_docker_network
     tfe_hairpin_addressing          = var.tfe_hairpin_addressing
-    #tfe_run_pipeline_docker_extra_hosts = "" # computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
+    #tfe_run_pipeline_docker_extra_hosts = "" // computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
     # Network bootstrap settings
     tfe_iact_subnets         = ""
     tfe_iact_time_limit      = 60
     tfe_iact_trusted_proxies = ""
   }
+}
+
+locals {
+  user_data_template_rendered = templatefile("${path.module}/templates/tfe_user_data.sh.tpl", local.user_data_args)
 }
 
 #------------------------------------------------------------------------------
@@ -150,7 +154,7 @@ resource "aws_launch_template" "tfe" {
   image_id               = data.aws_ami.selected.id
   instance_type          = var.ec2_instance_size
   key_name               = var.ec2_ssh_key_pair
-  user_data              = base64encode(templatefile("${path.module}/templates/tfe_user_data.sh.tpl", local.user_data_args))
+  user_data              = base64gzip(local.user_data_template_rendered)
   update_default_version = true
 
   iam_instance_profile {
