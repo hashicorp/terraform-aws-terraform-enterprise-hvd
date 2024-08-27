@@ -14,7 +14,7 @@ variable "region" {
 #------------------------------------------------------------------------------
 variable "friendly_name_prefix" {
   type        = string
-  description = "Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod') a team name, or a project name."
+  description = "Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name."
 
   validation {
     condition     = !strcontains(lower(var.friendly_name_prefix), "tfe")
@@ -39,27 +39,27 @@ variable "is_secondary_region" {
 #------------------------------------------------------------------------------
 variable "tfe_license_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE license file."
+  description = "ARN of AWS Secrets Manager secret for TFE license file. Secret type should be plaintext."
 }
 
 variable "tfe_tls_cert_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string."
+  description = "ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
 }
 
 variable "tfe_tls_privkey_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string."
+  description = "ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
 }
 
 variable "tfe_tls_ca_bundle_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string."
+  description = "ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
 }
 
 variable "tfe_encryption_password_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE encryption password."
+  description = "ARN of AWS Secrets Manager secret for TFE encryption password. Secret type should be plaintext."
 }
 
 variable "tfe_image_repository_url" {
@@ -349,8 +349,8 @@ variable "ec2_os_distro" {
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["amzn2023", "ubuntu", "rhel", "centos"], var.ec2_os_distro)
-    error_message = "Supported values are `amzn2023`, `ubuntu`, `rhel`, or `centos`."
+    condition     = contains(["ubuntu", "rhel", "amzn2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `amzn2023`, or `centos`."
   }
 }
 
@@ -361,7 +361,7 @@ variable "container_runtime" {
 
   validation {
     condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
-    error_message = "Supported values are `docker` or `podman`."
+    error_message = "Valid values are `docker` or `podman`."
   }
 }
 
@@ -402,6 +402,11 @@ variable "ec2_ami_id" {
   validation {
     condition     = try((length(var.ec2_ami_id) > 4 && substr(var.ec2_ami_id, 0, 4) == "ami-"), var.ec2_ami_id == null)
     error_message = "Value must start with \"ami-\"."
+  }
+
+  validation {
+    condition     = var.ec2_os_distro == "centos" ? var.ec2_ami_id != null : true
+    error_message = "Value must be set to a CentOS AMI ID when `ec2_os_distro` is `centos`."
   }
 }
 
@@ -489,7 +494,7 @@ variable "ebs_iops" {
 #------------------------------------------------------------------------------
 variable "tfe_database_password_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for the TFE RDS Aurora (PostgreSQL) database password."
+  description = "ARN of AWS Secrets Manager secret for the TFE database password used to create RDS Aurora (PostgreSQL) database cluster. Secret type should be plaintext. Value of secret must be from 8 to 128 alphanumeric characters or symbols (excluding `@`, `\"`, and `/`)."
 }
 
 variable "tfe_database_name" {
@@ -500,12 +505,12 @@ variable "tfe_database_name" {
 
 variable "rds_availability_zones" {
   type        = list(string)
-  description = "List of AWS Availability Zones to spread Aurora database cluster instances across. Leave as `null` and RDS will automatically assign 3 Availability Zones."
+  description = "List of AWS availability zones to spread Aurora database cluster instances across. Leave as `null` and RDS will automatically assign 3 availability zones."
   default     = null
 
   validation {
     condition     = try(length(var.rds_availability_zones) <= 3, var.rds_availability_zones == null)
-    error_message = "A maximum of three Availability Zones can be specified."
+    error_message = "A maximum of three availability zones can be specified."
   }
 }
 
@@ -765,7 +770,7 @@ variable "s3_destination_bucket_kms_key_arn" {
 #------------------------------------------------------------------------------
 variable "tfe_redis_password_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for the TFE Redis password. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding @, \", and /)."
+  description = "ARN of AWS Secrets Manager secret for the TFE Redis password used to create Redis (Elasticache Replication Group) cluster. Secret type should be plaintext. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding `@`, `\"`, and `/`)."
   default     = null
 }
 
@@ -795,7 +800,7 @@ variable "redis_node_type" {
 
 variable "redis_multi_az_enabled" {
   type        = bool
-  description = "Boolean to create Redis nodes across multiple Availability Zones. If `true`, `redis_automatic_failover_enabled` must also be `true`, and more than one subnet must be specified within `redis_subnet_ids`."
+  description = "Boolean to create Redis nodes across multiple availability zones. If `true`, `redis_automatic_failover_enabled` must also be `true`, and more than one subnet must be specified within `redis_subnet_ids`."
   default     = true
 
   validation {
@@ -806,7 +811,7 @@ variable "redis_multi_az_enabled" {
 
 variable "redis_automatic_failover_enabled" {
   type        = bool
-  description = "Boolean for deploying Redis nodes in multiple Availability Zones and enabling automatic failover."
+  description = "Boolean for deploying Redis nodes in multiple availability zones and enabling automatic failover."
   default     = true
 
   validation {
