@@ -251,7 +251,7 @@ data "aws_iam_policy_document" "tfe_ec2_allow_redis_kms_cmk" {
 }
 
 data "aws_iam_policy_document" "tfe_ec2_allow_s3_log_fwd" {
-  count = var.tfe_log_forwarding_enabled && var.s3_log_fwd_bucket_name != null ? 1 : 0
+  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "s3" && var.s3_log_fwd_bucket_name != null ? 1 : 0
 
   statement {
     sid    = "TfeEc2AllowS3LogFwd"
@@ -271,7 +271,7 @@ data "aws_iam_policy_document" "tfe_ec2_allow_s3_log_fwd" {
 }
 
 data "aws_iam_policy_document" "tfe_ec2_allow_cloudwatch" {
-  count = var.tfe_log_forwarding_enabled && var.cloudwatch_log_group_name != null ? 1 : 0
+  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "cloudwatch" && var.cloudwatch_log_group_name != null ? 1 : 0
 
   statement {
     sid    = "TfeEc2AllowCloudWatch"
