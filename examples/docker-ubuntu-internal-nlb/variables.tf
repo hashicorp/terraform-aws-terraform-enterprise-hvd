@@ -345,12 +345,12 @@ variable "route53_tfe_hosted_zone_is_private" {
 #------------------------------------------------------------------------------
 variable "ec2_os_distro" {
   type        = string
-  description = "Linux OS distribution type for TFE EC2 instance. Choose from `amzn2023`, `ubuntu`, `rhel`, `centos`."
+  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`."
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["ubuntu", "rhel", "amzn2023", "centos"], var.ec2_os_distro)
-    error_message = "Valid values are `ubuntu`, `rhel`, `amzn2023`, or `centos`."
+    condition     = contains(["ubuntu", "rhel", "al2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `al2023`, or `centos`."
   }
 }
 
@@ -363,11 +363,16 @@ variable "container_runtime" {
     condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
     error_message = "Valid values are `docker` or `podman`."
   }
+
+  validation {
+    condition     = var.ec2_os_distro == "al2023" ? var.container_runtime != "podman" : true
+    error_message = "Value cannot be `podman` when `ec2_os_distro` is `al2023`. Currently, only `docker` is supported for `al2023`."
+  }
 }
 
 variable "docker_version" {
   type        = string
-  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution."
+  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
   default     = "24.0.9"
 }
 
@@ -396,7 +401,7 @@ variable "asg_health_check_grace_period" {
 
 variable "ec2_ami_id" {
   type        = string
-  description = "Custom AMI ID for TFE EC2 launch template. If specified, value of `os_distro` must coincide with this custom AMI OS distro."
+  description = "Custom AMI ID for TFE EC2 launch template. If specified, value of `ec2_os_distro` must coincide with this custom AMI OS distro."
   default     = null
 
   validation {
@@ -884,6 +889,11 @@ variable "cloudwatch_log_group_name" {
     condition     = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "cloudwatch" ? var.cloudwatch_log_group_name != null : true
     error_message = "Value must be set when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `cloudwatch`."
   }
+
+  validation {
+    condition     = var.log_fwd_destination_type != "cloudwatch" ? var.cloudwatch_log_group_name == null : true
+    error_message = "Value must be `null` when `log_fwd_destination_type` is not `cloudwatch`."
+  }
 }
 
 variable "s3_log_fwd_bucket_name" {
@@ -894,6 +904,11 @@ variable "s3_log_fwd_bucket_name" {
   validation {
     condition     = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "s3" ? var.s3_log_fwd_bucket_name != null : true
     error_message = "Value must be set when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `s3`."
+  }
+
+  validation {
+    condition     = var.log_fwd_destination_type != "s3" ? var.s3_log_fwd_bucket_name == null : true
+    error_message = "Value must be `null` when `log_fwd_destination_type` is not `s3`."
   }
 }
 
