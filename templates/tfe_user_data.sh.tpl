@@ -112,15 +112,23 @@ function install_podman {
   local OS_DISTRO="$1"
   local OS_MAJOR_VERSION="$2"
 
-  if [[ -n "$(command -v podman)" ]]; then
+  if command -v podman > /dev/null; then
     log "INFO" "Detected 'podman' is already installed. Skipping."
   else
     if [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
       log "INFO" "Installing Podman for RHEL $OS_MAJOR_VERSION."
       dnf update -y
-      dnf install -y podman-docker
+      if [[ "$OS_MAJOR_VERSION" == "9" ]]; then
+        dnf install -y container-tools
+      elif [[ "$OS_MAJOR_VERSION" == "8" ]]; then
+        dnf module install -y container-tools
+        dnf install -y podman-docker
+      else
+        log "ERROR" "Podman install for RHEL $OS_MAJOR_VERSION is currently not supported."
+        exit_script 3
+      fi
     else
-      log "ERROR" "Podman install for $OS_DISTRO is currently not supported."
+      log "ERROR" "Podman install for $OS_DISTRO $OS_MAJOR_VERSION is currently not supported."
       exit_script 3
     fi
     systemctl enable --now podman.socket
@@ -468,7 +476,7 @@ spec:
         type: "spc_t"
     volumeMounts:
 %{ if tfe_log_forwarding_enabled ~}
-    - mountPath: "/etc/fluent-bit/fluent-bit.conf"
+    - mountPath: "$TFE_LOG_FORWARDING_CONFIG_PATH"
       name: "fluent-bit"
 %{ endif ~}
     - mountPath: "/etc/ssl/private/terraform-enterprise"

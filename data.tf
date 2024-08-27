@@ -100,13 +100,13 @@ data "aws_ami" "amzn2023" {
 # Log forwarding destinations
 #------------------------------------------------------------------------------
 data "aws_s3_bucket" "log_fwd" {
-  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "s3" ? 1 : 0
+  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "s3" && var.s3_log_fwd_bucket_name != null ? 1 : 0
 
   bucket = var.s3_log_fwd_bucket_name
 }
 
 data "aws_cloudwatch_log_group" "log_fwd" {
-  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "cloudwatch" ? 1 : 0
+  count = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "cloudwatch" && var.cloudwatch_log_group_name != null ? 1 : 0
 
   name = var.cloudwatch_log_group_name
 }

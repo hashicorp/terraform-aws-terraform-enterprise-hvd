@@ -355,11 +355,16 @@ variable "container_runtime" {
     condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
     error_message = "Valid values are `docker` or `podman`."
   }
+
+  validation {
+    condition     = var.ec2_os_distro == "amzn2023" ? var.container_runtime != "podman" : true
+    error_message = "Value cannot be `podman` when `ec2_os_distro` is `amzn2023`. Currently, only `docker` is supported for `amzn2023`."
+  }
 }
 
 variable "docker_version" {
   type        = string
-  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution."
+  description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `amzn2023`)."
   default     = "24.0.9"
 }
 
@@ -388,7 +393,7 @@ variable "asg_health_check_grace_period" {
 
 variable "ec2_ami_id" {
   type        = string
-  description = "Custom AMI ID for TFE EC2 launch template. If specified, value of `os_distro` must coincide with this custom AMI OS distro."
+  description = "Custom AMI ID for TFE EC2 launch template. If specified, value of `ec2_os_distro` must coincide with this custom AMI OS distro."
   default     = null
 
   validation {
@@ -876,6 +881,11 @@ variable "cloudwatch_log_group_name" {
     condition     = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "cloudwatch" ? var.cloudwatch_log_group_name != null : true
     error_message = "Value must be set when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `cloudwatch`."
   }
+
+  validation {
+    condition     = var.log_fwd_destination_type != "cloudwatch" ? var.cloudwatch_log_group_name == null : true
+    error_message = "Value must be `null` when `log_fwd_destination_type` is not `cloudwatch`."
+  }
 }
 
 variable "s3_log_fwd_bucket_name" {
@@ -886,6 +896,11 @@ variable "s3_log_fwd_bucket_name" {
   validation {
     condition     = var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "s3" ? var.s3_log_fwd_bucket_name != null : true
     error_message = "Value must be set when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `s3`."
+  }
+
+  validation {
+    condition     = var.log_fwd_destination_type != "s3" ? var.s3_log_fwd_bucket_name == null : true
+    error_message = "Value must be `null` when `log_fwd_destination_type` is not `s3`."
   }
 }
 
