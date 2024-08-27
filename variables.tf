@@ -341,8 +341,8 @@ variable "ec2_os_distro" {
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["amzn2023", "ubuntu", "rhel", "centos"], var.ec2_os_distro)
-    error_message = "Supported values are `amzn2023`, `ubuntu`, `rhel`, or `centos`."
+    condition     = contains(["ubuntu", "rhel", "amzn2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `amzn2023`, or `centos`."
   }
 }
 
@@ -353,7 +353,7 @@ variable "container_runtime" {
 
   validation {
     condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
-    error_message = "Supported values are `docker` or `podman`."
+    error_message = "Valid values are `docker` or `podman`."
   }
 }
 
@@ -394,6 +394,11 @@ variable "ec2_ami_id" {
   validation {
     condition     = try((length(var.ec2_ami_id) > 4 && substr(var.ec2_ami_id, 0, 4) == "ami-"), var.ec2_ami_id == null)
     error_message = "Value must start with \"ami-\"."
+  }
+
+  validation {
+    condition     = var.ec2_os_distro == "centos" ? var.ec2_ami_id != null : true
+    error_message = "Value must be set to a CentOS AMI ID when `ec2_os_distro` is `centos`."
   }
 }
 

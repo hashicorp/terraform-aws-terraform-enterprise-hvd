@@ -27,13 +27,13 @@ data "aws_ami" "ubuntu" {
   }
 
   filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    name   = "architecture"
+    values = ["x86_64"]
   }
 
   filter {
-    name   = "architecture"
-    values = ["x86_64"]
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 
   filter {
@@ -56,28 +56,6 @@ data "aws_ami" "rhel" {
   filter {
     name   = "architecture"
     values = ["x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-}
-
-data "aws_ami" "centos" {
-  count = var.ec2_os_distro == "centos" && var.ec2_ami_id == null ? 1 : 0
-
-  owners      = ["679593333241"]
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["CentOS Linux 7 x86_64 HVM EBS*"]
   }
 
   filter {
