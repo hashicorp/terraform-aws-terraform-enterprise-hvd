@@ -35,7 +35,7 @@ function detect_os_distro {
       OS_DISTRO_DETECTED="amzn2023"
       ;;
     *)
-      log "ERROR" "'$OS_DISTRO_NAME' is not a supported Linux OS distro for TFE."
+      log "ERROR" "'$OS_DISTRO_NAME' is not a supported Linux OS distro for this TFE module."
       exit_script 1
   esac
 
@@ -115,15 +115,14 @@ function install_podman {
   if [[ -n "$(command -v podman)" ]]; then
     log "INFO" "Detected 'podman' is already installed. Skipping."
   else
-    if [[ "$OS_DISTRO" == "rhel" ]]; then
+    if [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
       log "INFO" "Installing Podman for RHEL $OS_MAJOR_VERSION."
       dnf update -y
       dnf install -y podman-docker
     else
       log "ERROR" "Podman install for $OS_DISTRO is currently not supported."
-      exit_script 2
+      exit_script 3
     fi
-    #systemctl enable --now podman.service
     systemctl enable --now podman.socket
   fi
 }
@@ -172,8 +171,7 @@ ${fluent_bit_rendered_config}
 EOF
 }
 
-# https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
-function generate_tfe_docker_compose_config {
+function generate_tfe_docker_compose_file {
   local TFE_SETTINGS_PATH="$1"
   cat > "$TFE_SETTINGS_PATH" << EOF
 ---
@@ -213,8 +211,10 @@ services:
       TFE_OBJECT_STORAGE_S3_REGION: ${tfe_object_storage_s3_region}
       TFE_OBJECT_STORAGE_S3_ENDPOINT: ${tfe_object_storage_s3_endpoint}
       TFE_OBJECT_STORAGE_S3_USE_INSTANCE_PROFILE: ${tfe_object_storage_s3_use_instance_profile}
+%{ if !tfe_object_storage_s3_use_instance_profile ~}
       TFE_OBJECT_STORAGE_S3_ACCESS_KEY_ID: ${tfe_object_storage_s3_access_key_id}
       TFE_OBJECT_STORAGE_S3_SECRET_ACCESS_KEY: ${tfe_object_storage_s3_secret_access_key}
+%{ endif ~}
       TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION: ${tfe_object_storage_s3_server_side_encryption}
       TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION_KMS_KEY_ID: ${tfe_object_storage_s3_server_side_encryption_kms_key_id}
       
@@ -301,10 +301,223 @@ volumes:
 EOF
 }
 
+function generate_tfe_podman_manifest {
+  local TFE_SETTINGS_PATH="$1"
+  cat > $TFE_SETTINGS_PATH << EOF
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  labels:
+    app: "tfe"
+  name: "tfe"
+spec:
+%{ if tfe_hairpin_addressing ~}
+  hostAliases:
+    - ip: $VM_PRIVATE_IP
+      hostnames:
+        - "${tfe_hostname}"
+%{ endif ~}
+  containers:
+  - env:
+    # Application settings
+    - name: "TFE_HOSTNAME"
+      value: ${tfe_hostname}
+    - name: "TFE_LICENSE"
+      value: $TFE_LICENSE
+    - name: "TFE_LICENSE_PATH"
+      value: ""
+    - name: "TFE_OPERATIONAL_MODE"
+      value: ${tfe_operational_mode}
+    - name: "TFE_ENCRYPTION_PASSWORD"
+      value: $TFE_ENCRYPTION_PASSWORD
+    - name: "TFE_CAPACITY_CONCURRENCY"
+      value: ${tfe_capacity_concurrency}
+    - name: "TFE_CAPACITY_CPU"
+      value: ${tfe_capacity_cpu}
+    - name: "TFE_CAPACITY_MEMORY"
+      value: ${tfe_capacity_memory}
+    - name: "TFE_LICENSE_REPORTING_OPT_OUT"
+      value: ${tfe_license_reporting_opt_out}
+    - name: "TFE_RUN_PIPELINE_DRIVER"
+      value: ${tfe_run_pipeline_driver}
+    - name: "TFE_RUN_PIPELINE_IMAGE"
+      value: ${tfe_run_pipeline_image}
+    - name: "TFE_BACKUP_RESTORE_TOKEN"
+      value: ${tfe_backup_restore_token}
+    - name: "TFE_NODE_ID"
+      value: ${tfe_node_id}
+    - name: "TFE_HTTP_PORT"
+      value: 8080
+    - name: "TFE_HTTPS_PORT"
+      value: 8443
+
+    # Database settings
+    - name: "TFE_DATABASE_HOST"
+      value: ${tfe_database_host}
+    - name: "TFE_DATABASE_NAME"
+      value: ${tfe_database_name}
+    - name: "TFE_DATABASE_PARAMETERS"
+      value: ${tfe_database_parameters}
+    - name: "TFE_DATABASE_PASSWORD"
+      value: ${tfe_database_password}
+    - name: "TFE_DATABASE_USER"
+      value: ${tfe_database_user}
+
+    # Object storage settings
+    - name: "TFE_OBJECT_STORAGE_TYPE"
+      value: ${tfe_object_storage_type}
+    - name: "TFE_OBJECT_STORAGE_S3_BUCKET"
+      value: ${tfe_object_storage_s3_bucket}
+    - name: "TFE_OBJECT_STORAGE_S3_REGION"
+      value: ${tfe_object_storage_s3_region}
+    - name: "TFE_OBJECT_STORAGE_S3_ENDPOINT"
+      value: ${tfe_object_storage_s3_endpoint}
+    - name: "TFE_OBJECT_STORAGE_S3_USE_INSTANCE_PROFILE"
+      value: ${tfe_object_storage_s3_use_instance_profile}
+%{ if !tfe_object_storage_s3_use_instance_profile ~}
+    - name: "TFE_OBJECT_STORAGE_S3_ACCESS_KEY_ID"
+      value: ${tfe_object_storage_s3_access_key_id}
+    - name: "TFE_OBJECT_STORAGE_S3_SECRET_ACCESS_KEY"
+      value: ${tfe_object_storage_s3_secret_access_key}
+%{ endif ~}
+    - name: "TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION"
+      value: ${tfe_object_storage_s3_server_side_encryption}
+    - name: "TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION_KMS_KEY_ID"
+      value: ${tfe_object_storage_s3_server_side_encryption_kms_key_id}
+
+%{ if tfe_operational_mode == "active-active" ~}
+    # Redis settings
+    - name: "TFE_REDIS_HOST"
+      value: ${tfe_redis_host}
+    - name: "TFE_REDIS_PASSWORD"
+      value: ${tfe_redis_password}
+    - name: "TFE_REDIS_USE_AUTH"
+      value: ${tfe_redis_use_auth}
+    - name: "TFE_REDIS_USE_TLS"
+      value: ${tfe_redis_use_tls}
+
+    # Vault cluster settings
+    - name: "TFE_VAULT_CLUSTER_ADDRESS"
+      value: https://$VM_PRIVATE_IP:8201
+%{ endif ~}
+
+    # TLS settings
+    - name: "TFE_TLS_CERT_FILE"
+      value: ${tfe_tls_cert_file}
+    - name: "TFE_TLS_KEY_FILE"
+      value: ${tfe_tls_key_file}
+    - name: "TFE_TLS_CA_BUNDLE_FILE"
+      value: ${tfe_tls_ca_bundle_file}
+    - name: "TFE_TLS_CIPHERS"
+      value: ${tfe_tls_ciphers}
+    - name: "TFE_TLS_ENFORCE"
+      value: ${tfe_tls_enforce}
+    - name: "TFE_TLS_VERSION"
+      value: ${tfe_tls_version}
+
+    # Observability settings
+    - name: "TFE_LOG_FORWARDING_ENABLED"
+      value: ${tfe_log_forwarding_enabled}
+    - name: "TFE_LOG_FORWARDING_CONFIG_PATH"
+      value: $TFE_LOG_FORWARDING_CONFIG_PATH
+    - name: "TFE_METRICS_ENABLE"
+      value: ${tfe_metrics_enable}
+    - name: "TFE_METRICS_HTTP_PORT"
+      value: ${tfe_metrics_http_port}
+    - name: "TFE_METRICS_HTTPS_PORT"
+      value: ${tfe_metrics_https_port}
+
+    # Docker driver settings
+%{ if tfe_hairpin_addressing ~}
+      # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
+    - name: "TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS"
+      value: ${tfe_hostname}:$VM_PRIVATE_IP
+%{ endif ~}
+    - name: "TFE_RUN_PIPELINE_DOCKER_NETWORK"
+      value: ${tfe_run_pipeline_docker_network}
+    - name: "TFE_DISK_CACHE_PATH"
+      value: /var/cache/tfe-task-worker
+    - name: "TFE_DISK_CACHE_VOLUME_NAME"
+      value: terraform-enterprise-cache
+    
+    # Network settings
+    - name: "TFE_IACT_SUBNETS"
+      value: ${tfe_iact_subnets}
+    - name: "TFE_IACT_TRUSTED_PROXIES"
+      value: ${tfe_iact_trusted_proxies}
+    - name: "TFE_IACT_TIME_LIMIT"
+      value: ${tfe_iact_time_limit}
+
+    image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
+    name: "terraform-enterprise"
+    ports:
+    - containerPort: 8080
+      hostPort: ${tfe_http_port}
+    - containerPort: 8443
+      hostPort: ${tfe_https_port}
+    - containerPort: 8201
+      hostPort: 8201
+    securityContext:
+      capabilities:
+        add:
+        - "CAP_IPC_LOCK"
+        - "CAP_AUDIT_WRITE"
+      readOnlyRootFilesystem: true
+      seLinuxOptions:
+        type: "spc_t"
+    volumeMounts:
+%{ if tfe_log_forwarding_enabled ~}
+    - mountPath: "/etc/fluent-bit/fluent-bit.conf"
+      name: "fluent-bit"
+%{ endif ~}
+    - mountPath: "/etc/ssl/private/terraform-enterprise"
+      name: "certs"
+    - mountPath: "/var/log/terraform-enterprise"
+      name: "log"
+    - mountPath: "/run"
+      name: "run"
+    - mountPath: "/tmp"
+      name: "tmp"
+    - mountPath: "/run/docker.sock"
+      name: "docker-sock"
+    - mountPath: "/var/cache/tfe-task-worker/terraform"
+      name: "terraform-enterprise-cache"
+  restartPolicy: "Never"
+  volumes:
+%{ if tfe_log_forwarding_enabled ~}
+  - hostpath:
+      path: "$TFE_LOG_FORWARDING_CONFIG_PATH"
+      type: "File"
+    name: "fluent-bit"
+%{ endif ~}
+  - hostPath:
+      path: "$TFE_TLS_CERTS_DIR"
+      type: "Directory"
+    name: "certs"
+  - emptyDir:
+      medium: "Memory"
+    name: "log"
+  - emptyDir:
+      medium: "Memory"
+    name: "run"
+  - emptyDir:
+      medium: "Memory"
+    name: "tmp"
+  - hostPath:
+      path: "/var/run/docker.sock"
+      type: "File"
+    name: "docker-sock"
+  - name: "terraform-enterprise-cache"
+    persistentVolumeClaim:
+      claimName: "terraform-enterprise-cache"
+EOF
+}
+
 function generate_tfe_podman_quadlet {
   cat > $TFE_CONFIG_DIR/tfe.kube << EOF
 [Unit]
-Description=Terraform Enterprise Kubernetes Deployment
+Description=Terraform Enterprise Kubernetes deployment.
 
 [Install]
 WantedBy=default.target
@@ -318,6 +531,8 @@ EOF
 }
 
 function pull_tfe_image {
+  local TFE_CONTAINER_RUNTIME="$1"
+  
   log "INFO" "Authenticating to '${tfe_image_repository_url}' container registry."
   log "INFO" "Detected TFE image repository username is '${tfe_image_repository_username}'."
   if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
@@ -327,7 +542,7 @@ function pull_tfe_image {
     log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
     TFE_IMAGE_REPOSITORY_PASSWORD=${tfe_image_repository_password}
   fi
-  if [[ "${container_runtime}" == "podman" ]]; then
+  if [[ "$TFE_CONTAINER_RUNTIME" == "podman" ]]; then
     podman login --username ${tfe_image_repository_username} ${tfe_image_repository_url} --password $TFE_IMAGE_REPOSITORY_PASSWORD
     log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
     podman pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
@@ -372,12 +587,6 @@ function main() {
     install_docker "$OS_DISTRO" "$OS_MAJOR_VERSION"
   fi
 
-  if [[ "$OS_DISTRO" == "rhel" ]]; then
-    log "INFO" "Resizing '/' and '/var' partitions for RHEL."
-    lvresize -r -L 10G /dev/mapper/rootvg-rootlv
-    lvresize -r -L 40G /dev/mapper/rootvg-varlv
-  fi
-
   log "INFO" "Retrieving TFE license file..."
   retrieve_license_from_awssm "${tfe_license_secret_arn}"
 
@@ -388,43 +597,34 @@ function main() {
   log "INFO" "Retrieving TFE TLS CA bundle..."
   retrieve_certs_from_awssm "${tfe_tls_ca_bundle_secret_arn}" "$TFE_TLS_CERTS_DIR/bundle.pem"
 
-  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' secret..."
+  log "INFO" "Retrieving 'TFE_ENCRYPTION_PASSWORD' secret from ${tfe_encryption_password_secret_arn}..."
   TFE_ENCRYPTION_PASSWORD=$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id "${tfe_encryption_password_secret_arn}" --query SecretString --output text)
 
   if [[ "${tfe_log_forwarding_enabled}" == "true" ]]; then
     log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for log forwarding."
     configure_log_forwarding
   fi
-
-  # Generate TFE container runtime config file
+  
   if [[ "${container_runtime}" == "podman" ]]; then
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/tfe-pod.yaml"
-    log "INFO" "Generating '$TFE_SETTINGS_PATH' config file for TFE on Podman."
-    #generate_tfe_podman_spec "$TFE_SETTINGS_PATH"
-    log "ERROR" "Podman support is not yet available. Exiting."
-    exit_script 99
+    log "INFO" "Generating '$TFE_SETTINGS_PATH' Kubernetes pod manifest for TFE on Podman."
+    generate_tfe_podman_manifest "$TFE_SETTINGS_PATH"
+    log "INFO" "Preparing to download TFE container image..."
+    pull_tfe_image "${container_runtime}"
+    log "INFO" "Configuring systemd service using Quadlet to manage TFE Podman containers."
+    generate_tfe_podman_quadlet
+    cp "$TFE_SETTINGS_PATH" "/etc/containers/systemd"
+    cp "$TFE_CONFIG_DIR/tfe.kube" "/etc/containers/systemd"
+    log "INFO" "Starting 'tfe' service (Podman containers)."
+    systemctl daemon-reload
+    systemctl start tfe.service
   else
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/docker-compose.yaml"
-    log "INFO" "Generating '$TFE_SETTINGS_PATH' config file for TFE on Docker."
-    generate_tfe_docker_compose_config "$TFE_SETTINGS_PATH"
-  fi
-  
-  log "INFO" "Preparing to download TFE container image..."
-  pull_tfe_image
-
-  cd $TFE_CONFIG_DIR
-  if [[ "${container_runtime}" == "podman" ]]; then
-    #log "INFO" "Starting TFE application via Podman."
-    #podman play kube $TFE_SETTINGS_PATH
-    #generate_tfe_podman_quadlet
-    #cp $TFE_SETTINGS_PATH /etc/containers/systemd
-    #cp $TFE_CONFIG_DIR/tfe.kube /etc/containers/systemd
-    #systemctl daemon-reload
-    #systemctl start tfe.service
-    log "ERROR" "Podman support is not yet available. Exiting."
-    exit_script 99
-  else
-    log "INFO" "Starting TFE application via Docker Compose."
+    log "INFO" "Generating '$TFE_SETTINGS_PATH' file for TFE on Docker."
+    generate_tfe_docker_compose_file "$TFE_SETTINGS_PATH"
+    log "INFO" "Preparing to download TFE container image..."
+    pull_tfe_image "${container_runtime}"
+    log "INFO" "Starting TFE application using Docker Compose."
     if command -v docker-compose > /dev/null; then
       docker-compose --file $TFE_SETTINGS_PATH up --detach
     else
