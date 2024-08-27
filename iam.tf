@@ -30,32 +30,6 @@ data "aws_iam_policy_document" "tfe_ec2_assume_role" {
 #------------------------------------------------------------------------------
 # TFE IAM role policy
 #------------------------------------------------------------------------------
-# resource "aws_iam_role_policy" "tfe_ec2" {
-#   name = "${var.friendly_name_prefix}-tfe-instance-role-policy-${data.aws_region.current.name}"
-#   role = aws_iam_role.tfe_ec2.id
-#   policy = templatefile(
-#     "${path.module}/templates/tfe-instance-role-policy.json",
-#     {
-#       #s3_tfe_bucket_arn                   = aws_s3_bucket.tfe.arn,
-#       #tfe_license_secret_arn              = var.tfe_license_secret_arn,
-#       #tfe_encryption_password_secret_arn  = var.tfe_encryption_password_secret_arn,
-#       #tfe_tls_cert_secret_arn             = var.tfe_tls_cert_secret_arn,
-#       #tfe_tls_privkey_secret_arn          = var.tfe_tls_privkey_secret_arn,
-#       #tfe_tls_ca_bundle_secret_arn        = var.tfe_tls_ca_bundle_secret_arn,
-#       #tfe_database_password_secret_arn    = var.tfe_database_password_secret_arn,
-#       #tfe_redis_password_secret_arn       = var.tfe_redis_password_secret_arn != null ? var.tfe_redis_password_secret_arn : "",
-#       #rds_kms_key_arn                     = var.rds_kms_key_arn != null ? var.rds_kms_key_arn : "",
-#       #s3_kms_key_arn                      = var.s3_kms_key_arn != null ? var.s3_kms_key_arn : "",
-#       #redis_kms_key_arn                   = var.redis_kms_key_arn != null ? var.redis_kms_key_arn : "",
-#       #tfe_log_forwarding_enabled          = var.tfe_log_forwarding_enabled
-#       #s3_log_fwd_bucket_arn               = var.tfe_log_forwarding_enabled && var.s3_log_fwd_bucket_name != null ? data.aws_s3_bucket.log_fwd[0].arn : ""
-#       #cloudwatch_log_fwd_log_group_arn    = var.tfe_log_forwarding_enabled && var.cloudwatch_log_group_name != null ? data.aws_cloudwatch_log_group.log_fwd[0].arn : ""
-#       #tfe_run_pipeline_image_ecr_repo_arn = var.tfe_run_pipeline_image_ecr_repo_name != null ? data.aws_ecr_repository.tfe_run_pipeline_image[0].arn : ""
-#       #tfe_cost_estimation_iam_enabled     = var.tfe_cost_estimation_iam_enabled
-#     }
-#   )
-# }
-
 resource "aws_iam_role_policy" "tfe_ec2" {
   name   = "${var.friendly_name_prefix}-tfe-instance-role-policy-${data.aws_region.current.name}"
   role   = aws_iam_role.tfe_ec2.id
