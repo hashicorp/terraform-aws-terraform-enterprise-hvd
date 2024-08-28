@@ -2,7 +2,7 @@
 
 Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
-![TFE on AWS](docs/images/tfe_aws_ec2.png)
+![TFE on AWS](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/images/tfe_aws_ec2.png)
 
 ## Prerequisites
 
