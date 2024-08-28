@@ -152,10 +152,10 @@ One of the following logging destinations:
 
 8.  After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
    
-   ```shell
-   cd /etc/tfe
-   sudo docker compose exec tfe tfe-health-check-status
-   ```
+    ```shell
+    cd /etc/tfe
+    sudo docker compose exec tfe tfe-health-check-status
+    ```
 
 9.  Follow the steps to [here](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) to create the TFE initial admin user.
 

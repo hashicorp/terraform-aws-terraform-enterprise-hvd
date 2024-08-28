@@ -63,5 +63,5 @@ module "tfe" {
   # --- Log forwarding (optional) --- #
   tfe_log_forwarding_enabled = var.tfe_log_forwarding_enabled
   log_fwd_destination_type   = var.log_fwd_destination_type
-  s3_log_fwd_bucket_name     = var.s3_log_fwd_bucket_name 
+  s3_log_fwd_bucket_name     = var.s3_log_fwd_bucket_name
 }
