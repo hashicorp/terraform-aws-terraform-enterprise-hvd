@@ -1,6 +1,6 @@
 # TFE "Bootstrap" Secrets
 
-Below is a table and example screenshot of the TFE _bootstrap_ secrets stored in AWS Secrets Manager that this module requires to fully automate the deployment and installation of TFE on AWS (VM + Container).
+This document contains a table of the TFE _bootstrap_ secrets to be stored in AWS Secrets Manager required by this module to fully automate the deployment and installation of TFE on AWS (VM + Container), how to format them, and an example screenshot.
 
 | Secret                                           | Secret Type      | Module Input                         |
 |--------------------------------------------------|------------------|--------------------------------------|
@@ -32,12 +32,12 @@ cat terraform.hclic
 ### TFE database password
 
 - This value should be randomly generated characters between 8 and 128 characters in length
-- Special characters are OK to use here, except for the '@', '\"', or '/' characters
+- Special characters are OK to use here, except for the `@`, `"`, and `/` characters
 
 ### TFE redis password
 
 - This value should be randomly generated characters between 16 and 128 characters in length
-- Special characters are OK to use here, except for the '@', '\"', or '/' characters
+- Special characters are OK to use here, except for the `@`, `"`, and `/` characters
 
 ### TFE TLS certificates
 

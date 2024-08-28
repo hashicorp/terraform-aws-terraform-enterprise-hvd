@@ -1,6 +1,6 @@
 # Terraform Enterprise HVD on AWS EC2
 
-Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker is currently the only supported container runtime, but Podman support is being added.
+Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
 ![TFE on AWS](docs/images/tfe_aws_ec2.png)
 
@@ -54,20 +54,23 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 
 - **TFE license file** - raw contents of license file stored as a plaintext secret (_e.g._ `cat terraform.hclic`)
 - **TFE encryption password** - random characters stored as a plaintext secret (used to protect internally-managed Vault unseal key and root token)
-- **TFE database password** - used to create RDS Aurora (PostgreSQL) database cluster; random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain '@', '\"', or '/' characters
-- **TFE Redis password** - used to create Redis (Elasticache Replication Group) cluster; random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain '@', '\"', or '/' characters
+- **TFE database password** - used to create RDS Aurora (PostgreSQL) database cluster; random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
+- **TFE Redis password** - used to create Redis (Elasticache Replication Group) cluster; random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
 - **TFE TLS certificate** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for an example snippet of these secrets stored in AWS Secrets Manager.
+>📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
+
+#### Connecting to shell of EC2 instances
 
 One of the following mechanisms for shell access to TFE EC2 instances:
 
 - EC2 SSH key pair
-- AWS SSM (supported via [ec2_allow_ssm](#input_ec2_allow_ssm) boolean input variable)
+- AWS SSM (can be enabled by setting [ec2_allow_ssm](#input_ec2_allow_ssm) boolean input variable to `true`)
+
 
 ### Log forwarding (optional)
 
@@ -83,9 +86,9 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module inputs as you see fit.
+2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [deploy-customizations](./docs/deployment-customizations.md) doc for more details).
 
-3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. If you are not sure where to create this new directory, it is common for users to create an `environments/` directory at the root of this repo, and then a subdirectory for each TFE instance deployment, like so:
+3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
     ```
     .
@@ -103,6 +106,7 @@ One of the following logging destinations:
             ├── terraform.tfvars
             └── variables.tf
     ```
+    
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
 4. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
@@ -113,25 +117,42 @@ One of the following logging destinations:
 
 7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:<br>
 
-   Higher-level logs:
-   ```sh
+   #### Connecting to EC2 instance
+   
+   SSH when `ec2_os_distro` is `ubuntu`:
+   ```shell
+   ssh -i /path/to/ec2_ssh_key_pair.pem ubuntu@<ec2-private-ip>
+   ```
+
+   SSH when `ec2_os_distro` is `rhel` or `al2023`:
+   ```shell
+   ssh -i /path/to/ec2_ssh_key_pair.pem ec2-user@<ec2-private-ip>
+   ```
+   
+   #### Viewing the logs
+
+   View the higher-level logs:
+   ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
-   Lower-level logs:
-   ```sh
+   View the lower-level logs:
+   ```shell
    journalctl -xu cloud-final -f
    ```
+   
    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
+   #### Successful install log message
 
-   The log files should display the following message after the cloud-init (user_data) script finishes successfully:
+   The log files should display the following log message after the cloud-init (user_data) script finishes successfully:
    ```
    [INFO] tfe_user_data script finished successfully!
    ```
 
-8. After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
-   ```sh
+8.  After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
+   
+   ```shell
    cd /etc/tfe
    sudo docker compose exec tfe tfe-health-check-status
    ```
@@ -158,13 +179,13 @@ Below are links to various docs related to the customization and management of y
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.61 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.64 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.61 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.64 |
 
 ## Resources
 
@@ -223,8 +244,7 @@ Below are links to various docs related to the customization and management of y
 | [aws_security_group_rule.lb_allow_ingress_tfe_https_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.rds_allow_ingress_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.redis_allow_ingress_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
-| [aws_ami.amzn2023](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_ami.centos](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_ami.al2023](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.rhel](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.selected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.ubuntu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
@@ -262,16 +282,16 @@ Below are links to various docs related to the customization and management of y
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_ec2_subnet_ids"></a> [ec2\_subnet\_ids](#input\_ec2\_subnet\_ids) | List of subnet IDs to use for the EC2 instance. Private subnets is the best practice here. | `list(string)` | n/a | yes |
-| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all AWS resources. | `string` | n/a | yes |
+| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
 | <a name="input_lb_subnet_ids"></a> [lb\_subnet\_ids](#input\_lb\_subnet\_ids) | List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherise, these should be private subnets. | `list(string)` | n/a | yes |
 | <a name="input_rds_subnet_ids"></a> [rds\_subnet\_ids](#input\_rds\_subnet\_ids) | List of subnet IDs to use for RDS database subnet group. Private subnets is the best practice here. | `list(string)` | n/a | yes |
-| <a name="input_tfe_database_password_secret_arn"></a> [tfe\_database\_password\_secret\_arn](#input\_tfe\_database\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE RDS Aurora (PostgreSQL) database password. | `string` | n/a | yes |
-| <a name="input_tfe_encryption_password_secret_arn"></a> [tfe\_encryption\_password\_secret\_arn](#input\_tfe\_encryption\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE encryption password. | `string` | n/a | yes |
+| <a name="input_tfe_database_password_secret_arn"></a> [tfe\_database\_password\_secret\_arn](#input\_tfe\_database\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE database password used to create RDS Aurora (PostgreSQL) database cluster. Secret type should be plaintext. Value of secret must be from 8 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | n/a | yes |
+| <a name="input_tfe_encryption_password_secret_arn"></a> [tfe\_encryption\_password\_secret\_arn](#input\_tfe\_encryption\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE encryption password. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_tfe_fqdn"></a> [tfe\_fqdn](#input\_tfe\_fqdn) | Fully qualified domain name (FQDN) of TFE instance. This name should resolve to the DNS name or IP address of the TFE load balancer and will be what clients use to access TFE. | `string` | n/a | yes |
-| <a name="input_tfe_license_secret_arn"></a> [tfe\_license\_secret\_arn](#input\_tfe\_license\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE license file. | `string` | n/a | yes |
-| <a name="input_tfe_tls_ca_bundle_secret_arn"></a> [tfe\_tls\_ca\_bundle\_secret\_arn](#input\_tfe\_tls\_ca\_bundle\_secret\_arn) | ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. | `string` | n/a | yes |
-| <a name="input_tfe_tls_cert_secret_arn"></a> [tfe\_tls\_cert\_secret\_arn](#input\_tfe\_tls\_cert\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. | `string` | n/a | yes |
-| <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. | `string` | n/a | yes |
+| <a name="input_tfe_license_secret_arn"></a> [tfe\_license\_secret\_arn](#input\_tfe\_license\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE license file. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_ca_bundle_secret_arn"></a> [tfe\_tls\_ca\_bundle\_secret\_arn](#input\_tfe\_tls\_ca\_bundle\_secret\_arn) | ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_cert_secret_arn"></a> [tfe\_tls\_cert\_secret\_arn](#input\_tfe\_tls\_cert\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
 | <a name="input_asg_health_check_grace_period"></a> [asg\_health\_check\_grace\_period](#input\_asg\_health\_check\_grace\_period) | The amount of time to wait for a new TFE EC2 instance to become healthy. If this threshold is breached, the ASG will terminate the instance and launch a new one. | `number` | `900` | no |
 | <a name="input_asg_instance_count"></a> [asg\_instance\_count](#input\_asg\_instance\_count) | Desired number of TFE EC2 instances to run in autoscaling group. Must be `1` when `tfe_operational_mode` is `external`. | `number` | `1` | no |
@@ -285,10 +305,10 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_cidr_allow_ingress_tfe_metrics_https"></a> [cidr\_allow\_ingress\_tfe\_metrics\_https](#input\_cidr\_allow\_ingress\_tfe\_metrics\_https) | List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `[]` | no |
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | Name of CloudWatch Log Group to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for all taggable AWS resources. | `map(string)` | `{}` | no |
-| <a name="input_container_runtime"></a> [container\_runtime](#input\_container\_runtime) | Container runtime to use for TFE. Supported values are 'docker'. | `string` | `"docker"` | no |
+| <a name="input_container_runtime"></a> [container\_runtime](#input\_container\_runtime) | Container runtime to use for TFE. Supported values are `docker` or `podman`. | `string` | `"docker"` | no |
 | <a name="input_create_route53_tfe_dns_record"></a> [create\_route53\_tfe\_dns\_record](#input\_create\_route53\_tfe\_dns\_record) | Boolean to create Route53 Alias Record for `tfe_hostname` resolving to Load Balancer DNS name. If `true`, `route53_hosted_zone_tfe` is also required. | `bool` | `false` | no |
 | <a name="input_custom_fluent_bit_config"></a> [custom\_fluent\_bit\_config](#input\_custom\_fluent\_bit\_config) | Custom Fluent Bit configuration for log forwarding. Only valid when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `custom`. | `string` | `null` | no |
-| <a name="input_docker_version"></a> [docker\_version](#input\_docker\_version) | Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution. | `string` | `"24.0.9"` | no |
+| <a name="input_docker_version"></a> [docker\_version](#input\_docker\_version) | Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`). | `string` | `"24.0.9"` | no |
 | <a name="input_ebs_iops"></a> [ebs\_iops](#input\_ebs\_iops) | Amount of IOPS to configure when EBS volume type is `gp3`. Must be greater than or equal to `3000` and less than or equal to `16000`. | `number` | `3000` | no |
 | <a name="input_ebs_is_encrypted"></a> [ebs\_is\_encrypted](#input\_ebs\_is\_encrypted) | Boolean to encrypt the EBS root block device of the TFE EC2 instance(s). An AWS managed key will be used when `true` unless a value is also specified for `ebs_kms_key_arn`. | `bool` | `true` | no |
 | <a name="input_ebs_kms_key_arn"></a> [ebs\_kms\_key\_arn](#input\_ebs\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE EC2 EBS volumes. | `string` | `null` | no |
@@ -297,9 +317,9 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_ebs_volume_type"></a> [ebs\_volume\_type](#input\_ebs\_volume\_type) | EBS volume type for TFE EC2 instances. | `string` | `"gp3"` | no |
 | <a name="input_ec2_allow_all_egress"></a> [ec2\_allow\_all\_egress](#input\_ec2\_allow\_all\_egress) | Boolean to allow all egress traffic from TFE EC2 instances. | `bool` | `false` | no |
 | <a name="input_ec2_allow_ssm"></a> [ec2\_allow\_ssm](#input\_ec2\_allow\_ssm) | Boolean to attach the `AmazonSSMManagedInstanceCore` policy to the TFE instance role, allowing the SSM agent (if present) to function. | `bool` | `false` | no |
-| <a name="input_ec2_ami_id"></a> [ec2\_ami\_id](#input\_ec2\_ami\_id) | Custom AMI ID for TFE EC2 launch template. If specified, value of `os_distro` must coincide with this custom AMI OS distro. | `string` | `null` | no |
+| <a name="input_ec2_ami_id"></a> [ec2\_ami\_id](#input\_ec2\_ami\_id) | Custom AMI ID for TFE EC2 launch template. If specified, value of `ec2_os_distro` must coincide with this custom AMI OS distro. | `string` | `null` | no |
 | <a name="input_ec2_instance_size"></a> [ec2\_instance\_size](#input\_ec2\_instance\_size) | EC2 instance type for TFE EC2 launch template. | `string` | `"m7i.xlarge"` | no |
-| <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `amzn2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
+| <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
 | <a name="input_ec2_ssh_key_pair"></a> [ec2\_ssh\_key\_pair](#input\_ec2\_ssh\_key\_pair) | Name of existing SSH key pair to attach to TFE EC2 instance. | `string` | `null` | no |
 | <a name="input_is_secondary_region"></a> [is\_secondary\_region](#input\_is\_secondary\_region) | Boolean indicating whether this TFE deployment is in the primary or secondary (replica) region. | `bool` | `false` | no |
 | <a name="input_lb_is_internal"></a> [lb\_is\_internal](#input\_lb\_is\_internal) | Boolean to create an internal (private) load balancer. The `lb_subnet_ids` must be private subnets when this is `true`. | `bool` | `true` | no |
@@ -310,7 +330,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_rds_aurora_engine_version"></a> [rds\_aurora\_engine\_version](#input\_rds\_aurora\_engine\_version) | Engine version of RDS Aurora PostgreSQL. | `number` | `16.2` | no |
 | <a name="input_rds_aurora_instance_class"></a> [rds\_aurora\_instance\_class](#input\_rds\_aurora\_instance\_class) | Instance class of Aurora PostgreSQL database. | `string` | `"db.r6i.xlarge"` | no |
 | <a name="input_rds_aurora_replica_count"></a> [rds\_aurora\_replica\_count](#input\_rds\_aurora\_replica\_count) | Number of replica (reader) cluster instances to create within the RDS Aurora database cluster (within the same region). | `number` | `1` | no |
-| <a name="input_rds_availability_zones"></a> [rds\_availability\_zones](#input\_rds\_availability\_zones) | List of AWS Availability Zones to spread Aurora database cluster instances across. Leave as `null` and RDS will automatically assign 3 Availability Zones. | `list(string)` | `null` | no |
+| <a name="input_rds_availability_zones"></a> [rds\_availability\_zones](#input\_rds\_availability\_zones) | List of AWS availability zones to spread Aurora database cluster instances across. Leave as `null` and RDS will automatically assign 3 availability zones. | `list(string)` | `null` | no |
 | <a name="input_rds_backup_retention_period"></a> [rds\_backup\_retention\_period](#input\_rds\_backup\_retention\_period) | The number of days to retain backups for. Must be between 0 and 35. Must be greater than 0 if the database cluster is used as a source of a read replica cluster. | `number` | `35` | no |
 | <a name="input_rds_deletion_protection"></a> [rds\_deletion\_protection](#input\_rds\_deletion\_protection) | Boolean to enable deletion protection for RDS global cluster. | `bool` | `false` | no |
 | <a name="input_rds_force_destroy"></a> [rds\_force\_destroy](#input\_rds\_force\_destroy) | Boolean to enable the removal of RDS database cluster members from RDS global cluster on destroy. | `bool` | `false` | no |
@@ -328,10 +348,10 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_redis_apply_immediately"></a> [redis\_apply\_immediately](#input\_redis\_apply\_immediately) | Boolean to apply changes immediately to Redis cluster. | `bool` | `true` | no |
 | <a name="input_redis_at_rest_encryption_enabled"></a> [redis\_at\_rest\_encryption\_enabled](#input\_redis\_at\_rest\_encryption\_enabled) | Boolean to enable encryption at rest on Redis cluster. An AWS managed key will be used when `true` unless a value is also specified for `redis_kms_key_arn`. | `bool` | `true` | no |
 | <a name="input_redis_auto_minor_version_upgrade"></a> [redis\_auto\_minor\_version\_upgrade](#input\_redis\_auto\_minor\_version\_upgrade) | Boolean to enable automatic minor version upgrades for Redis cluster. | `bool` | `true` | no |
-| <a name="input_redis_automatic_failover_enabled"></a> [redis\_automatic\_failover\_enabled](#input\_redis\_automatic\_failover\_enabled) | Boolean for deploying Redis nodes in multiple Availability Zones and enabling automatic failover. | `bool` | `true` | no |
+| <a name="input_redis_automatic_failover_enabled"></a> [redis\_automatic\_failover\_enabled](#input\_redis\_automatic\_failover\_enabled) | Boolean for deploying Redis nodes in multiple availability zones and enabling automatic failover. | `bool` | `true` | no |
 | <a name="input_redis_engine_version"></a> [redis\_engine\_version](#input\_redis\_engine\_version) | Redis version number. | `string` | `"7.1"` | no |
 | <a name="input_redis_kms_key_arn"></a> [redis\_kms\_key\_arn](#input\_redis\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt Redis cluster with. | `string` | `null` | no |
-| <a name="input_redis_multi_az_enabled"></a> [redis\_multi\_az\_enabled](#input\_redis\_multi\_az\_enabled) | Boolean to create Redis nodes across multiple Availability Zones. If `true`, `redis_automatic_failover_enabled` must also be `true`, and more than one subnet must be specified within `redis_subnet_ids`. | `bool` | `true` | no |
+| <a name="input_redis_multi_az_enabled"></a> [redis\_multi\_az\_enabled](#input\_redis\_multi\_az\_enabled) | Boolean to create Redis nodes across multiple availability zones. If `true`, `redis_automatic_failover_enabled` must also be `true`, and more than one subnet must be specified within `redis_subnet_ids`. | `bool` | `true` | no |
 | <a name="input_redis_node_type"></a> [redis\_node\_type](#input\_redis\_node\_type) | Type (size) of Redis node from a compute, memory, and network throughput standpoint. | `string` | `"cache.m5.large"` | no |
 | <a name="input_redis_parameter_group_name"></a> [redis\_parameter\_group\_name](#input\_redis\_parameter\_group\_name) | Name of parameter group to associate with Redis cluster. | `string` | `"default.redis7"` | no |
 | <a name="input_redis_port"></a> [redis\_port](#input\_redis\_port) | Port number the Redis nodes will accept connections on. | `number` | `6379` | no |
@@ -367,7 +387,7 @@ Below are links to various docs related to the customization and management of y
 | <a name="input_tfe_object_storage_s3_secret_access_key"></a> [tfe\_object\_storage\_s3\_secret\_access\_key](#input\_tfe\_object\_storage\_s3\_secret\_access\_key) | Secret access key for S3 bucket. Required when `tfe_object_storage_s3_use_instance_profile` is `false`. | `string` | `null` | no |
 | <a name="input_tfe_object_storage_s3_use_instance_profile"></a> [tfe\_object\_storage\_s3\_use\_instance\_profile](#input\_tfe\_object\_storage\_s3\_use\_instance\_profile) | Boolean to use TFE instance profile for S3 bucket access. If `false`, `tfe_object_storage_s3_access_key_id` and `tfe_object_storage_s3_secret_access_key` are required. | `bool` | `true` | no |
 | <a name="input_tfe_operational_mode"></a> [tfe\_operational\_mode](#input\_tfe\_operational\_mode) | [Operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes) for TFE. Valid values are `active-active` or `external`. | `string` | `"active-active"` | no |
-| <a name="input_tfe_redis_password_secret_arn"></a> [tfe\_redis\_password\_secret\_arn](#input\_tfe\_redis\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE Redis password. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding @, ", and /). | `string` | `null` | no |
+| <a name="input_tfe_redis_password_secret_arn"></a> [tfe\_redis\_password\_secret\_arn](#input\_tfe\_redis\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE Redis password used to create Redis (Elasticache Replication Group) cluster. Secret type should be plaintext. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_docker_network"></a> [tfe\_run\_pipeline\_docker\_network](#input\_tfe\_run\_pipeline\_docker\_network) | Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network created by TFE. | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Name of the Docker image to use for the run pipeline driver. | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_image_ecr_repo_name"></a> [tfe\_run\_pipeline\_image\_ecr\_repo\_name](#input\_tfe\_run\_pipeline\_image\_ecr\_repo\_name) | Name of the AWS ECR repository containing your custom TFE run pipeline image. | `string` | `null` | no |

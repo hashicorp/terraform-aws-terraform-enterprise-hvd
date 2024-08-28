@@ -27,8 +27,10 @@ This module supports creating an _alias_ record in AWS Route53 for the TFE FQDN 
 ```hcl
 create_route53_tfe_dns_record      = true
 route53_tfe_hosted_zone_name       = "<example.com>"
-route53_tfe_hosted_zone_is_private = false
+route53_tfe_hosted_zone_is_private = true
 ```
+
+>📝 Note: If `lb_is_internal` is `false`, then `route53_tfe_hosted_zone_is_private` should also be `false`. An DNS record resolving to an _internal_ load balancer should be created in a _private_ Route53 Hosted Zone, and a DNS record resolving to an _Internet-facing_ (external) load balancer should be a created in a _public_ Route53 Hosted Zone.
 
 ## KMS
 
@@ -43,9 +45,18 @@ redis_kms_key_arn = "<redis-kms-key-arn>"
 
 ## Custom AMI
 
+By default, this module will use the standard AWS Marketplace image based on the value of the `ec2_os_distro` input (either `ubuntu`, `rhel`, or `al2023`). If you prefer to use your own custom AMI, then you may do so by setting `ec2_ami_id` accordingly.
+
 If you have a custom AWS AMI you would like to use, you can specify it via the following module input variables:
 
 ```hcl
-ec2_ami_id    = "<custom-rhel-ami-id>"
 ec2_os_distro = "<rhel>"
+ec2_ami_id    = "<custom-rhel-ami-id>"
 ```
+
+By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
+
+- `aws-cli` (and `unzip` as a depedency to unpacking and installing this)
+- `docker` or `podman` (depending on the value of the `container_runtime` input)
+
+If your TFE EC2 instances will not have egress connectivity to the official package repositories, then you should bake those into your custom image.
