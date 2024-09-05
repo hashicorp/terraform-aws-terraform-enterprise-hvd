@@ -143,7 +143,7 @@ locals {
   ])
 }
 
-// Query the specific AMI being used to retreive root_device_name.
+// Query the specific AMI being used to retrieve root_device_name.
 data "aws_ami" "selected" {
   filter {
     name   = "image-id"
