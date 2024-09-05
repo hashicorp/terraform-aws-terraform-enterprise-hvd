@@ -88,7 +88,7 @@ variable "tfe_image_repository_username" {
 
 variable "tfe_image_repository_password" {
   type        = string
-  description = "Pasword for container registry where TFE container image is hosted. Leave as `null` if using the default TFE registry as the default password is the TFE license."
+  description = "Password for container registry where TFE container image is hosted. Leave as `null` if using the default TFE registry as the default password is the TFE license."
   default     = null
 
   validation {
@@ -119,7 +119,7 @@ variable "tfe_capacity_concurrency" {
 
 variable "tfe_capacity_cpu" {
   type        = number
-  description = "Maxium number of CPU cores that a Terraform run is allowed to consume in TFE. Set to `0` for no limit."
+  description = "Maximum number of CPU cores that a Terraform run is allowed to consume in TFE. Set to `0` for no limit."
   default     = 0
 }
 
@@ -209,7 +209,7 @@ variable "vpc_id" {
 
 variable "lb_subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherise, these should be private subnets."
+  description = "List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherwise, these should be private subnets."
 }
 
 variable "ec2_subnet_ids" {
@@ -319,13 +319,13 @@ variable "ec2_allow_all_egress" {
 #------------------------------------------------------------------------------
 variable "create_route53_tfe_dns_record" {
   type        = bool
-  description = "Boolean to create Route53 Alias Record for `tfe_hostname` resolving to Load Balancer DNS name. If `true`, `route53_hosted_zone_tfe` is also required."
+  description = "Boolean to create Route53 Alias Record for `tfe_hostname` resolving to Load Balancer DNS name. If `true`, `route53_tfe_hosted_zone_name` is also required."
   default     = false
 }
 
 variable "route53_tfe_hosted_zone_name" {
   type        = string
-  description = "Route53 Hosted Zone name to create `tfe_hostname` Alias record in. Required if `create_tfe_alias_record` is `true`."
+  description = "Route53 Hosted Zone name to create `tfe_hostname` Alias record in. Required if `create_route53_tfe_dns_record` is `true`."
   default     = null
 
   validation {
