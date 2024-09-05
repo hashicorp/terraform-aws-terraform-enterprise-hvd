@@ -1,8 +1,8 @@
 # TFE Version Upgrades
 
-TFE follows a monthly release cadence. See the [Terraform Enterprise Releases](https://developer.hashicorp.com/terraform/enterprise/releases) page for full details on the releases. Since we have bootstrapped and automated the TFE deployment and the TFE application data is decoupled from the compute (EC2) layer, the EC2 instance(s) are stateless, ephemeral, and are treated as immutable. Therefore, the process of upgrading your TFE instance to a new version involves updating your Terraform code managing your TFE deployment to reflect the new version, applying the change via Terraform to update the TFE EC2 launch template, and then replacing running EC2 instance(s) within the autoscaling group. The steps below in the [Upgrade Procedure](#upgrade-procedure) section should only be followed during a maintenace window such that no in-flight Terraform runs are disrupted.
+TFE follows a monthly release cadence. See the [Terraform Enterprise Releases](https://developer.hashicorp.com/terraform/enterprise/releases) page for full details on the releases. Since we have bootstrapped and automated the TFE deployment and the TFE application data is decoupled from the compute (EC2) layer, the EC2 instance(s) are stateless, ephemeral, and are treated as immutable. Therefore, the process of upgrading your TFE instance to a new version involves updating your Terraform code managing your TFE deployment to reflect the new version, applying the change via Terraform to update the TFE EC2 launch template, and then replacing running EC2 instance(s) within the autoscaling group. The steps below in the [Upgrade Procedure](#procedure) section should only be followed during a maintenance window such that no in-flight Terraform runs are disrupted.
 
-This module includes an input variable named `tfe_image_tag` that dicates which version of TFE is deployed.
+This module includes an input variable named `tfe_image_tag` that dictates which version of TFE is deployed.
 
 ## Procedure
 

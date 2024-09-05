@@ -56,7 +56,7 @@ ec2_ami_id    = "<custom-rhel-ami-id>"
 
 By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
 
-- `aws-cli` (and `unzip` as a depedency to unpacking and installing this)
+- `aws-cli` (and `unzip` as a dependency to unpacking and installing this)
 - `docker` or `podman` (depending on the value of the `container_runtime` input)
 
 If your TFE EC2 instances will not have egress connectivity to the official package repositories, then you should bake those into your custom image.
