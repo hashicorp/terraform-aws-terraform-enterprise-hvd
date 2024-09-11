@@ -193,6 +193,25 @@ data "aws_iam_policy_document" "tfe_ec2_allow_get_redis_password_secret" {
   }
 }
 
+data "aws_iam_policy_document" "tfe_ec2_allow_ebs_kms_cmk" {
+  count = var.ebs_kms_key_arn != null ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2AllowEbsKmsCmk"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:DescribeKey",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKey*"
+    ]
+    resources = [
+      var.ebs_kms_key_arn
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "tfe_ec2_allow_rds_kms_cmk" {
   count = var.rds_kms_key_arn != null ? 1 : 0
 
@@ -339,6 +358,7 @@ data "aws_iam_policy_document" "tfe_ec2_combined" {
     var.tfe_tls_ca_bundle_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secret[0].json : "",
     var.tfe_database_password_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_rds_password_secret[0].json : "",
     var.tfe_redis_password_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_get_redis_password_secret[0].json : "",
+    var.ebs_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_ebs_kms_cmk[0].json : "",
     var.rds_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_rds_kms_cmk[0].json : "",
     var.s3_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_s3_kms_cmk[0].json : "",
     var.redis_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_redis_kms_cmk[0].json : "",
