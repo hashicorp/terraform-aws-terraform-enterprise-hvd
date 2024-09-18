@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 LOGFILE="/var/log/tfe-cloud-init.log"
@@ -571,7 +571,7 @@ function exit_script {
   exit "$1"
 }
 
-function main() {
+function main {
   log "INFO" "Beginning TFE user_data script."
   log "INFO" "Determining Linux operating system distro..."
   OS_DISTRO=$(detect_os_distro)
@@ -651,4 +651,4 @@ function main() {
   exit_script 0
 }
 
-main "$@"
+main
