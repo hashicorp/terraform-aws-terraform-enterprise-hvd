@@ -265,6 +265,9 @@ services:
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
       TFE_IACT_TRUSTED_PROXIES: ${tfe_iact_trusted_proxies}
       TFE_IACT_TIME_LIMIT: ${tfe_iact_time_limit}
+      http_proxy: ${http_proxy}
+      https_proxy: ${https_proxy}
+      no_proxy: "$NO_PROXY"
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -456,6 +459,12 @@ spec:
       value: ${tfe_iact_trusted_proxies}
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
+    - name:  "http_proxy"
+      value: ${http_proxy}
+    - name:  "https_proxy"
+      value: ${https_proxy}
+    - name:  "no_proxy"
+      value: "$NO_PROXY"
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
@@ -586,6 +595,15 @@ function main {
   
   log "INFO" "Creating TFE directories..."
   mkdir -p $TFE_CONFIG_DIR $TFE_TLS_CERTS_DIR
+
+  log "INFO" "Setting proxy environment variables"
+  export http_proxy="${http_proxy}"
+  export https_proxy="${https_proxy}"
+  NO_PROXY="${no_proxy},$VM_PRIVATE_IP,${tfe_hostname}"
+  export no_proxy=$NO_PROXY
+  echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null 
+  echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null 
+  echo "no_proxy=$NO_PROXY" | tee -a /etc/environment > /dev/null 
 
   log "INFO" "Installing software dependencies..."
   install_awscli "$OS_DISTRO"

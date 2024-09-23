@@ -43,6 +43,10 @@ module "tfe" {
   cidr_allow_ingress_tfe_443 = var.cidr_allow_ingress_tfe_443
   cidr_allow_ingress_ec2_ssh = var.cidr_allow_ingress_ec2_ssh
 
+  http_proxy = var.http_proxy
+  https_proxy = var.https_proxy
+  additional_no_proxy = var.additional_no_proxy
+  
   # --- DNS (optional) --- #
   create_route53_tfe_dns_record      = var.create_route53_tfe_dns_record
   route53_tfe_hosted_zone_name       = var.route53_tfe_hosted_zone_name
