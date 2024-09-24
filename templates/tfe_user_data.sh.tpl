@@ -106,6 +106,14 @@ function install_docker {
     fi
     systemctl enable --now docker.service
   fi
+  mkdir -p /etc/systemd/system/docker.service.d
+  cat > /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=${http_proxy}"
+Environment="HTTPS_PROXY=${https_proxy}"
+EOF
+  systemctl daemon-reload
+  systemctl restart docker
 }
 
 function install_podman {
