@@ -41,6 +41,8 @@ module "tfe" {
   redis_subnet_ids           = var.redis_subnet_ids
   cidr_allow_ingress_tfe_443 = var.cidr_allow_ingress_tfe_443
   cidr_allow_ingress_ec2_ssh = var.cidr_allow_ingress_ec2_ssh
+  cidr_allow_egress_ec2_http = var.cidr_allow_egress_ec2_http
+  cidr_allow_egress_ec2_https= var.cidr_allow_egress_ec2_https
 
   http_proxy = var.http_proxy
   https_proxy = var.https_proxy
