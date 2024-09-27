@@ -43,6 +43,7 @@ module "tfe" {
   cidr_allow_ingress_ec2_ssh = var.cidr_allow_ingress_ec2_ssh
   cidr_allow_egress_ec2_http = var.cidr_allow_egress_ec2_http
   cidr_allow_egress_ec2_https= var.cidr_allow_egress_ec2_https
+  ec2_allow_all_egress       = var.ec2_allow_all_egress
 
   http_proxy = var.http_proxy
   https_proxy = var.https_proxy
