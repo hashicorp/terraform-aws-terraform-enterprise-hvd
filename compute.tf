@@ -122,9 +122,9 @@ locals {
     tfe_iact_subnets         = ""
     tfe_iact_time_limit      = 60
     tfe_iact_trusted_proxies = ""
-    http_proxy = var.http_proxy
-    https_proxy = var.https_proxy
-    no_proxy = var.additional_no_proxy == "" ? "localhost,127.0.0.1,169.254.169.254" : "${var.additional_no_proxy},localhost,127.0.0.1,169.254.169.254"
+    http_proxy               = var.http_proxy
+    https_proxy              = var.https_proxy
+    no_proxy                 = var.additional_no_proxy == "" ? "localhost,127.0.0.1,169.254.169.254" : "${var.additional_no_proxy},localhost,127.0.0.1,169.254.169.254"
   }
 }
 

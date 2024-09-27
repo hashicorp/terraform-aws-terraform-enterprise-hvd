@@ -34,22 +34,22 @@ module "tfe" {
   tfe_image_tag = var.tfe_image_tag
 
   # --- Networking --- #
-  vpc_id                     = var.vpc_id
-  lb_subnet_ids              = var.lb_subnet_ids
-  lb_is_internal             = var.lb_is_internal
-  ec2_subnet_ids             = var.ec2_subnet_ids
-  rds_subnet_ids             = var.rds_subnet_ids
-  redis_subnet_ids           = var.redis_subnet_ids
-  cidr_allow_ingress_tfe_443 = var.cidr_allow_ingress_tfe_443
-  cidr_allow_ingress_ec2_ssh = var.cidr_allow_ingress_ec2_ssh
-  cidr_allow_egress_ec2_http = var.cidr_allow_egress_ec2_http
-  cidr_allow_egress_ec2_https= var.cidr_allow_egress_ec2_https
-  ec2_allow_all_egress       = var.ec2_allow_all_egress
+  vpc_id                      = var.vpc_id
+  lb_subnet_ids               = var.lb_subnet_ids
+  lb_is_internal              = var.lb_is_internal
+  ec2_subnet_ids              = var.ec2_subnet_ids
+  rds_subnet_ids              = var.rds_subnet_ids
+  redis_subnet_ids            = var.redis_subnet_ids
+  cidr_allow_ingress_tfe_443  = var.cidr_allow_ingress_tfe_443
+  cidr_allow_ingress_ec2_ssh  = var.cidr_allow_ingress_ec2_ssh
+  cidr_allow_egress_ec2_http  = var.cidr_allow_egress_ec2_http
+  cidr_allow_egress_ec2_https = var.cidr_allow_egress_ec2_https
+  ec2_allow_all_egress        = var.ec2_allow_all_egress
 
-  http_proxy = var.http_proxy
-  https_proxy = var.https_proxy
+  http_proxy          = var.http_proxy
+  https_proxy         = var.https_proxy
   additional_no_proxy = var.additional_no_proxy
-  
+
   # --- DNS (optional) --- #
   create_route53_tfe_dns_record      = var.create_route53_tfe_dns_record
   route53_tfe_hosted_zone_name       = var.route53_tfe_hosted_zone_name

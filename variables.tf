@@ -307,21 +307,21 @@ variable "ec2_allow_all_egress" {
 }
 
 variable "http_proxy" {
-  type = string
+  type        = string
   description = "Outbound HTTP requests will be routed through the proxy at the given URL."
-  default = ""
+  default     = ""
 }
 
 variable "https_proxy" {
-  type = string
+  type        = string
   description = "Outbound HTTPS requests will be routed through the proxy at the given URL."
-  default = ""
+  default     = ""
 }
 
 variable "additional_no_proxy" {
-  type = string
+  type        = string
   description = "Comma-separated domain names for which outbound requests doesn't have to be routed through any proxy."
-  default = ""
+  default     = ""
 }
 
 #------------------------------------------------------------------------------
