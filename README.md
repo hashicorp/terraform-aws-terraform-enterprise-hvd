@@ -60,7 +60,7 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE Bootstrap Secrets](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
+>📝 Note: See the [TFE Bootstrap Secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/tree/main/docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
 
@@ -86,7 +86,7 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/deployment-customizations.md) doc for more details).
+2. Nested within the [examples](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/tree/main/examples) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/tree/main/docs/deployment-customizations.md) doc for more details).
 
 3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
