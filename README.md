@@ -60,7 +60,7 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
+>📝 Note: See the [TFE Bootstrap Secrets](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
 
@@ -86,7 +86,7 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) doc for more details).
+2. Nested within the [examples](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/deployment-customizations.md) doc for more details).
 
 3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
@@ -106,7 +106,7 @@ One of the following logging destinations:
             ├── terraform.tfvars
             └── variables.tf
     ```
-    
+
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
 4. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
@@ -118,45 +118,45 @@ One of the following logging destinations:
 7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:<br>
 
    #### Connecting to EC2 instance
-   
+
    SSH when `ec2_os_distro` is `ubuntu`:
-   
+
    ```shell
    ssh -i /path/to/ec2_ssh_key_pair.pem ubuntu@<ec2-private-ip>
    ```
 
    SSH when `ec2_os_distro` is `rhel` or `al2023`:
-   
+
    ```shell
    ssh -i /path/to/ec2_ssh_key_pair.pem ec2-user@<ec2-private-ip>
    ```
-   
+
    #### Viewing the logs
 
    View the higher-level logs:
-   
+
    ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
    View the lower-level logs:
-   
+
    ```shell
    journalctl -xu cloud-final -f
    ```
-   
+
    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
    #### Successful install log message
 
    The log files should display the following log message after the cloud-init (user_data) script finishes successfully:
-   
+
    ```
    [INFO] tfe_user_data script finished successfully!
    ```
 
 8.  After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
-   
+
     ```shell
     cd /etc/tfe
     sudo docker compose exec tfe tfe-health-check-status
