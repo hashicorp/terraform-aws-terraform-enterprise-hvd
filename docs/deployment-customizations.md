@@ -1,4 +1,4 @@
-# Deployment Customizations
+# Deployment customizations
 
 This page contains various deployment customizations as it relates to creating your TFE infrastructure, and their corresponding module input variables that you may additionally set to meet your own requirements where the default module values do not suffice. That said, all of the module input variables on this page are optional.
 
@@ -54,7 +54,7 @@ ec2_os_distro = "<rhel>"
 ec2_ami_id    = "<custom-rhel-ami-id>"
 ```
 
-By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
+By default, the `templates/tfe_user_data.sh.tpl` (cloud-init) script will attempt to install the required software dependencies to install TFE:
 
 - `aws-cli` (and `unzip` as a dependency to unpacking and installing this)
 - `docker` or `podman` (depending on the value of the `container_runtime` input)
