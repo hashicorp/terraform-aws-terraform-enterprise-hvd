@@ -2,7 +2,7 @@
 
 Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
-![TFE on AWS](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/images/tfe_aws_ec2.png)
+![TFE architecture](https://developer.hashicorp.com/.extracted/hvd/img/terraform/solution-design-guides/tfe/architecture-logical-active-active.png)
 
 ## Prerequisites
 
@@ -106,7 +106,7 @@ One of the following logging destinations:
             ├── terraform.tfvars
             └── variables.tf
     ```
-    
+
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
 4. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
@@ -118,45 +118,45 @@ One of the following logging destinations:
 7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:<br>
 
    #### Connecting to EC2 instance
-   
+
    SSH when `ec2_os_distro` is `ubuntu`:
-   
+
    ```shell
    ssh -i /path/to/ec2_ssh_key_pair.pem ubuntu@<ec2-private-ip>
    ```
 
    SSH when `ec2_os_distro` is `rhel` or `al2023`:
-   
+
    ```shell
    ssh -i /path/to/ec2_ssh_key_pair.pem ec2-user@<ec2-private-ip>
    ```
-   
+
    #### Viewing the logs
 
    View the higher-level logs:
-   
+
    ```shell
    tail -f /var/log/tfe-cloud-init.log
    ```
 
    View the lower-level logs:
-   
+
    ```shell
    journalctl -xu cloud-final -f
    ```
-   
+
    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
    #### Successful install log message
 
    The log files should display the following log message after the cloud-init (user_data) script finishes successfully:
-   
+
    ```
    [INFO] tfe_user_data script finished successfully!
    ```
 
 8.  After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
-   
+
     ```shell
     cd /etc/tfe
     sudo docker compose exec tfe tfe-health-check-status
