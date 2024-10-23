@@ -80,9 +80,9 @@ function install_docker {
   if command -v docker > /dev/null; then
     log "INFO" "Detected 'docker' is already installed. Skipping."
   else
+    log "INFO" "Installing Docker for $OS_DISTRO $OS_MAJOR_VERSION."
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
       # https://docs.docker.com/engine/install/ubuntu/
-      log "INFO" "Installing Docker for Ubuntu."
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
       echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
@@ -604,14 +604,16 @@ function main {
   log "INFO" "Creating TFE directories..."
   mkdir -p $TFE_CONFIG_DIR $TFE_TLS_CERTS_DIR
 
-  log "INFO" "Setting proxy environment variables"
-  export http_proxy="${http_proxy}"
-  export https_proxy="${https_proxy}"
-  NO_PROXY="${no_proxy},$VM_PRIVATE_IP,${tfe_hostname}"
-  export no_proxy=$NO_PROXY
-  echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null 
-  echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null 
-  echo "no_proxy=$NO_PROXY" | tee -a /etc/environment > /dev/null 
+  if [[ "${http_proxy}" != "" || "${https_proxy}" != "" ]]; then
+    log "INFO" "Setting proxy and no_proxy environment variables..."
+    export http_proxy="${http_proxy}"
+    export https_proxy="${https_proxy}"
+    NO_PROXY="${no_proxy},$VM_PRIVATE_IP"
+    export no_proxy=$NO_PROXY
+    echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null 
+    echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null 
+    echo "no_proxy=\"$NO_PROXY\"" | tee -a /etc/environment > /dev/null
+  fi
 
   log "INFO" "Installing software dependencies..."
   install_awscli "$OS_DISTRO"

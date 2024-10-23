@@ -60,3 +60,5 @@ By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) 
 - `docker` or `podman` (depending on the value of the `container_runtime` input)
 
 If your TFE EC2 instances will not have egress connectivity to the official package repositories, then you should bake those into your custom image.
+
+## Proxy

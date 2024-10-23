@@ -308,20 +308,30 @@ variable "ec2_allow_all_egress" {
 
 variable "http_proxy" {
   type        = string
-  description = "Outbound HTTP requests will be routed through the proxy at the given URL."
-  default     = ""
+  description = "Proxy address for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:8080`)."
+  default     = null
 }
 
 variable "https_proxy" {
   type        = string
-  description = "Outbound HTTPS requests will be routed through the proxy at the given URL."
-  default     = ""
+  description = "Proxy address for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:8080`)."
+  default     = null
 }
 
 variable "additional_no_proxy" {
   type        = string
-  description = "Comma-separated domain names for which outbound requests doesn't have to be routed through any proxy."
-  default     = ""
+  description = "Comma-separated list of domains, IP addresses, or CIDR ranges that TFE should bypass the proxy when making outbound requests, provided `http_proxy` or `https_proxy` are set. This list is in addition to automatically included addresses like RDS, S3, and Redis, which are dynamically added to `no_proxy` by the user_data script. Do not set if `http_proxy` and/or `https_proxy` are not configured."
+  default     = null
+
+  validation {
+    condition     = var.http_proxy == null && var.https_proxy == null ? var.additional_no_proxy == null : true
+    error_message = "Value must not be set when `http_proxy` and `https_proxy` are not configured."
+  }
+
+  validation {
+    condition     = var.additional_no_proxy == null || can(regex("^[^,\\s]+(,[^,\\s]+)*$", var.additional_no_proxy))
+    error_message = "Value must be single string containing a comma-separated list, with no empty entries or leading/trailing spaces."
+  }
 }
 
 #------------------------------------------------------------------------------

@@ -39,6 +39,19 @@ locals {
 # User data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
+  rds_no_proxy_endpoint   = aws_rds_cluster.tfe.endpoint
+  s3_no_proxy_endpoint    = "${aws_s3_bucket.tfe.bucket_domain_name},${aws_s3_bucket.tfe.bucket_regional_domain_name}"
+  redis_no_proxy_endpoint = var.tfe_operational_mode == "active-active" ? aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address : null
+  addl_no_proxy_base = join(",", [
+    "localhost",
+    "127.0.0.1",
+    "169.254.169.254",
+    var.tfe_fqdn,
+    local.rds_no_proxy_endpoint,
+    local.s3_no_proxy_endpoint,
+    local.redis_no_proxy_endpoint
+  ])
+
   user_data_args = {
     # Bootstrap
     aws_region                         = data.aws_region.current.name
@@ -49,14 +62,14 @@ locals {
     tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
     tfe_image_repository_url           = var.tfe_image_repository_url
     tfe_image_repository_username      = var.tfe_image_repository_username
-    tfe_image_repository_password      = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
+    tfe_image_repository_password      = var.tfe_image_repository_password != null ? var.tfe_image_repository_password : ""
     tfe_image_name                     = var.tfe_image_name
     tfe_image_tag                      = var.tfe_image_tag
     container_runtime                  = var.container_runtime
     docker_version                     = var.docker_version
 
     # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
-    # TFE application settings
+    # Application settings
     tfe_hostname                  = var.tfe_fqdn
     tfe_operational_mode          = var.tfe_operational_mode
     tfe_capacity_concurrency      = var.tfe_capacity_concurrency
@@ -118,17 +131,15 @@ locals {
     tfe_hairpin_addressing          = var.tfe_hairpin_addressing
     #tfe_run_pipeline_docker_extra_hosts = "" // computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
-    # Network bootstrap settings
+    # Network settings
     tfe_iact_subnets         = ""
     tfe_iact_time_limit      = 60
     tfe_iact_trusted_proxies = ""
-    http_proxy               = var.http_proxy
-    https_proxy              = var.https_proxy
-    no_proxy                 = var.additional_no_proxy == "" ? "localhost,127.0.0.1,169.254.169.254" : "${var.additional_no_proxy},localhost,127.0.0.1,169.254.169.254"
+    http_proxy               = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy              = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
   }
-}
 
-locals {
   user_data_template_rendered = templatefile("${path.module}/templates/tfe_user_data.sh.tpl", local.user_data_args)
 }
 
