@@ -171,7 +171,6 @@ Within the `docs` folder there is additional guidance on customization and manag
 - TFE Configuration Settings
 - TFE Bootstrap Secrets
 
-<!-- BEGIN_TF_DOCS -->
 ## Module support
 
 This open source software is maintained by the HashiCorp Technical Field Organization, independently of our enterprise products. While our Support Engineering team provides dedicated support for our enterprise offerings, this open source software is not included.
@@ -181,6 +180,7 @@ This open source software is maintained by the HashiCorp Technical Field Organiz
 
 Please note that there is no official Service Level Agreement (SLA) for support of this software as a HashiCorp customer. This software falls under the definition of Community Software/Versions in your Agreement. We appreciate your understanding and collaboration in improving our open source projects.
 
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
