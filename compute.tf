@@ -39,17 +39,20 @@ locals {
 # User data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
-  rds_no_proxy_endpoint   = aws_rds_cluster.tfe.endpoint
-  s3_no_proxy_endpoint    = "${aws_s3_bucket.tfe.bucket_domain_name},${aws_s3_bucket.tfe.bucket_regional_domain_name}"
-  redis_no_proxy_endpoint = var.tfe_operational_mode == "active-active" ? aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address : null
+  rds_no_proxy             = aws_rds_cluster.tfe.endpoint
+  s3_no_proxy              = "${aws_s3_bucket.tfe.bucket_domain_name},${aws_s3_bucket.tfe.bucket_regional_domain_name}"
+  redis_no_proxy           = var.tfe_operational_mode == "active-active" ? aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address : null
+  secrets_manager_no_proxy = "secretsmanager.${data.aws_region.current.name}.${data.aws_partition.current.dns_suffix}"
+  
   addl_no_proxy_base = join(",", [
     "localhost",
     "127.0.0.1",
     "169.254.169.254",
     var.tfe_fqdn,
-    local.rds_no_proxy_endpoint,
-    local.s3_no_proxy_endpoint,
-    local.redis_no_proxy_endpoint
+    local.rds_no_proxy,
+    local.s3_no_proxy,
+    local.redis_no_proxy,
+    local.secrets_manager_no_proxy
   ])
 
   user_data_args = {
