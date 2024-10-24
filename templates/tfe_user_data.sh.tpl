@@ -106,14 +106,19 @@ function install_docker {
     fi
     systemctl enable --now docker.service
   fi
-  mkdir -p /etc/systemd/system/docker.service.d
-  cat > /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+  
+  if [[ "${http_proxy}" != "" || "${https_proxy}" != "" ]]; then
+    log "INFO" "Configuring proxy settings for Docker daemon."
+    mkdir -p /etc/systemd/system/docker.service.d
+    cat > /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
 [Service]
 Environment="HTTP_PROXY=${http_proxy}"
 Environment="HTTPS_PROXY=${https_proxy}"
+Environment="NO_PROXY=$NO_PROXY"
 EOF
-  systemctl daemon-reload
-  systemctl restart docker
+    systemctl daemon-reload
+    systemctl restart docker
+  fi
 }
 
 function install_podman {
@@ -189,6 +194,7 @@ EOF
 
 function generate_tfe_docker_compose_file {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > "$TFE_SETTINGS_PATH" << EOF
 ---
 name: tfe
@@ -322,6 +328,7 @@ EOF
 
 function generate_tfe_podman_manifest {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > $TFE_SETTINGS_PATH << EOF
 ---
 apiVersion: "v1"
