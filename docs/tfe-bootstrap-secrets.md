@@ -63,4 +63,4 @@ cat tfe_ca_bundle.pem | base64 -w 0
 
 ## Example screenshot
 
-![TFE on AWS bootstrap secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/raw/main/docs/images/tfe_aws_bootstrap_secrets.png)
+![TFE on AWS bootstrap secrets](./images/tfe_aws_bootstrap_secrets.png)
