@@ -5,7 +5,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.64"
+      version = "~> 5.73"
     }
   }
 }
@@ -31,11 +31,6 @@ module "tfe" {
   # --- TFE config settings --- #
   tfe_fqdn      = var.tfe_fqdn
   tfe_image_tag = var.tfe_image_tag
-  
-  # --- Temporary testing --- #
-  http_proxy          = var.http_proxy
-  https_proxy         = var.https_proxy
-  additional_no_proxy = var.additional_no_proxy
 
   # --- Networking --- #
   vpc_id                      = var.vpc_id

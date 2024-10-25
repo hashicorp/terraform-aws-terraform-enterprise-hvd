@@ -28,6 +28,7 @@ rds_subnet_ids             = ["<my-db-subnet-id-a>", "<my-db-subnet-id-b>", "<my
 redis_subnet_ids           = ["<my-redis-subnet-id-a>", "<my-redis-subnet-id-b>", "<my-redis-subnet-id-c>"] # private subnets
 cidr_allow_ingress_tfe_443 = ["<10.0.0.0/16>", "<192.168.1.0/24>", "<192.168.2.0/24>"]                      # CIDR ranges of TFE users/clients, VCS
 cidr_allow_ingress_ec2_ssh = ["<10.0.0.0/16>"]
+ec2_allow_all_egress       = false
 
 # --- DNS (optional) --- #
 create_route53_tfe_dns_record      = <true>

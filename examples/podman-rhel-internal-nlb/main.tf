@@ -5,7 +5,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.64"
+      version = "~> 5.73"
     }
   }
 }
@@ -45,10 +45,6 @@ module "tfe" {
   cidr_allow_egress_ec2_http  = var.cidr_allow_egress_ec2_http
   cidr_allow_egress_ec2_https = var.cidr_allow_egress_ec2_https
   ec2_allow_all_egress        = var.ec2_allow_all_egress
-
-  http_proxy          = var.http_proxy
-  https_proxy         = var.https_proxy
-  additional_no_proxy = var.additional_no_proxy
 
   # --- DNS (optional) --- #
   create_route53_tfe_dns_record      = var.create_route53_tfe_dns_record
