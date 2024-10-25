@@ -89,8 +89,8 @@ locals {
     # Database settings
     tfe_database_host       = "${aws_rds_cluster.tfe.endpoint}:5432"
     tfe_database_name       = aws_rds_cluster.tfe.database_name
-    tfe_database_user       = aws_rds_cluster.tfe.master_username
-    tfe_database_password   = aws_rds_cluster.tfe.master_password
+    tfe_database_user       = var.tfe_database_user
+    tfe_database_password   = data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
     tfe_database_parameters = var.tfe_database_parameters
 
     # Object storage settings
