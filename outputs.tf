@@ -9,6 +9,11 @@ output "tfe_url" {
   description = "URL to access TFE application based on value of `tfe_fqdn` input."
 }
 
+output "tfe_create_initial_admin_user_url" {
+  value       = "https://${var.tfe_fqdn}/admin/account/new?token=<IACT_TOKEN>"
+  description = "URL to create TFE initial admin user."
+}
+
 output "lb_dns_name" {
   value       = var.lb_type == "alb" ? aws_lb.alb[0].dns_name : aws_lb.nlb[0].dns_name
   description = "DNS name of the Load Balancer."

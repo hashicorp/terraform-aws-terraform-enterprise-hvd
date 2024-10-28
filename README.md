@@ -186,13 +186,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.64 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.73 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.64 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.73 |
 
 ## Resources
 
@@ -240,6 +240,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_security_group_rule.ec2_allow_egress_dns_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_egress_proxy_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_egress_proxy_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_rds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_redis](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -279,6 +281,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_tls_cert_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_tls_privkey_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_route53_zone.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_s3_bucket.log_fwd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
@@ -301,12 +304,14 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_tls_cert_secret_arn"></a> [tfe\_tls\_cert\_secret\_arn](#input\_tfe\_tls\_cert\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
+| <a name="input_additional_no_proxy"></a> [additional\_no\_proxy](#input\_additional\_no\_proxy) | Comma-separated list of domains, IP addresses, or CIDR ranges that TFE should bypass the proxy when making outbound requests, provided `http_proxy` or `https_proxy` are set. This list is in addition to automatically included addresses like RDS, S3, and Redis, which are dynamically added to `no_proxy` by the user\_data script. Do not set if `http_proxy` and/or `https_proxy` are not configured. | `string` | `null` | no |
 | <a name="input_asg_health_check_grace_period"></a> [asg\_health\_check\_grace\_period](#input\_asg\_health\_check\_grace\_period) | The amount of time to wait for a new TFE EC2 instance to become healthy. If this threshold is breached, the ASG will terminate the instance and launch a new one. | `number` | `900` | no |
 | <a name="input_asg_instance_count"></a> [asg\_instance\_count](#input\_asg\_instance\_count) | Desired number of TFE EC2 instances to run in autoscaling group. Must be `1` when `tfe_operational_mode` is `external`. | `number` | `1` | no |
 | <a name="input_asg_max_size"></a> [asg\_max\_size](#input\_asg\_max\_size) | Max number of TFE EC2 instances to run in autoscaling group. Only valid when `tfe_operational_mode` is `active-active`. Value is hard-coded to `1` when `tfe_operational_mode` is `external`. | `number` | `3` | no |
 | <a name="input_cidr_allow_egress_ec2_dns"></a> [cidr\_allow\_egress\_ec2\_dns](#input\_cidr\_allow\_egress\_ec2\_dns) | List of destination CIDR ranges to allow TCP/53 and UDP/53 (DNS) outbound from TFE EC2 instances. Only set if you want to use custom DNS servers instead of the AWS-provided DNS resolver within your VPC. | `list(string)` | `[]` | no |
 | <a name="input_cidr_allow_egress_ec2_http"></a> [cidr\_allow\_egress\_ec2\_http](#input\_cidr\_allow\_egress\_ec2\_http) | List of destination CIDR ranges to allow TCP/80 outbound from TFE EC2 instances. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cidr_allow_egress_ec2_https"></a> [cidr\_allow\_egress\_ec2\_https](#input\_cidr\_allow\_egress\_ec2\_https) | List of destination CIDR ranges to allow TCP/443 outbound from TFE EC2 instances. Include the CIDR range of your VCS provider if you are configuring VCS integration with TFE. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
+| <a name="input_cidr_allow_egress_ec2_proxy"></a> [cidr\_allow\_egress\_ec2\_proxy](#input\_cidr\_allow\_egress\_ec2\_proxy) | List of destination CIDR range(s) where proxy server exists. Required and only valid when `http_proxy` and/or `https_proxy` are set. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_ec2_ssh"></a> [cidr\_allow\_ingress\_ec2\_ssh](#input\_cidr\_allow\_ingress\_ec2\_ssh) | List of CIDR ranges to allow SSH ingress to TFE EC2 instance (i.e. bastion IP, client/workstation IP, etc.). | `list(string)` | `[]` | no |
 | <a name="input_cidr_allow_ingress_tfe_443"></a> [cidr\_allow\_ingress\_tfe\_443](#input\_cidr\_allow\_ingress\_tfe\_443) | List of CIDR ranges to allow ingress traffic on port 443 to TFE server or load balancer. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_http"></a> [cidr\_allow\_ingress\_tfe\_metrics\_http](#input\_cidr\_allow\_ingress\_tfe\_metrics\_http) | List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `[]` | no |
@@ -329,6 +334,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_ec2_instance_size"></a> [ec2\_instance\_size](#input\_ec2\_instance\_size) | EC2 instance type for TFE EC2 launch template. | `string` | `"m7i.xlarge"` | no |
 | <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
 | <a name="input_ec2_ssh_key_pair"></a> [ec2\_ssh\_key\_pair](#input\_ec2\_ssh\_key\_pair) | Name of existing SSH key pair to attach to TFE EC2 instance. | `string` | `null` | no |
+| <a name="input_http_proxy"></a> [http\_proxy](#input\_http\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
+| <a name="input_https_proxy"></a> [https\_proxy](#input\_https\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
 | <a name="input_is_secondary_region"></a> [is\_secondary\_region](#input\_is\_secondary\_region) | Boolean indicating whether this TFE deployment is in the primary or secondary (replica) region. | `bool` | `false` | no |
 | <a name="input_lb_is_internal"></a> [lb\_is\_internal](#input\_lb\_is\_internal) | Boolean to create an internal (private) load balancer. The `lb_subnet_ids` must be private subnets when this is `true`. | `bool` | `true` | no |
 | <a name="input_lb_type"></a> [lb\_type](#input\_lb\_type) | Indicates which type of AWS load balancer is created: Application Load Balancer (`alb`) or Network Load Balancer (`nlb`). | `string` | `"nlb"` | no |
@@ -417,6 +424,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | ARN of TFE S3 bucket. |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | Name of TFE S3 bucket. |
 | <a name="output_s3_crr_iam_role_arn"></a> [s3\_crr\_iam\_role\_arn](#output\_s3\_crr\_iam\_role\_arn) | ARN of S3 cross-region replication IAM role. |
+| <a name="output_tfe_create_initial_admin_user_url"></a> [tfe\_create\_initial\_admin\_user\_url](#output\_tfe\_create\_initial\_admin\_user\_url) | URL to create TFE initial admin user. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | PostgreSQL server endpoint in the format that TFE will connect to. |
 | <a name="output_tfe_url"></a> [tfe\_url](#output\_tfe\_url) | URL to access TFE application based on value of `tfe_fqdn` input. |
 <!-- END_TF_DOCS -->

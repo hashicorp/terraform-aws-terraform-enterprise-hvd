@@ -13,11 +13,10 @@ tfe_encryption_password_secret_arn = "<my-tfe-encryption-password-secret-arn>"
 tfe_tls_cert_secret_arn            = "<my-tfe-tls-cert-secret-arn>"
 tfe_tls_privkey_secret_arn         = "<my-tfe-tls-cert-private-key-secret-arn>"
 tfe_tls_ca_bundle_secret_arn       = "<my-tfe-tls-ca-bundle-secret-arn>"
-container_runtime                  = "podman"
 
 # --- TFE config settings --- #
 tfe_fqdn      = "<tfe.aws.example.com>"
-tfe_image_tag = "<v202408-1>"
+tfe_image_tag = "<v202410-1>"
 
 # --- Networking --- #
 vpc_id                     = "<my-vpc-id>"
@@ -35,8 +34,9 @@ route53_tfe_hosted_zone_name       = "<aws.example.com>"
 route53_tfe_hosted_zone_is_private = <true>
 
 # --- Compute --- #
+container_runtime  = "podman"
 ec2_os_distro      = "rhel"
-ec2_ssh_key_pair   = "<my-ec2-key-pair>"
+ec2_ssh_key_pair   = "<my-ec2-key-pair-name>"
 asg_instance_count = 1
 
 # --- Database --- #

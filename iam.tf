@@ -372,7 +372,7 @@ resource "aws_iam_role_policy_attachment" "aws_ssm" {
   count = var.ec2_allow_ssm ? 1 : 0
 
   role       = aws_iam_role.tfe_ec2.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  policy_arn = provider::aws::arn_build(data.aws_partition.current.partition, "iam", "", "aws", "policy/AmazonSSMManagedInstanceCore")
 }
 
 #------------------------------------------------------------------------------

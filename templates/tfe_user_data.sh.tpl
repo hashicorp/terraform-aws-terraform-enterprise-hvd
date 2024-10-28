@@ -80,9 +80,9 @@ function install_docker {
   if command -v docker > /dev/null; then
     log "INFO" "Detected 'docker' is already installed. Skipping."
   else
+    log "INFO" "Installing Docker for $OS_DISTRO $OS_MAJOR_VERSION."
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
       # https://docs.docker.com/engine/install/ubuntu/
-      log "INFO" "Installing Docker for Ubuntu."
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
       echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
@@ -105,6 +105,19 @@ function install_docker {
       chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
     fi
     systemctl enable --now docker.service
+  fi
+  
+  if [[ "${http_proxy}" != "" || "${https_proxy}" != "" ]]; then
+    log "INFO" "Configuring proxy settings for Docker daemon."
+    mkdir -p /etc/systemd/system/docker.service.d
+    cat > /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=${http_proxy}"
+Environment="HTTPS_PROXY=${https_proxy}"
+Environment="NO_PROXY=$NO_PROXY"
+EOF
+    systemctl daemon-reload
+    systemctl restart docker
   fi
 }
 
@@ -181,6 +194,7 @@ EOF
 
 function generate_tfe_docker_compose_file {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > "$TFE_SETTINGS_PATH" << EOF
 ---
 name: tfe
@@ -265,6 +279,11 @@ services:
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
       TFE_IACT_TRUSTED_PROXIES: ${tfe_iact_trusted_proxies}
       TFE_IACT_TIME_LIMIT: ${tfe_iact_time_limit}
+%{ if http_proxy != "" || https_proxy != ""  ~}
+      http_proxy: ${http_proxy}
+      https_proxy: ${https_proxy}
+      no_proxy: "$NO_PROXY"
+%{ endif ~}
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -311,6 +330,7 @@ EOF
 
 function generate_tfe_podman_manifest {
   local TFE_SETTINGS_PATH="$1"
+  
   cat > $TFE_SETTINGS_PATH << EOF
 ---
 apiVersion: "v1"
@@ -456,6 +476,14 @@ spec:
       value: ${tfe_iact_trusted_proxies}
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
+%{ if http_proxy != "" || https_proxy != ""  ~}
+    - name:  "http_proxy"
+      value: ${http_proxy}
+    - name:  "https_proxy"
+      value: ${https_proxy}
+    - name:  "no_proxy"
+      value: "$NO_PROXY"
+%{ endif ~}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
@@ -580,12 +608,23 @@ function main {
   log "INFO" "Detected OS major version is '$OS_MAJOR_VERSION'."
   
   log "INFO" "Scraping EC2 instance metadata for private IP address..."
-  EC2_TOKEN=$(curl -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-  VM_PRIVATE_IP=$(curl -sS -H "X-aws-ec2-metadata-token: $EC2_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+  EC2_TOKEN=$(curl --noproxy -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  VM_PRIVATE_IP=$(curl --noproxy -sS -H "X-aws-ec2-metadata-token: $EC2_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
   log "INFO" "Detected EC2 instance private IP address is '$VM_PRIVATE_IP'."
-  
+
   log "INFO" "Creating TFE directories..."
   mkdir -p $TFE_CONFIG_DIR $TFE_TLS_CERTS_DIR
+
+  if [[ "${http_proxy}" != "" || "${https_proxy}" != "" ]]; then
+    log "INFO" "Setting proxy and no_proxy environment variables..."
+    export http_proxy="${http_proxy}"
+    export https_proxy="${https_proxy}"
+    NO_PROXY="${no_proxy},$VM_PRIVATE_IP"
+    export no_proxy=$NO_PROXY
+    echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null 
+    echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null 
+    echo "no_proxy=\"$NO_PROXY\"" | tee -a /etc/environment > /dev/null
+  fi
 
   log "INFO" "Installing software dependencies..."
   install_awscli "$OS_DISTRO"

@@ -4,36 +4,31 @@
 #------------------------------------------------------------------------------
 # TFE URLs
 #------------------------------------------------------------------------------
-output "tfe_url" {
-  value = module.tfe.tfe_url
-}
-
-output "tfe_lb_dns_name" {
-  value = module.tfe.lb_dns_name
+output "tfe_urls" {
+  value = {
+    tfe_url                           = module.tfe.tfe_url
+    tfe_create_initial_admin_user_url = module.tfe.tfe_create_initial_admin_user_url
+    tfe_lb_dns_name                   = module.tfe.lb_dns_name
+  }
 }
 
 #------------------------------------------------------------------------------
 # Database
 #------------------------------------------------------------------------------
-output "rds_aurora_global_cluster_id" {
-  value = module.tfe.rds_aurora_global_cluster_id
-}
-
-output "rds_aurora_cluster_arn" {
-  value = module.tfe.rds_aurora_cluster_arn
-}
-
-output "rds_aurora_cluster_members" {
-  value = module.tfe.rds_aurora_cluster_members
-}
-
-output "rds_aurora_cluster_endpoint" {
-  value = module.tfe.rds_aurora_cluster_endpoint
+output "database" {
+  value = {
+    rds_global_cluster_id = module.tfe.rds_aurora_global_cluster_id
+    rds_cluster_arn       = module.tfe.rds_aurora_cluster_arn
+  }
 }
 
 #------------------------------------------------------------------------------
 # Object storage
 #------------------------------------------------------------------------------
-output "tfe_s3_bucket_name" {
-  value = module.tfe.s3_bucket_name
+output "object_storage" {
+  value = {
+    s3_bucket_name = module.tfe.s3_bucket_name
+    s3_bucket_arn  = module.tfe.s3_bucket_arn
+  }
 }
+
