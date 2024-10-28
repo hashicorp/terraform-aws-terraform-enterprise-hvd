@@ -1,4 +1,4 @@
-# TFE Configuration Settings
+# TFE configuration settings
 
 In order to bootstrap and automate the TFE install, the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) (cloud-init) script dynamically generates a `docker-compose.yaml` file containing all of the TFE configuration settings required to start and run the application. Some of these configuration settings values are derived from interpolated values from other resources that this module creates, others are derived from module input variable values, and several are automatically computed by this module.
 
@@ -17,24 +17,24 @@ Within the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) script there is
 ## Procedure
 
 1. Determine which [configuration setting](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) you would like to add/modify/update.
-   
-2. Find the corresponding variable in the [variables.tf](../variables.tf) file.
-   
-3. Specify the input within your TFE module block. For example, if you want to modify the `TFE_CAPACITY_CONCURRENCY` setting to a value different from the default value of `10`:
-   
-   ```hcl
-   module "tfe" {
-    ...
-    
-    tfe_capacity_concurrency = var.tfe_capacity_concurrency
-    ...
-   }
-   ```
 
-   >📝 Note: If you would prefer to hard code the input value on the right side of the equals side and not use a variable, then you can do so and skip step 4.
+1. Find the corresponding variable in the [variables.tf](../variables.tf) file.
 
-4. Verify the corresponding variable definition exists in your own `variables.tf` file. If it is not in there, then add it. Then, update your `terraform.tfvars` file with the desired input variable value.
+1. Specify the input within your TFE module block. For example, if you want to modify the `TFE_CAPACITY_CONCURRENCY` setting to a value different from the default value of `10`:
 
-5. From within the Terraform directory managing your TFE deployment, run `terraform apply` to update the TFE EC2 launch template.
+    ```hcl
+    module "tfe" {
+      ...
+      
+      tfe_capacity_concurrency = var.tfe_capacity_concurrency
+      ...
+    }
+    ```
 
-6. During a maintenance window, terminate the running TFE EC2 instance(s) which will trigger the autoscaling group to spawn new instance(s) from the latest version of the TFE EC2 launch template. This process will effectively re-install TFE on the new instance(s), including the updated configuration settings values within the installation configuration.
+    >📝 Note: If you would prefer to hard code the input value on the right side of the equals side and not use a variable, then you can do so and skip step 4.
+
+1. Verify the corresponding variable definition exists in your own `variables.tf` file. If it is not in there, then add it. Then, update your `terraform.tfvars` file with the desired input variable value.
+
+1. From within the Terraform directory managing your TFE deployment, run `terraform apply` to update the TFE EC2 launch template.
+
+1. During a maintenance window, terminate the running TFE EC2 instance(s) which will trigger the autoscaling group to spawn new instance(s) from the latest version of the TFE EC2 launch template. This process will effectively re-install TFE on the new instance(s), including the updated configuration settings values within the installation configuration.

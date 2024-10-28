@@ -1,4 +1,4 @@
-# Deployment Customizations
+# Deployment customizations
 
 This page contains various deployment customizations as it relates to creating your TFE infrastructure, and their corresponding module input variables that you may additionally set to meet your own requirements where the default module values do not suffice. That said, all of the module input variables on this page are optional.
 

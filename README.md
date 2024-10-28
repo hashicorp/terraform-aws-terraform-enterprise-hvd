@@ -2,7 +2,7 @@
 
 Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
 
-![TFE on AWS](https://raw.githubusercontent.com/hashicorp/terraform-aws-terraform-enterprise-hvd/main/docs/images/tfe_aws_ec2.png)
+![TFE architecture](https://developer.hashicorp.com/.extracted/hvd/img/terraform/solution-design-guides/tfe/architecture-logical-active-active.png)
 
 ## Prerequisites
 
@@ -71,7 +71,6 @@ One of the following mechanisms for shell access to TFE EC2 instances:
 - EC2 SSH key pair
 - AWS SSM (can be enabled by setting [ec2_allow_ssm](#input_ec2_allow_ssm) boolean input variable to `true`)
 
-
 ### Log forwarding (optional)
 
 One of the following logging destinations:
@@ -80,17 +79,15 @@ One of the following logging destinations:
 - AWS S3 bucket
 - A custom fluent bit configuration that will forward logs to custom destination
 
----
-
 ## Usage
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) doc for more details).
+1. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) doc for more details).
 
-3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
+1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
-    ```
+    ```pre
     .
     └── environments
         ├── production
@@ -106,65 +103,63 @@ One of the following logging destinations:
             ├── terraform.tfvars
             └── variables.tf
     ```
-    
+
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
-4. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
+1. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
-5. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`.
+1. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`.
 
-6. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
+1. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
 
-7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:<br>
+1. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:
 
-   #### Connecting to EC2 instance
-   
-   SSH when `ec2_os_distro` is `ubuntu`:
-   
-   ```shell
-   ssh -i /path/to/ec2_ssh_key_pair.pem ubuntu@<ec2-private-ip>
-   ```
+    **Connecting to the EC2 instance**
 
-   SSH when `ec2_os_distro` is `rhel` or `al2023`:
-   
-   ```shell
-   ssh -i /path/to/ec2_ssh_key_pair.pem ec2-user@<ec2-private-ip>
-   ```
-   
-   #### Viewing the logs
+    SSH when `ec2_os_distro` is `ubuntu`:
 
-   View the higher-level logs:
-   
-   ```shell
-   tail -f /var/log/tfe-cloud-init.log
-   ```
+    ```shell
+    ssh -i /path/to/ec2_ssh_key_pair.pem ubuntu@<ec2-private-ip>
+    ```
 
-   View the lower-level logs:
-   
-   ```shell
-   journalctl -xu cloud-final -f
-   ```
-   
-   >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+    SSH when `ec2_os_distro` is `rhel` or `al2023`:
 
-   #### Successful install log message
+    ```shell
+    ssh -i /path/to/ec2_ssh_key_pair.pem ec2-user@<ec2-private-ip>
+    ```
 
-   The log files should display the following log message after the cloud-init (user_data) script finishes successfully:
-   
-   ```
-   [INFO] tfe_user_data script finished successfully!
-   ```
+    **Viewing the logs**
 
-8.  After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
-   
+    View the higher-level logs:
+
+    ```shell
+    tail -f /var/log/tfe-cloud-init.log
+    ```
+
+    View the lower-level logs:
+
+    ```shell
+    journalctl -xu cloud-final -f
+    ```
+
+    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+
+    **Successful install log message**
+
+    The log files should display the following log message after the cloud-init (user_data) script finishes successfully:
+
+    ```shell
+    [INFO] tfe_user_data script finished successfully!
+    ```
+
+1. After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
+
     ```shell
     cd /etc/tfe
     sudo docker compose exec tfe tfe-health-check-status
     ```
 
-9.  Follow the steps to [here](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) to create the TFE initial admin user.
-
----
+1. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
 ## Docs
 
@@ -176,7 +171,14 @@ Below are links to various docs related to the customization and management of y
 - [TFE Configuration Settings](./docs/tfe-config-settings.md)
 - [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md)
 
----
+## Module support
+
+This open source software is maintained by the HashiCorp Technical Field Organization, independently of our enterprise products. While our Support Engineering team provides dedicated support for our enterprise offerings, this open source software is not included.
+
+- For help using this open source software, please engage your account team.
+- To report bugs/issues with this open source software, please open them directly against this code repository using the GitHub issues feature.
+
+Please note that there is no official Service Level Agreement (SLA) for support of this software as a HashiCorp customer. This software falls under the definition of Community Software/Versions in your Agreement. We appreciate your understanding and collaboration in improving our open source projects.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

@@ -1,11 +1,11 @@
-# TFE "Bootstrap" Secrets
+# TFE "Bootstrap" secrets
 
 This document contains a table of the TFE _bootstrap_ secrets to be stored in AWS Secrets Manager required by this module to fully automate the deployment and installation of TFE on AWS (VM + Container), how to format them, and an example screenshot.
 
 | Secret                                           | Secret Type      | Module Input                         |
 |--------------------------------------------------|------------------|--------------------------------------|
 | TFE license file                                 | Plaintext secret | `tfe_license_secret_arn`             |
-| TFE encryption password                          | Plaintext secret | `tfe_encryption_password_secret_arn` |    
+| TFE encryption password                          | Plaintext secret | `tfe_encryption_password_secret_arn` |
 | TFE database password                            | Plaintext secret | `tfe_database_password_secret_arn`   |
 | TFE Redis password                               | Plaintext secret | `tfe_redis_password_secret_arn`      |
 | TFE TLS certificate (base64-encoded)             | Plaintext secret | `tfe_tls_cert_secret_arn`            |
@@ -61,6 +61,6 @@ cat tfe_privkey.pem | base64 -w 0
 cat tfe_ca_bundle.pem | base64 -w 0
 ```
 
-## Example Screenshot
+## Example screenshot
 
 ![TFE on AWS bootstrap secrets](./images/tfe_aws_bootstrap_secrets.png)
