@@ -9,9 +9,6 @@ variable "region" {
   description = "AWS region where TFE will be deployed."
 }
 
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
 #------------------------------------------------------------------------------
 # Common
 #------------------------------------------------------------------------------
@@ -311,6 +308,22 @@ variable "cidr_allow_egress_ec2_dns" {
   default     = []
 }
 
+variable "cidr_allow_egress_ec2_proxy" {
+  type        = list(string)
+  description = "List of destination CIDR range(s) where proxy server exists. Required and only valid when `http_proxy` and/or `https_proxy` are set."
+  default     = null
+
+  validation {
+    condition     = var.http_proxy != null || var.https_proxy != null ? var.cidr_allow_egress_ec2_proxy != null : true
+    error_message = "`cidr_allow_egress_ec2_proxy` must be set when `http_proxy` and/or `https_proxy` are set."
+  }
+
+  validation {
+    condition     = var.http_proxy == null && var.https_proxy == null ? var.cidr_allow_egress_ec2_proxy == null : true
+    error_message = "`cidr_allow_egress_ec2_proxy` is not valid when `http_proxy` and `https_proxy` are not set."
+  }
+}
+
 variable "ec2_allow_all_egress" {
   type        = bool
   description = "Boolean to allow all egress traffic from TFE EC2 instances."
@@ -319,14 +332,24 @@ variable "ec2_allow_all_egress" {
 
 variable "http_proxy" {
   type        = string
-  description = "Proxy address for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:8080`)."
+  description = "Proxy address (including port number) for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:3128`)."
   default     = null
+
+  validation {
+    condition     = var.http_proxy != null ? can(regex("^http://[a-zA-Z0-9.-]+:[0-9]{1,5}$", var.http_proxy)) : true
+    error_message = "`http_proxy` value must start with `http://` and be in the format `http://proxy.example.com:3128`, including a colon and port number at the end."
+  }
 }
 
 variable "https_proxy" {
   type        = string
-  description = "Proxy address for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:8080`)."
+  description = "Proxy address (including port number) for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:3128`)."
   default     = null
+
+  validation {
+    condition     = var.https_proxy != null ? can(regex("^(http|https)://[a-zA-Z0-9.-]+:[0-9]{1,5}$", var.https_proxy)) : true
+    error_message = "`https_proxy` value must start with `http://` or `https://` and be in the format `http://proxy.example.com:3128` or `https://proxy.example.com:3128`, including a colon and port number at the end."
+  }
 }
 
 variable "additional_no_proxy" {

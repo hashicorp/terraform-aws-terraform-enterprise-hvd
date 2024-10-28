@@ -31,6 +31,10 @@ module "tfe" {
   # --- TFE config settings --- #
   tfe_fqdn      = var.tfe_fqdn
   tfe_image_tag = var.tfe_image_tag
+  
+  #http_proxy                  = "http://proxy.example.com:3128"
+  #https_proxy                 = "http://proxy.example.com:3129"
+  #cidr_allow_egress_ec2_proxy = ["10.0.0.0/16"]
 
   # --- Networking --- #
   vpc_id                      = var.vpc_id
@@ -41,9 +45,6 @@ module "tfe" {
   redis_subnet_ids            = var.redis_subnet_ids
   cidr_allow_ingress_tfe_443  = var.cidr_allow_ingress_tfe_443
   cidr_allow_ingress_ec2_ssh  = var.cidr_allow_ingress_ec2_ssh
-  cidr_allow_egress_ec2_http  = var.cidr_allow_egress_ec2_http
-  cidr_allow_egress_ec2_https = var.cidr_allow_egress_ec2_https
-  ec2_allow_all_egress        = var.ec2_allow_all_egress
 
   # --- DNS (optional) --- #
   create_route53_tfe_dns_record      = var.create_route53_tfe_dns_record
@@ -51,6 +52,7 @@ module "tfe" {
   route53_tfe_hosted_zone_is_private = var.route53_tfe_hosted_zone_is_private
 
   # --- Compute --- #
+  container_runtime  = var.container_runtime 
   ec2_os_distro      = var.ec2_os_distro
   ec2_ssh_key_pair   = var.ec2_ssh_key_pair
   asg_instance_count = var.asg_instance_count
