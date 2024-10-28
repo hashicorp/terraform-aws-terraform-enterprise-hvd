@@ -268,7 +268,7 @@ resource "aws_security_group_rule" "ec2_allow_ingress_tfe_https_from_lb" {
   to_port                  = 443
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_allow_ingress.id
-  description              = "Allow TCP/443 (HTTPS) inbound to TFE EC2 instance(s) from TFE load balancer."
+  description              = "Allow TCP/443 (HTTPS) inbound to TFE EC2 instances from TFE load balancer."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -281,7 +281,7 @@ resource "aws_security_group_rule" "ec2_allow_ingress_ssh" {
   to_port     = 22
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_ingress_ec2_ssh
-  description = "Allow TCP/22 (SSH) inbound to TFE EC2 instance(s) from specified CIDR ranges."
+  description = "Allow TCP/22 (SSH) inbound to TFE EC2 instances from specified CIDR ranges."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -294,7 +294,7 @@ resource "aws_security_group_rule" "ec2_allow_ingress_vault" {
   to_port     = 8201
   protocol    = "tcp"
   self        = true
-  description = "Allow TCP/8201 between TFE EC2 instance(s) for internal Vault cluster communication with Active/Active operational mode."
+  description = "Allow TCP/8201 between TFE EC2 instances for internal Vault cluster communication with Active/Active operational mode."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -307,7 +307,7 @@ resource "aws_security_group_rule" "ec2_allow_cidr_ingress_tfe_metrics_http" {
   to_port     = var.tfe_metrics_http_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_ingress_tfe_metrics_http
-  description = "Allow TCP/9090 (HTTP) or specified port inbound to metrics endpoint on TFE EC2 instance(s) from specified CIDR ranges."
+  description = "Allow TCP/9090 (HTTP) or specified port inbound to metrics endpoint on TFE EC2 instances from specified CIDR ranges."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -320,7 +320,7 @@ resource "aws_security_group_rule" "ec2_allow_cidr_ingress_tfe_metrics_https" {
   to_port     = var.tfe_metrics_https_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_ingress_tfe_metrics_https
-  description = "Allow TCP/9091 (HTTPS) or specified port inbound to metrics endpoint on TFE EC2 instance(s) from specified CIDR ranges."
+  description = "Allow TCP/9091 (HTTPS) or specified port inbound to metrics endpoint on TFE EC2 instances from specified CIDR ranges."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -339,7 +339,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_all" {
   to_port     = 0
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
-  description = "Allow all traffic outbound from TFE EC2 instance(s)."
+  description = "Allow all traffic outbound from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -350,7 +350,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_http" {
   to_port     = 80
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_http
-  description = "Allow TCP/80 (HTTP) outbound to specified CIDR ranges from TFE EC2 instance(s)."
+  description = "Allow TCP/80 (HTTP) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -361,7 +361,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_https" {
   to_port     = 443
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_http
-  description = "Allow TCP/443 (HTTPS) outbound to specified CIDR ranges from TFE EC2 instance(s)."
+  description = "Allow TCP/443 (HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -372,7 +372,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_rds" {
   to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.rds_allow_ingress.id
-  description              = "Allow TCP/5432 (PostgreSQL) outbound to RDS Aurora cluster from TFE EC2 instance(s)."
+  description              = "Allow TCP/5432 (PostgreSQL) outbound to RDS Aurora cluster from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -385,7 +385,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_redis" {
   to_port                  = 6379
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.redis_allow_ingress[0].id
-  description              = "Allow TCP/6379 (Redis) outbound to Redis cluster from TFE EC2 instance(s)."
+  description              = "Allow TCP/6379 (Redis) outbound to Redis cluster from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -398,7 +398,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_vault" {
   to_port     = 8201
   protocol    = "tcp"
   self        = true
-  description = "Allow TCP/8201 between TFE EC2 instance(s) for internal Vault cluster communication in Active/Active operational mode."
+  description = "Allow TCP/8201 between TFE EC2 instances for internal Vault cluster communication in Active/Active operational mode."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -411,7 +411,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_dns_tcp" {
   to_port     = 53
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_dns
-  description = "Allow TCP/53 (DNS) outbound to specified CIDR ranges from TFE EC2 instance(s)."
+  description = "Allow TCP/53 (DNS) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -424,7 +424,38 @@ resource "aws_security_group_rule" "ec2_allow_egress_dns_udp" {
   to_port     = 53
   protocol    = "udp"
   cidr_blocks = var.cidr_allow_egress_ec2_dns
-  description = "Allow UDP/53 (DNS) outbound to specified CIDR ranges from TFE EC2 instance(s)."
+  description = "Allow UDP/53 (DNS) outbound to specified CIDR ranges from TFE EC2 instances."
+
+  security_group_id = aws_security_group.ec2_allow_egress.id
+}
+
+locals {
+  http_proxy_port  = var.http_proxy != null ? replace(regexall(":[0-9]+$", var.http_proxy)[0], ":", "") : null
+  https_proxy_port = var.https_proxy != null ? replace(regexall(":[0-9]+$", var.https_proxy)[0], ":", "") : null
+}
+
+resource "aws_security_group_rule" "ec2_allow_egress_proxy_http" {
+  count = var.cidr_allow_egress_ec2_proxy != null && local.http_proxy_port != null ? 1 : 0
+
+  type        = "egress"
+  from_port   = local.http_proxy_port
+  to_port     = local.http_proxy_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_egress_ec2_proxy
+  description = "Allow TCP/${local.http_proxy_port} (HTTP proxy port) outbound to specified CIDR ranges from TFE EC2 instances."
+
+  security_group_id = aws_security_group.ec2_allow_egress.id
+}
+
+resource "aws_security_group_rule" "ec2_allow_egress_proxy_https" {
+  count = var.cidr_allow_egress_ec2_proxy != null && local.https_proxy_port != null ? 1 : 0
+
+  type        = "egress"
+  from_port   = local.https_proxy_port
+  to_port     = local.https_proxy_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_egress_ec2_proxy
+  description = "Allow TCP/${local.https_proxy_port} (HTTPS proxy port) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
