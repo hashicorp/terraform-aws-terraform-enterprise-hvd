@@ -608,10 +608,10 @@ function main {
   log "INFO" "Detected OS major version is '$OS_MAJOR_VERSION'."
   
   log "INFO" "Scraping EC2 instance metadata for private IP address..."
-  EC2_TOKEN=$(curl -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-  VM_PRIVATE_IP=$(curl -sS -H "X-aws-ec2-metadata-token: $EC2_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+  EC2_TOKEN=$(curl --noproxy -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  VM_PRIVATE_IP=$(curl --noproxy -sS -H "X-aws-ec2-metadata-token: $EC2_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
   log "INFO" "Detected EC2 instance private IP address is '$VM_PRIVATE_IP'."
-  
+
   log "INFO" "Creating TFE directories..."
   mkdir -p $TFE_CONFIG_DIR $TFE_TLS_CERTS_DIR
 
