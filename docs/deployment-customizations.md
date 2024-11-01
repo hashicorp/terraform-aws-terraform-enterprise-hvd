@@ -56,7 +56,7 @@ Ensure the value you set for `ec2_os_distro` accurately reflects the OS distribu
 
 ### Software dependencies
 
-By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
+By default, the [tfe_user_data](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
 
 - `aws-cli` (and `unzip` as a dependency to unpacking and installing this)
 - `docker` or `podman` (depending on the value of the `container_runtime` input)

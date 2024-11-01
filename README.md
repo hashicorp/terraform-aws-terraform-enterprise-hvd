@@ -60,7 +60,7 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
+>📝 Note: See the [TFE Bootstrap Secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
 
@@ -83,7 +83,7 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-1. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) doc for more details).
+1. Nested within the [examples](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/deployment-customizations.md) doc for more details).
 
 1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
 
@@ -165,11 +165,11 @@ One of the following logging destinations:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
-- [Deployment Customizations](./docs/deployment-customizations.md)
-- [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
-- [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
-- [TFE Configuration Settings](./docs/tfe-config-settings.md)
-- [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md)
+- [Deployment Customizations](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/deployment-customizations.md)
+- [TFE Version Upgrades](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-version-upgrades.md)
+- [TFE TLS Certificate Rotation](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-cert-rotation.md)
+- [TFE Configuration Settings](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-config-settings.md)
+- [TFE Bootstrap Secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.2.0/docs/tfe-bootstrap-secrets.md)
 
 ## Module support
 
