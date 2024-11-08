@@ -10,5 +10,7 @@ project {
   header_ignore = [
     # "vendor/**",
     # "**autogen**",
+    "**/*.yaml",
+    "**/*.yml"
   ]
 }
