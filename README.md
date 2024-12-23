@@ -13,7 +13,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - General understanding of how to use Terraform (Community Edition)
 - General understanding of how to use AWS
 - `git` CLI and Visual Studio Code editor installed on workstations are strongly recommended
-- AWS account that TFE will be deployed in with permissions to provision these [resources](#resources) via Terraform CLI
+- AWS account that TFE will be deployed in with permissions to create these [resources](#resources) via Terraform CLI
 - (Optional) AWS S3 bucket for [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) that will be used to manage the Terraform state of this TFE deployment (out-of-band from the TFE application) via Terraform CLI (Community Edition)
 
 ### Networking
@@ -60,7 +60,7 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
+>📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
 
@@ -83,9 +83,7 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-1. Nested within the [examples](./examples/) directory are subdirectories containing ready-made Terraform configurations for example scenarios on how to call and deploy this module. To get started, choose the example scenario that most closely matches your requirements. You can customize your deployment later by adding additional module [inputs](#inputs) as you see fit (see the [Deployment-Customizations](./docs/deployment-customizations.md) doc for more details).
-
-1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your Terraform configuration that will manage your TFE deployment. This is a common directory structure for managing multiple TFE deployments:
+2. Refer to the ready-made Terraform configuration provided in the [main](./examples/main) example subdirectory within the [examples](./examples) directory for how to deploy this module. To get started, copy all of the Terraform files from the [main](./examples/main) example into a new destination directory. This will serve as your root Terraform configuration for managing your TFE deployment. Below is a common directory structure for managing multiple TFE deployments:
 
     ```pre
     .
@@ -106,13 +104,24 @@ One of the following logging destinations:
 
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
-1. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
+3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
-1. Populate your own custom values into the `terraform.tfvars.example` file that was provided (in particular, values enclosed in the `<>` characters). Then, remove the `.example` file extension such that the file is now named `terraform.tfvars`.
+4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
+  
+5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
+   
+   ```hcl
+   module "tfe" {
+     source  = "hashicorp/terraform-enterprise-hvd/aws"
+     version = "x.x.x"
 
-1. Navigate to the directory of your newly created Terraform configuration for your TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
+     ...
+   }
+   ```
 
-1. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:
+6. Navigate to the directory containing your newly created root Terraform configuration for the TFE deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
+
+7. After your `terraform apply` finishes successfully, you can monitor the installation progress by connecting to your TFE EC2 instance shell via SSH or AWS SSM and observing the cloud-init (user_data) logs:
 
     **Connecting to the EC2 instance**
 
@@ -152,24 +161,24 @@ One of the following logging destinations:
     [INFO] tfe_user_data script finished successfully!
     ```
 
-1. After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
+8. After the cloud-init (user_data) script finishes successfully, while still connected to the TFE EC2 instance shell, you can check the health status of TFE:
 
     ```shell
     cd /etc/tfe
     sudo docker compose exec tfe tfe-health-check-status
     ```
 
-1. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
+9.  Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
-- [Deployment Customizations](./docs/deployment-customizations.md)
-- [TFE Version Upgrades](./docs/tfe-version-upgrades.md)
-- [TFE TLS Certificate Rotation](./docs/tfe-cert-rotation.md)
-- [TFE Configuration Settings](./docs/tfe-config-settings.md)
-- [TFE Bootstrap Secrets](./docs/tfe-bootstrap-secrets.md)
+- [Deployment customizations](./docs/deployment-customizations.md)
+- [TFE version upgrades](./docs/tfe-version-upgrades.md)
+- [TFE TLS certificate rotation](./docs/tfe-cert-rotation.md)
+- [TFE configuration settings](./docs/tfe-config-settings.md)
+- [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md)
 
 ## Module support
 
@@ -347,11 +356,11 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_rds_aurora_replica_count"></a> [rds\_aurora\_replica\_count](#input\_rds\_aurora\_replica\_count) | Number of replica (reader) cluster instances to create within the RDS Aurora database cluster (within the same region). | `number` | `1` | no |
 | <a name="input_rds_availability_zones"></a> [rds\_availability\_zones](#input\_rds\_availability\_zones) | List of AWS availability zones to spread Aurora database cluster instances across. Leave as `null` and RDS will automatically assign 3 availability zones. | `list(string)` | `null` | no |
 | <a name="input_rds_backup_retention_period"></a> [rds\_backup\_retention\_period](#input\_rds\_backup\_retention\_period) | The number of days to retain backups for. Must be between 0 and 35. Must be greater than 0 if the database cluster is used as a source of a read replica cluster. | `number` | `35` | no |
-| <a name="input_rds_deletion_protection"></a> [rds\_deletion\_protection](#input\_rds\_deletion\_protection) | Boolean to enable deletion protection for RDS global cluster. | `bool` | `false` | no |
+| <a name="input_rds_deletion_protection"></a> [rds\_deletion\_protection](#input\_rds\_deletion\_protection) | Boolean to enable deletion protection for RDS Aurora global cluster. | `bool` | `false` | no |
 | <a name="input_rds_force_destroy"></a> [rds\_force\_destroy](#input\_rds\_force\_destroy) | Boolean to enable the removal of RDS database cluster members from RDS global cluster on destroy. | `bool` | `false` | no |
 | <a name="input_rds_global_cluster_id"></a> [rds\_global\_cluster\_id](#input\_rds\_global\_cluster\_id) | ID of RDS global cluster. Only required only when `is_secondary_region` is `true`, otherwise leave as `null`. | `string` | `null` | no |
 | <a name="input_rds_kms_key_arn"></a> [rds\_kms\_key\_arn](#input\_rds\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE RDS cluster. | `string` | `null` | no |
-| <a name="input_rds_parameter_group_family"></a> [rds\_parameter\_group\_family](#input\_rds\_parameter\_group\_family) | Family of Aurora PostgreSQL DB Parameter Group. | `string` | `"aurora-postgresql16"` | no |
+| <a name="input_rds_parameter_group_family"></a> [rds\_parameter\_group\_family](#input\_rds\_parameter\_group\_family) | Family of RDS Aurora PostgreSQL database parameter group. | `string` | `"aurora-postgresql16"` | no |
 | <a name="input_rds_performance_insights_enabled"></a> [rds\_performance\_insights\_enabled](#input\_rds\_performance\_insights\_enabled) | Boolean to enable performance insights for RDS cluster instance(s). | `bool` | `true` | no |
 | <a name="input_rds_performance_insights_retention_period"></a> [rds\_performance\_insights\_retention\_period](#input\_rds\_performance\_insights\_retention\_period) | Number of days to retain RDS performance insights data. Must be between 7 and 731. | `number` | `7` | no |
 | <a name="input_rds_preferred_backup_window"></a> [rds\_preferred\_backup\_window](#input\_rds\_preferred\_backup\_window) | Daily time range (UTC) for RDS backup to occur. Must not overlap with `rds_preferred_maintenance_window`. | `string` | `"04:00-04:30"` | no |

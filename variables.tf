@@ -389,17 +389,6 @@ variable "route53_tfe_hosted_zone_is_private" {
 #------------------------------------------------------------------------------
 # Compute
 #------------------------------------------------------------------------------
-variable "ec2_os_distro" {
-  type        = string
-  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`."
-  default     = "ubuntu"
-
-  validation {
-    condition     = contains(["ubuntu", "rhel", "al2023", "centos"], var.ec2_os_distro)
-    error_message = "Valid values are `ubuntu`, `rhel`, `al2023`, or `centos`."
-  }
-}
-
 variable "container_runtime" {
   type        = string
   description = "Container runtime to use for TFE. Supported values are `docker` or `podman`."
@@ -408,6 +397,17 @@ variable "container_runtime" {
   validation {
     condition     = var.container_runtime == "docker" || var.container_runtime == "podman"
     error_message = "Valid values are `docker` or `podman`."
+  }
+}
+
+variable "ec2_os_distro" {
+  type        = string
+  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`."
+  default     = "ubuntu"
+
+  validation {
+    condition     = contains(["ubuntu", "rhel", "al2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `al2023`, or `centos`."
   }
 
   validation {
@@ -567,7 +567,7 @@ variable "rds_availability_zones" {
 
 variable "rds_deletion_protection" {
   type        = bool
-  description = "Boolean to enable deletion protection for RDS global cluster."
+  description = "Boolean to enable deletion protection for RDS Aurora global cluster."
   default     = false
 }
 
@@ -719,7 +719,7 @@ variable "rds_apply_immediately" {
 
 variable "rds_parameter_group_family" {
   type        = string
-  description = "Family of Aurora PostgreSQL DB Parameter Group."
+  description = "Family of RDS Aurora PostgreSQL database parameter group."
   default     = "aurora-postgresql16"
 }
 
