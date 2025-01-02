@@ -32,7 +32,7 @@ ec2_subnet_ids                       = ["<my-ec2-subnet-id-a>", "<my-ec2-subnet-
 rds_subnet_ids                       = ["<my-db-subnet-id-a>", "<my-db-subnet-id-b>", "<my-db-subnet-id-c>"]          # private subnets
 redis_subnet_ids                     = ["<my-redis-subnet-id-a>", "<my-redis-subnet-id-b>", "<my-redis-subnet-id-c>"] # private subnets
 cidr_allow_ingress_tfe_443           = ["<10.0.0.0/16>", "<192.168.1.0/24>", "<192.168.2.0/24>"]                      # CIDR range(s) of TFE users/clients, VCS
-cidr_allow_ingress_ec2_ssh           = ["<10.0.0.0/16>", "1.2.3.4/32"]                                                # CIDR range(s) of workstations managing TFE servers
+cidr_allow_ingress_ec2_ssh           = ["<10.0.0.0/16>", "1.2.3.4/32"]                                                # CIDR range(s) of workstations managing TFE servers, remove to block SSH
 cidr_allow_ingress_tfe_metrics_http  = ["10.1.0.20/32"]                                                               # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
 cidr_allow_ingress_tfe_metrics_https = ["10.1.0.20/32"]                                                               # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
 
@@ -45,9 +45,9 @@ route53_tfe_hosted_zone_is_private = <true> # must be `true` when `lb_is_interna
 container_runtime  = "docker" # either `docker` or `podman`
 ec2_os_distro      = "ubuntu" # either `ubuntu`, `rhel`, `al2023`, or `centos`
 ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` if you prefer to use SSM Session Manager instead of SSH for shell access
-ec2_allow_ssm      = <false>                  # set to `true` if you prefer to use SSM Session Manager for shell access
+ec2_allow_ssm      = <false>                  # set to `true` if you want to use SSM Session Manager for shell access
 ec2_instance_size  = "<m7i.xlarge>"
-asg_instance_count = 1 # bump up to a max of 3 after successful installation
+asg_instance_count = 1 # optionally bump up to a max of 3 after successful installation
 
 # --- Database --- #
 tfe_database_password_secret_arn = "<my-database-password-secret-arn>"
@@ -57,7 +57,7 @@ tfe_database_parameters          = "<sslmode=require>"
 rds_aurora_engine_version        = "<16.4>"
 rds_parameter_group_family       = "<aurora-postgresql16>"
 rds_aurora_instance_class        = "<db.r6i.xlarge>"
-rds_aurora_replica_count         = <1> # set to 0 to disable high availability with database
+rds_aurora_replica_count         = <1> # set to 0 to deploy no "reader" instances
 rds_skip_final_snapshot          = <false>
 
 # --- Redis --- #
