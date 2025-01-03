@@ -20,21 +20,21 @@ tfe_tls_ca_bundle_secret_arn       = "<my-tfe-tls-ca-bundle-secret-arn>"
 tfe_fqdn               = "<tfe.aws.example.com>"
 tfe_image_tag          = "<v202411-2>" # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
 tfe_operational_mode   = "active-active"
-tfe_metrics_enable     = <true>
+tfe_metrics_enable     = <false>
 tfe_metrics_http_port  = 9090
 tfe_metrics_https_port = 9091
 
 # --- Networking --- #
 vpc_id                               = "<my-vpc-id>"
-lb_is_internal                       = <true>
+lb_is_internal                       = true
 lb_subnet_ids                        = ["<my-lb-subnet-id-a>", "<my-lb-subnet-id-b>", "<my-lb-subnet-id-c>"]          # private subnets when `lb_is_internal` is `true`, public subnets when `lb_is_internal` is `false`
 ec2_subnet_ids                       = ["<my-ec2-subnet-id-a>", "<my-ec2-subnet-id-b>", "<my-ec2-subnet-id-c>"]       # private subnets
 rds_subnet_ids                       = ["<my-db-subnet-id-a>", "<my-db-subnet-id-b>", "<my-db-subnet-id-c>"]          # private subnets
 redis_subnet_ids                     = ["<my-redis-subnet-id-a>", "<my-redis-subnet-id-b>", "<my-redis-subnet-id-c>"] # private subnets
 cidr_allow_ingress_tfe_443           = ["<10.0.0.0/16>", "<192.168.1.0/24>", "<192.168.2.0/24>"]                      # CIDR range(s) of TFE users/clients, VCS
-cidr_allow_ingress_ec2_ssh           = ["<10.0.0.0/16>", "1.2.3.4/32"]                                                # CIDR range(s) of workstations managing TFE servers, remove to block SSH
-cidr_allow_ingress_tfe_metrics_http  = ["10.1.0.20/32"]                                                               # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
-cidr_allow_ingress_tfe_metrics_https = ["10.1.0.20/32"]                                                               # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
+cidr_allow_ingress_ec2_ssh           = ["<10.0.0.0/16>", "1.2.3.4/32"]                                                # CIDR range(s) of workstations managing TFE servers, remove to block SSH (port 22) access
+cidr_allow_ingress_tfe_metrics_http  = ["<10.1.0.20/32>"]                                                             # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
+cidr_allow_ingress_tfe_metrics_https = ["<10.1.0.20/32>"]                                                             # CIDR range(s) of monitoring tool's polling source, remove if `tfe_metrics_enable` is `false`
 
 # --- DNS (optional) --- #
 create_route53_tfe_dns_record      = <true>
@@ -42,34 +42,34 @@ route53_tfe_hosted_zone_name       = "<aws.example.com>"
 route53_tfe_hosted_zone_is_private = <true> # must be `true` when `lb_is_internal` is `true`, and `false` when `lb_is_internal` is `false`
 
 # --- Compute --- #
-container_runtime  = "docker" # either `docker` or `podman`
-ec2_os_distro      = "ubuntu" # either `ubuntu`, `rhel`, `al2023`, or `centos`
-ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` if you prefer to use SSM Session Manager instead of SSH for shell access
-ec2_allow_ssm      = <false>                  # set to `true` if you want to use SSM Session Manager for shell access
-ec2_instance_size  = "<m7i.xlarge>"
-asg_instance_count = 1 # optionally bump up to a max of 3 after successful installation
+container_runtime  = "docker"                 # either `docker` or `podman`
+ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel`, `al2023`, or `centos`
+ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` or remove if you do not want to use SSH for shell access
+ec2_allow_ssm      = false                    # set to `true` if you want to use SSM Session Manager for shell access
+ec2_instance_size  = "m7i.xlarge"
+asg_instance_count = 1                        # optionally bump up to a max of 3 after successful installation
 
 # --- Database --- #
 tfe_database_password_secret_arn = "<my-database-password-secret-arn>"
-tfe_database_name                = "<tfe>"
-tfe_database_user                = "<tfe>"
-tfe_database_parameters          = "<sslmode=require>"
-rds_aurora_engine_version        = "<16.4>"
-rds_parameter_group_family       = "<aurora-postgresql16>"
-rds_aurora_instance_class        = "<db.r6i.xlarge>"
-rds_aurora_replica_count         = <1> # set to 0 to deploy no "reader" instances
-rds_skip_final_snapshot          = <false>
+tfe_database_name                = "tfe"
+tfe_database_user                = "tfe"
+tfe_database_parameters          = "sslmode=require"
+rds_aurora_engine_version        = "16.4"
+rds_parameter_group_family       = "aurora-postgresql16"
+rds_aurora_instance_class        = "db.r6i.xlarge"
+rds_aurora_replica_count         = 1 # set to 0 to deploy no "reader" instances
+rds_skip_final_snapshot          = false
 
 # --- Redis --- #
-tfe_redis_password_secret_arn = "<my-redis-password-secret-arn>"
-redis_engine_version             = "<7.1>"
-redis_parameter_group_name       = "<default.redis7>"
-redis_node_type                  = "<cache.m5.large>"
-redis_multi_az_enabled           = <true> # requires more than one subnet specified in `redis_subnet_ids` when `true`
-redis_automatic_failover_enabled = <true> # requires more than one subnet specified in `redis_subnet_ids` when `true`
+tfe_redis_password_secret_arn    = "<my-redis-password-secret-arn>"
+redis_engine_version             = "7.1"
+redis_parameter_group_name       = "default.redis7"
+redis_node_type                  = "cache.m5.large"
+redis_multi_az_enabled           = true # requires more than one subnet specified in `redis_subnet_ids` when `true`
+redis_automatic_failover_enabled = true # requires more than one subnet specified in `redis_subnet_ids` when `true`
 
 # --- Log forwarding (optional) --- #
-tfe_log_forwarding_enabled = <true>
-log_fwd_destination_type   = "<s3>" # either `s3` or `cloudwatch`
-s3_log_fwd_bucket_name     = "<tfe-logging-bucket-name>"
-#cloudwatch_log_group_name = "<tfe-log-group-name>"
+tfe_log_forwarding_enabled = <true>                      # set to `false` if you have your own 
+log_fwd_destination_type   = "<s3>"                      # either `s3` or `cloudwatch`
+s3_log_fwd_bucket_name     = "<tfe-logging-bucket-name>" # set to `null` or remove when `log_fwd_destination_type` is `cloudwatch`
+#cloudwatch_log_group_name = "<tfe-log-group-name>"      # set to `null` or remove when `log_fwd_destination_type` is `s3`
