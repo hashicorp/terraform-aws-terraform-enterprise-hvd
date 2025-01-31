@@ -30,18 +30,18 @@ resource "aws_s3_bucket_versioning" "tfe" {
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "tfe" {
-  count = var.s3_kms_key_arn != null ? 1 : 0
+# resource "aws_s3_bucket_server_side_encryption_configuration" "tfe" {
+#   count = var.s3_kms_key_arn != null ? 1 : 0
 
-  bucket = aws_s3_bucket.tfe.id
+#   bucket = aws_s3_bucket.tfe.id
 
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm     = "aws:kms"
-      kms_master_key_id = var.s3_kms_key_arn
-    }
-  }
-}
+#   rule {
+#     apply_server_side_encryption_by_default {
+#       sse_algorithm     = "aws:kms"
+#       kms_master_key_id = var.s3_kms_key_arn
+#     }
+#   }
+# }
 
 resource "aws_s3_bucket_replication_configuration" "tfe" {
   count = var.s3_enable_bucket_replication && !var.is_secondary_region ? 1 : 0
@@ -56,26 +56,26 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
     id     = "tfe-s3-crr"
     status = "Enabled"
 
-    dynamic "source_selection_criteria" {
-      for_each = var.s3_destination_bucket_kms_key_arn == null ? [] : [1]
+    # dynamic "source_selection_criteria" {
+    #   for_each = var.s3_destination_bucket_kms_key_arn == null ? [] : [1]
 
-      content {
-        sse_kms_encrypted_objects {
-          status = "Enabled"
-        }
-      }
-    }
+    #   content {
+    #     sse_kms_encrypted_objects {
+    #       status = "Enabled"
+    #     }
+    #   }
+    # }
 
     destination {
       bucket = var.s3_destination_bucket_arn
 
-      dynamic "encryption_configuration" {
-        for_each = var.s3_destination_bucket_kms_key_arn == null ? [] : [1]
+      # dynamic "encryption_configuration" {
+      #   for_each = var.s3_destination_bucket_kms_key_arn == null ? [] : [1]
 
-        content {
-          replica_kms_key_id = var.s3_destination_bucket_kms_key_arn
-        }
-      }
+      #   content {
+      #     replica_kms_key_id = var.s3_destination_bucket_kms_key_arn
+      #   }
+      # }
     }
   }
 }
@@ -158,57 +158,57 @@ data "aws_iam_policy_document" "s3_crr" {
   }
 
   # Conditionally add the KMS permissions
-  dynamic "statement" {
-    for_each = var.s3_kms_key_arn != "" ? [1] : []
+  # dynamic "statement" {
+  #   for_each = var.s3_kms_key_arn != "" ? [1] : []
 
-    content {
-      actions = [
-        "kms:Decrypt"
-      ]
-      effect = "Allow"
-      condition {
-        test     = "StringLike"
-        variable = "kms:ViaService"
-        values   = ["s3.${split(":", var.s3_kms_key_arn)[3]}.amazonaws.com"]
-      }
-      condition {
-        test     = "StringLike"
-        variable = "kms:EncryptionContext:aws:s3:arn"
-        values = [
-          "${aws_s3_bucket.tfe.arn}/*"
-        ]
-      }
-      resources = [
-        var.s3_kms_key_arn
-      ]
-    }
-  }
+  #   content {
+  #     actions = [
+  #       "kms:Decrypt"
+  #     ]
+  #     effect = "Allow"
+  #     condition {
+  #       test     = "StringLike"
+  #       variable = "kms:ViaService"
+  #       values   = ["s3.${split(":", var.s3_kms_key_arn)[3]}.amazonaws.com"]
+  #     }
+  #     condition {
+  #       test     = "StringLike"
+  #       variable = "kms:EncryptionContext:aws:s3:arn"
+  #       values = [
+  #         "${aws_s3_bucket.tfe.arn}/*"
+  #       ]
+  #     }
+  #     resources = [
+  #       var.s3_kms_key_arn
+  #     ]
+  #   }
+  # }
 
-  dynamic "statement" {
-    for_each = var.s3_kms_key_arn != "" ? [1] : []
+  # dynamic "statement" {
+  #   for_each = var.s3_kms_key_arn != "" ? [1] : []
 
-    content {
-      actions = [
-        "kms:Encrypt"
-      ]
-      effect = "Allow"
-      condition {
-        test     = "StringLike"
-        variable = "kms:ViaService"
-        values   = ["s3.${split(":", var.s3_destination_bucket_kms_key_arn)[3]}.amazonaws.com"]
-      }
-      condition {
-        test     = "StringLike"
-        variable = "kms:EncryptionContext:aws:s3:arn"
-        values = [
-          "${var.s3_destination_bucket_arn}/*"
-        ]
-      }
-      resources = [
-        var.s3_destination_bucket_kms_key_arn
-      ]
-    }
-  }
+  #   content {
+  #     actions = [
+  #       "kms:Encrypt"
+  #     ]
+  #     effect = "Allow"
+  #     condition {
+  #       test     = "StringLike"
+  #       variable = "kms:ViaService"
+  #       values   = ["s3.${split(":", var.s3_destination_bucket_kms_key_arn)[3]}.amazonaws.com"]
+  #     }
+  #     condition {
+  #       test     = "StringLike"
+  #       variable = "kms:EncryptionContext:aws:s3:arn"
+  #       values = [
+  #         "${var.s3_destination_bucket_arn}/*"
+  #       ]
+  #     }
+  #     resources = [
+  #       var.s3_destination_bucket_kms_key_arn
+  #     ]
+  #   }
+  # }
 }
 
 resource "aws_iam_policy_attachment" "s3_crr" {
