@@ -638,16 +638,6 @@ variable "rds_replication_source_identifier" {
   type        = string
   description = "ARN of source RDS cluster or cluster instance if this database cluster is to be created as a read replica. Only required when `is_secondary_region` is `true`, otherwise leave as `null`."
   default     = null
-
-  validation {
-    condition     = var.is_secondary_region ? var.rds_replication_source_identifier != null : true
-    error_message = "Value must be set when `is_secondary_region` is `true`."
-  }
-
-  validation {
-    condition     = !var.is_secondary_region ? var.rds_replication_source_identifier == null : true
-    error_message = "Value must be `null` when `is_secondary_region` is `false`."
-  }
 }
 
 variable "rds_source_region" {
