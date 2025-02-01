@@ -782,16 +782,6 @@ variable "s3_enable_bucket_replication" {
   type        = bool
   description = "Boolean to enable cross-region replication for TFE S3 bucket. Do not enable when `is_secondary_region` is `true`. An `s3_destination_bucket_arn` is also required when `true`."
   default     = false
-
-  validation {
-    condition     = var.is_secondary_region ? var.s3_enable_bucket_replication == false : true
-    error_message = "Cross-region replication should not be enabled when `is_secondary_region` is `true`."
-  }
-
-  validation {
-    condition     = var.s3_enable_bucket_replication ? var.s3_destination_bucket_arn != "" : true
-    error_message = "When `true`, an `s3_destination_bucket_arn` is also required."
-  }
 }
 
 variable "s3_destination_bucket_arn" {
