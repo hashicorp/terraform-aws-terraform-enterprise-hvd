@@ -1,0 +1,16 @@
+name: Jira Sync
+on:
+  issues:
+    types: [opened, closed, deleted, reopened]
+  pull_request_target:
+    types: [opened, closed, reopened]
+  issue_comment: # Also triggers when commenting on a PR from the conversation view
+    types: [created]
+jobs:
+  sync:
+    uses: hashicorp/hvd-module-management/.github/workflows/jira-sync.yml@main
+
+    secrets:
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+      JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
