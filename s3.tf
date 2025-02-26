@@ -80,7 +80,7 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
       # Optional decision, gives a better control over the replication and lowers the RPO. 
       # https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-time-control.html
       dynamic "replication_time" {
-        for_each = var.s3_enable_bucket_replication_rtc ? [1] : [0]
+        for_each = var.s3_enable_bucket_replication_rtc ? [1] : []
 
         content {
           status = "Enabled"
@@ -91,7 +91,7 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
       }
 
       dynamic "metrics" {
-        for_each = var.s3_enable_bucket_replication_rtc ? [1] : [0]
+        for_each = var.s3_enable_bucket_replication_rtc ? [1] : []
 
         content {
           status = "Enabled"
