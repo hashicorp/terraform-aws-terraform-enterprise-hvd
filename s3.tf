@@ -44,7 +44,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfe" {
 }
 
 resource "aws_s3_bucket_replication_configuration" "tfe" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   # Must have bucket versioning enabled first
   depends_on = [aws_s3_bucket_versioning.tfe]
@@ -76,6 +76,30 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
           replica_kms_key_id = var.s3_destination_bucket_kms_key_arn
         }
       }
+
+      # Optional decision, gives a better control over the replication and lowers the RPO. 
+      # https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-time-control.html
+      dynamic "replication_time" {
+        for_each = var.s3_enable_bucket_replication_rtc ? [1] : [0]
+
+        content {
+          status = "Enabled"
+          time {
+            minutes = 15
+          }
+        }
+      }
+
+      dynamic "metrics" {
+        for_each = var.s3_enable_bucket_replication_rtc ? [1] : [0]
+
+        content {
+          status = "Enabled"
+          event_threshold {
+            minutes = 15
+          }
+        }
+      }
     }
   }
 }
@@ -84,7 +108,7 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
 # S3 cross-region replication IAM
 #------------------------------------------------------------------------------
 resource "aws_iam_role" "s3_crr" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   name        = "${var.friendly_name_prefix}-tfe-s3-crr-iam-role-${data.aws_region.current.name}"
   path        = "/"
@@ -99,7 +123,7 @@ resource "aws_iam_role" "s3_crr" {
 }
 
 data "aws_iam_policy_document" "s3_crr_assume_role" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   statement {
     effect = "Allow"
@@ -114,7 +138,7 @@ data "aws_iam_policy_document" "s3_crr_assume_role" {
 }
 
 resource "aws_iam_policy" "s3_crr" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   name        = "${var.friendly_name_prefix}-tfe-s3-crr-iam-policy-${data.aws_region.current.name}"
   description = "Custom IAM policy for TFE S3 bucket cross-region replication."
@@ -122,7 +146,7 @@ resource "aws_iam_policy" "s3_crr" {
 }
 
 data "aws_iam_policy_document" "s3_crr" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   statement {
     actions = [
@@ -212,7 +236,7 @@ data "aws_iam_policy_document" "s3_crr" {
 }
 
 resource "aws_iam_policy_attachment" "s3_crr" {
-  count = var.s3_enable_bucket_replication  ? 1 : 0
+  count = var.s3_enable_bucket_replication && (!var.is_secondary_region || var.s3_enable_bucket_replication_bidirectional) ? 1 : 0
 
   name       = "${var.friendly_name_prefix}-tfe-s3-crr-iam-policy-attach-${data.aws_region.current.name}"
   roles      = [aws_iam_role.s3_crr[0].name]
