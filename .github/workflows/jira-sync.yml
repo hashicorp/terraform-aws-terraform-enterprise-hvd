@@ -8,7 +8,7 @@ on:
     types: [created]
 jobs:
   sync:
-    uses: hashicorp/hvd-module-management/.github/workflows/jira-sync.yml@main
+    uses: hashicorp/hvd-module-gha/.github/workflows/jira-sync.yml@main
 
     secrets:
       JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
