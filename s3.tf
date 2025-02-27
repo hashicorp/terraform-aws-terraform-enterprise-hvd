@@ -95,9 +95,6 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
 
         content {
           status = "Enabled"
-          event_threshold {
-            minutes = 15
-          }
         }
       }
     }
