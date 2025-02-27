@@ -56,6 +56,19 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
     id     = "tfe-s3-crr"
     status = "Enabled"
 
+    // Filter, delete marker replication, and priority are required to be specified if RTC is enabled. 
+    // https://stackoverflow.com/questions/68537825/replicationtime-cannot-be-used-for-this-version-of-the-replication-configuration
+    // Nevertheless, using the defaults whether RTC is enabled or not. This is the same behavior the module had before.
+
+    filter {
+    }
+
+    delete_marker_replication {
+      status = "Disabled"
+    }
+
+    priority = 0
+
     dynamic "source_selection_criteria" {
       for_each = var.s3_destination_bucket_kms_key_arn == null ? [] : [1]
 
@@ -95,6 +108,9 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
 
         content {
           status = "Enabled"
+          event_threshold {
+            minutes = 15
+          }
         }
       }
     }
