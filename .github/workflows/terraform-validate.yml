@@ -1,0 +1,13 @@
+name: Terraform Validate
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    uses: hashicorp/hvd-module-gha/.github/workflows/terraform-validate.yml@main
