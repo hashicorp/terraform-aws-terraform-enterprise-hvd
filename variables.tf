@@ -419,7 +419,7 @@ variable "ec2_os_distro" {
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
-  default     = "24.0.9"
+  default     = "28.0.1"
 }
 
 variable "asg_instance_count" {
