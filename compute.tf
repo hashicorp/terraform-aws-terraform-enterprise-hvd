@@ -138,8 +138,9 @@ locals {
     https_proxy              = var.https_proxy != null ? var.https_proxy : ""
     no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
   }
+  tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
+  user_data_template_rendered = templatefile(local.tfe_startup_script_tpl, local.user_data_args)
 
-  user_data_template_rendered = templatefile("${path.module}/templates/tfe_user_data.sh.tpl", local.user_data_args)
 }
 
 #------------------------------------------------------------------------------

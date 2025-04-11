@@ -548,6 +548,17 @@ variable "ebs_iops" {
   }
 }
 
+variable "custom_tfe_startup_script_template" {
+  type        = string
+  description = "Name of custom TFE startup script template file. File must exist within a directory named `./templates` within your current working directory."
+  default     = null
+
+  validation {
+    condition     = var.custom_tfe_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_tfe_startup_script_template}") : true
+    error_message = "File not found. Ensure the file exists within a directory named `./templates` within your current working directory."
+  }
+}
+
 #------------------------------------------------------------------------------
 # RDS Aurora PostgreSQL
 #------------------------------------------------------------------------------
@@ -748,6 +759,7 @@ variable "rds_performance_insights_retention_period" {
   description = "Number of days to retain RDS performance insights data. Must be between 7 and 731."
   default     = 7
 }
+
 
 #------------------------------------------------------------------------------
 # S3
