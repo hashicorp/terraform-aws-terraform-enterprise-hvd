@@ -89,3 +89,9 @@ If either `http_proxy` or `https_proxy` (or both) are set, the module will autom
 - Regional AWS Secrets Manager endpoint (_e.g.,_ `secretsmanager.<aws-region>.amazonaws.com`)
 
 Setting `additional_no_proxy` is optional. If specified, the value will be appended to this automatically generated base `no_proxy` list.
+
+## Custom Startup Script
+While this is not recommended, this module supports the ability to use your own custom startup script to install TFE. `var.custom_tfe_startup_script_template # defaults to /templates/tfe_custom_data.sh.tpl`
+- The script must exist in a folder named `./templates` within your current working directory that you are running Terraform from
+- The script must contain all of the variables (denoted by `${example-variable}`) in the module-level [TFE startup script](../templates/tfe_custom_data.sh.tpl)
+- Use at your own peril

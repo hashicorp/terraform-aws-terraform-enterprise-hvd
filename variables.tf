@@ -419,7 +419,7 @@ variable "ec2_os_distro" {
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
-  default     = "24.0.9"
+  default     = "28.0.1"
 }
 
 variable "asg_instance_count" {
@@ -537,6 +537,17 @@ variable "ebs_iops" {
   validation {
     condition     = var.ebs_iops >= 3000 && var.ebs_iops <= 16000
     error_message = "Value must be greater than or equal to `3000` and less than or equal to `16000`."
+  }
+}
+
+variable "custom_tfe_startup_script_template" {
+  type        = string
+  description = "Name of custom TFE startup script template file. File must exist within a directory named `./templates` within your current working directory."
+  default     = null
+
+  validation {
+    condition     = var.custom_tfe_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_tfe_startup_script_template}") : true
+    error_message = "File not found. Ensure the file exists within a directory named `./templates` within your current working directory."
   }
 }
 
