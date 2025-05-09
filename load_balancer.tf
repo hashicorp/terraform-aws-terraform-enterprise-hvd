@@ -63,7 +63,7 @@ resource "aws_lb_target_group" "nlb_443" {
   }
 
   stickiness {
-    enabled = true
+    enabled = var.lb_stickiness_enabled
     type    = "source_ip"
   }
 
