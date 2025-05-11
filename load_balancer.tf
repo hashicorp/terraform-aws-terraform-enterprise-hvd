@@ -62,6 +62,11 @@ resource "aws_lb_target_group" "nlb_443" {
     interval            = 30
   }
 
+  stickiness {
+    enabled = var.lb_stickiness_enabled
+    type    = "source_ip"
+  }
+
   tags = merge(
     { "Name" = "${var.friendly_name_prefix}-tfe-nlb-tg-443" },
     { "Description" = "Load balancer target group for TFE application traffic." },

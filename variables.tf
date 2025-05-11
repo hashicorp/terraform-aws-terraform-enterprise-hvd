@@ -242,6 +242,12 @@ variable "lb_is_internal" {
   default     = true
 }
 
+variable "lb_stickiness_enabled" {
+  type        = bool
+  description = "Boolean to enable sticky sessions for the load balancer. When `lb_type` is `nlb`, sticky sessions enabled by client IP Address."
+  default     = true
+}
+
 variable "tfe_alb_tls_certificate_arn" {
   type        = string
   description = "ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`."
