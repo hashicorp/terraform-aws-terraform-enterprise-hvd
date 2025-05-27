@@ -9,16 +9,16 @@ common_tags = {
   Owner = "<TeamName>"
 }
 
-# --- Bootstrap secrets --- #
+# --- Bootstrap --- #
 tfe_license_secret_arn             = "<my-tfe-license-secret-arn>"
 tfe_encryption_password_secret_arn = "<my-tfe-encryption-password-secret-arn>"
 tfe_tls_cert_secret_arn            = "<my-tfe-tls-cert-secret-arn>"
 tfe_tls_privkey_secret_arn         = "<my-tfe-tls-cert-private-key-secret-arn>"
 tfe_tls_ca_bundle_secret_arn       = "<my-tfe-tls-ca-bundle-secret-arn>"
+tfe_image_tag                      = "<v202411-2>" # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
 
 # --- TFE configuration settings --- #
 tfe_fqdn               = "<tfe.aws.example.com>"
-tfe_image_tag          = "<v202411-2>" # TFE version, refer to https://developer.hashicorp.com/terraform/enterprise/releases
 tfe_operational_mode   = "active-active"
 tfe_metrics_enable     = <false>
 tfe_metrics_http_port  = 9090

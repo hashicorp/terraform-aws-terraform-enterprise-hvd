@@ -566,27 +566,38 @@ Yaml=tfe-pod.yaml
 EOF
 }
 
-function pull_tfe_image {
+function pull_tfe_app_image {
   local TFE_CONTAINER_RUNTIME="$1"
+  local TFE_IMAGE_REPOSITORY_PASSWORD="$2"
+
+  log "INFO" "Detected TFE container image registry URL is '${tfe_image_repository_url}'."
+  log "INFO" "Detected TFE container image name is '${tfe_image_name}'."
+  log "INFO" "Detected TFE container image repository username is '${tfe_image_repository_username}'."
   
-  log "INFO" "Authenticating to '${tfe_image_repository_url}' container registry."
-  log "INFO" "Detected TFE image repository username is '${tfe_image_repository_username}'."
+  # Authenticate to container registry
   if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
-    log "INFO" "Detected default TFE registry in use. Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of TFE license."
-    TFE_IMAGE_REPOSITORY_PASSWORD=$TFE_LICENSE
+    log "INFO" "Detected default TFE container registry was specified. Using TFE license to authenticate to TFE container registry."
+    $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_LICENSE
+
+  elif [[ "${tfe_image_repository_url}" =~ ^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+    log "INFO" "Detected an AWS ECR registry was specified for TFE application container image repository."
+
+    if [[ "$TFE_IMAGE_REPOSITORY_PASSWORD" != "" ]]; then
+      log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
+      $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_IMAGE_REPOSITORY_PASSWORD
+    else
+      log "INFO" "No 'tfe_image_repository_password' was provided. Attempting to log in to AWS ECR registry using EC2 instance profile credentials."
+      aws ecr get-login-password --region $AWS_REGION | $TFE_CONTAINER_RUNTIME login --username ${tfe_image_repository_username} --password-stdin ${tfe_image_repository_url}
+    fi
+
   else
-    log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
-    TFE_IMAGE_REPOSITORY_PASSWORD=${tfe_image_repository_password}
+    echo "Attempting to authenticate to '${tfe_image_repository_url}' container registry."
+    $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password ${tfe_image_repository_password}
   fi
-  if [[ "$TFE_CONTAINER_RUNTIME" == "podman" ]]; then
-    podman login --username ${tfe_image_repository_username} ${tfe_image_repository_url} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    podman pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
-  else
-    docker login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    docker pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
-  fi
+  
+  # Download TFE application container image
+  log "INFO" "Pulling TFE application container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
+  $TFE_CONTAINER_RUNTIME pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
 }
 
 function exit_script { 
@@ -652,12 +663,13 @@ function main {
     configure_log_forwarding
   fi
   
+  log "INFO" "Preparing to download TFE application container image..."
+  pull_tfe_app_image "${container_runtime}" "${tfe_image_repository_password}"
+
   if [[ "${container_runtime}" == "podman" ]]; then
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/tfe-pod.yaml"
     log "INFO" "Generating '$TFE_SETTINGS_PATH' Kubernetes pod manifest for TFE on Podman."
     generate_tfe_podman_manifest "$TFE_SETTINGS_PATH"
-    log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
     log "INFO" "Configuring systemd service using Quadlet to manage TFE Podman containers."
     generate_tfe_podman_quadlet
     cp "$TFE_SETTINGS_PATH" "/etc/containers/systemd"
@@ -669,8 +681,6 @@ function main {
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/docker-compose.yaml"
     log "INFO" "Generating '$TFE_SETTINGS_PATH' file for TFE on Docker."
     generate_tfe_docker_compose_file "$TFE_SETTINGS_PATH"
-    log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
     log "INFO" "Starting TFE application using Docker Compose."
     if command -v docker-compose > /dev/null; then
       docker-compose --file $TFE_SETTINGS_PATH up --detach

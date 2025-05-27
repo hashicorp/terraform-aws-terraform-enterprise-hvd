@@ -311,6 +311,42 @@ data "aws_iam_policy_document" "tfe_ec2_allow_cloudwatch" {
   }
 }
 
+data "aws_iam_policy_document" "tfe_ec2_allow_tfe_app_image_pull_from_ecr" {
+  count = local.tfe_app_image_repo_is_ecr ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2AuthToTfeAppImageEcr"
+    effect = "Allow"
+
+    actions = [
+      "ecr:GetAuthorizationToken"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    sid    = "TfeEc2PullImageFromTfeAppImageEcr"
+    effect = "Allow"
+
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      #"ecr:GetRepositoryPolicy",
+      #"ecr:DescribeRepositories",
+      #"ecr:ListImages",
+      #"ecr:DescribeImages",
+      "ecr:BatchGetImage"
+    ]
+
+    resources = [
+      data.aws_ecr_repository.tfe_app_container_image[0].arn
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "tfe_ec2_ecr_image_pull" {
   count = var.tfe_run_pipeline_image_ecr_repo_name != null ? 1 : 0
 
@@ -321,10 +357,10 @@ data "aws_iam_policy_document" "tfe_ec2_ecr_image_pull" {
     actions = [
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
-      "ecr:GetRepositoryPolicy",
-      "ecr:DescribeRepositories",
-      "ecr:ListImages",
-      "ecr:DescribeImages",
+      #"ecr:GetRepositoryPolicy",
+      #"ecr:DescribeRepositories",
+      #"ecr:ListImages",
+      #"ecr:DescribeImages",
       "ecr:BatchGetImage"
     ]
 
@@ -364,6 +400,7 @@ data "aws_iam_policy_document" "tfe_ec2_combined" {
     var.redis_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_redis_kms_cmk[0].json : "",
     var.tfe_log_forwarding_enabled && var.s3_log_fwd_bucket_name != null ? data.aws_iam_policy_document.tfe_ec2_allow_s3_log_fwd[0].json : "",
     var.tfe_log_forwarding_enabled && var.cloudwatch_log_group_name != null ? data.aws_iam_policy_document.tfe_ec2_allow_cloudwatch[0].json : "",
+    local.tfe_app_image_repo_is_ecr && var.tfe_image_repository_password == null ? data.aws_iam_policy_document.tfe_ec2_allow_tfe_app_image_pull_from_ecr[0].json : "",
     var.tfe_run_pipeline_image_ecr_repo_name != null ? data.aws_iam_policy_document.tfe_ec2_ecr_image_pull[0].json : ""
   ]
 }

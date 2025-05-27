@@ -60,10 +60,10 @@ locals {
     tfe_tls_ca_bundle_secret_arn       = var.tfe_tls_ca_bundle_secret_arn
     tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
     tfe_image_repository_url           = var.tfe_image_repository_url
-    tfe_image_repository_username      = var.tfe_image_repository_username
-    tfe_image_repository_password      = var.tfe_image_repository_password != null ? var.tfe_image_repository_password : ""
     tfe_image_name                     = var.tfe_image_name
     tfe_image_tag                      = var.tfe_image_tag
+    tfe_image_repository_username      = var.tfe_image_repository_username
+    tfe_image_repository_password      = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
     container_runtime                  = var.container_runtime
     docker_version                     = var.docker_version
 
@@ -138,9 +138,9 @@ locals {
     https_proxy              = var.https_proxy != null ? var.https_proxy : ""
     no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
   }
+
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
   user_data_template_rendered = templatefile(local.tfe_startup_script_tpl, local.user_data_args)
-
 }
 
 #------------------------------------------------------------------------------

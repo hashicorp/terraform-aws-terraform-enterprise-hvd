@@ -95,3 +95,36 @@ While this is not recommended, this module supports the ability to use your own 
 - The script must exist in a folder named `./templates` within your current working directory that you are running Terraform from
 - The script must contain all of the variables (denoted by `${example-variable}`) in the module-level [TFE startup script](../templates/tfe_custom_data.sh.tpl)
 - Use at your own peril
+
+## Airgap
+
+If your TFE EC2 instance(s) will have limited to no egress connectivity to the public internet, then several TFE container images must be hosted, managed, and sourced internally:
+
+- TFE application container image
+- Terraform default agent container image (optional; referred to as `TFE_RUN_PIPELINE_IMAGE`)
+
+### TFE application container image
+
+To override the default behavior of the module downloading the TFE application container from the default registry (`images.releases.hashicorp.com`), set the following input variables:
+
+```hcl
+tfe_image_repository_url      = "internal-registry.example.com"
+tfe_image_name                = "example/terraform-enterprise"
+tfe_image_tag                 = "v202505-1"
+tfe_image_repository_username = "example-user"
+tfe_image_repository_password = "SomethingSecure!"
+```
+
+If you are specifically using Amazon Elastic Container Registry (ECR) to host the TFE application container image, the values would look something like:
+
+```hcl
+tfe_image_repository_url      = "<account-id>.dkr.ecr.<region>.amazonaws.com" # ECR registry URI
+tfe_image_name                = "tfe-app" # ECR repository name
+tfe_image_tag                 = v202505-1
+tfe_image_repository_username = "AWS"
+tfe_image_repository_password = null # Set to null to use the EC2 instance profile for authentication instead of password
+```
+
+### Terraform default agent container image
+
+Placeholder.
