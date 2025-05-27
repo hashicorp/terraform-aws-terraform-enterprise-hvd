@@ -127,9 +127,3 @@ data "aws_ecr_repository" "tfe_app_container_image" {
   name        = var.tfe_image_name
   registry_id = local.tfe_app_image_ecr_registry_id
 }
-
-data "aws_ecr_repository" "tfe_run_pipeline_image" {
-  count = var.tfe_run_pipeline_image_ecr_repo_name != null ? 1 : 0
-
-  name = var.tfe_run_pipeline_image_ecr_repo_name
-}
