@@ -43,25 +43,52 @@ s3_kms_key_arn    = "<s3-kms-key-arn>"
 redis_kms_key_arn = "<redis-kms-key-arn>"
 ```
 
-## Custom AMI
+## Airgap
 
-By default, this module will use the standard AWS Marketplace image based on the value of the `ec2_os_distro` input (either `ubuntu`, `rhel`, or `al2023`). If you prefer to use your own custom AMI, then you may do so by setting `ec2_ami_id` accordingly.
+If your TFE environment has limited to no egress connectivity to the public internet, then some additional inputs may need to be set.
+
+### TFE application container image
+
+By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to pull the TFE application container image from its publicly hosted location of `images.releases.hashicorp.com` (which is a canonical endpoint that is backed by various AWS S3 buckets across four regions). To override this default behavior and pull the TFE application container from a custom location instead, set the following inputs:
 
 ```hcl
-ec2_os_distro = "<rhel>"
-ec2_ami_id    = "<custom-rhel-ami-id>"
+tfe_image_repository_url      = "internal-registry.example.com"
+tfe_image_name                = "example/terraform-enterprise"
+tfe_image_tag                 = "v202505-1"
+tfe_image_repository_username = "example-user"
+tfe_image_repository_password = "SomethingSecure!"
+```
+
+If you are specifically using Amazon Elastic Container Registry (ECR) to host the TFE application container image, the values would look something like:
+
+```hcl
+tfe_image_repository_url      = "<account-id>.dkr.ecr.<region>.amazonaws.com" # ECR registry URI
+tfe_image_name                = "tfe-app" # ECR repository name
+tfe_image_tag                 = v202505-1
+tfe_image_repository_username = "AWS"
+tfe_image_repository_password = null # Set to null to use the EC2 instance profile for authentication instead of password
+```
+
+### OS software dependencies
+
+By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script attempts to install the required operating system software dependencies for TFE:
+
+- `unzip` - used to unpack and install `aws-cli`
+- `aws-cli` - used to fetch the required bootstrap secrets from AWS Secrets Manager
+- `docker` or `podman` (depending on the value of the `container_runtime` input) - used to run the TFE application
+
+If your TFE environment lacks egress connectivity to the official Linux package repositories, you should bake those dependencies into a custom image before deploying TFE. See the [Custom AMI](#custom-ami) section below for details.
+
+## Custom AMI
+
+By default, this module uses the standard AWS Marketplace image based on the value of the `ec2_os_distro` input (either `ubuntu`, `rhel`, or `al2023`). If you prefer to override this behavior and use a custom AMI, set the `ec2_ami_id` input accordingly:
+
+```hcl
+ec2_os_distro = "<os-distro>" # either 'ubuntu', 'rhel', 'al2023', or 'centos'
+ec2_ami_id    = "<custom-ami-id>"
 ```
 
 Ensure the value you set for `ec2_os_distro` accurately reflects the OS distribution of your custom AMI.
-
-### Software dependencies
-
-By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to install the required software dependencies to install TFE:
-
-- `aws-cli` (and `unzip` as a dependency to unpacking and installing this)
-- `docker` or `podman` (depending on the value of the `container_runtime` input)
-
-If your TFE EC2 instances will not have egress connectivity to the official Linux package repositories, then you should bake those dependencies into your custom image before deploying TFE.
 
 ## Proxy
 
@@ -78,7 +105,7 @@ This configuration applies the proxy settings at both the host level and within 
 
 ### Proxy bypass
 
-If either `http_proxy` or `https_proxy` (or both) are set, the module will automatically generate a base `no_proxy` list that includes:
+If either `http_proxy` or `https_proxy` (or both) are set, the module automatically generates a base `no_proxy` list that includes:
 
 - `localhost`
 - `127.0.0.1`
@@ -88,10 +115,30 @@ If either `http_proxy` or `https_proxy` (or both) are set, the module will autom
 - TFE S3 bucket regional domain name (_e.g.,_ `<tfe-s3-bucket-name>.s3.<aws-region>.amazonaws.com`)
 - Regional AWS Secrets Manager endpoint (_e.g.,_ `secretsmanager.<aws-region>.amazonaws.com`)
 
-Setting `additional_no_proxy` is optional. If specified, the value will be appended to this automatically generated base `no_proxy` list.
+Setting `additional_no_proxy` is optional. If specified, the value is appended to this automatically generated base `no_proxy` list.
 
-## Custom Startup Script
-While this is not recommended, this module supports the ability to use your own custom startup script to install TFE. `var.custom_tfe_startup_script_template # defaults to /templates/tfe_custom_data.sh.tpl`
-- The script must exist in a folder named `./templates` within your current working directory that you are running Terraform from
-- The script must contain all of the variables (denoted by `${example-variable}`) in the module-level [TFE startup script](../templates/tfe_custom_data.sh.tpl)
-- Use at your own peril
+## Terraform agent container image
+
+If you need to customize the Terraform agent container image that TFE uses to execute Terraform runs, set the following input accordingly:
+
+```hcl
+tfe_run_pipeline_image = "internal-registry.example.com/tfe-agent:latest"
+```
+
+IMPORTANT: the container registry used to host this image must support anonymous (unathenticated) image pulls, as authenticated image pulls here are currently unsupported.
+
+## Custom user_data (startup) script
+
+While not recommended, this module supports the use of custom `user_data` (startup) script to install TFE. To enable this behavior, set the `custom_tfe_startup_script_template` input to the filename of your custom script template.
+
+**Requirements**:
+
+- The file must exist in a directory named `./templates` relative to your current working directory (Terraform root)
+- The filename (not the path) should be passed to `custom_tfe_startup_script_template`
+- Your custom script must include all of the template variables (denoted by `${example-variable}`) used in the built-in [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script
+
+```hcl
+custom_tfe_startup_script_template = custom_tfe_user_data.sh.tpl"
+```
+
+> ⚠️ Use with caution and at your own peril. This should only be used if you have specific needs that the built-in script cannot accommodate.

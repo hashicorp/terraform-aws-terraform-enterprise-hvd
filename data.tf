@@ -116,8 +116,14 @@ data "aws_cloudwatch_log_group" "log_fwd" {
 #------------------------------------------------------------------------------
 # Elastic container registry (ECR)
 #------------------------------------------------------------------------------
-data "aws_ecr_repository" "tfe_run_pipeline_image" {
-  count = var.tfe_run_pipeline_image_ecr_repo_name != null ? 1 : 0
+locals {
+  tfe_app_image_repo_is_ecr     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url))
+  tfe_app_image_ecr_registry_id = local.tfe_app_image_repo_is_ecr ? regex("^([0-9]{12})\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)[0] : null
+}
 
-  name = var.tfe_run_pipeline_image_ecr_repo_name
+data "aws_ecr_repository" "tfe_app_container_image" {
+  count = local.tfe_app_image_repo_is_ecr ? 1 : 0
+
+  name        = var.tfe_image_name
+  registry_id = local.tfe_app_image_ecr_registry_id
 }

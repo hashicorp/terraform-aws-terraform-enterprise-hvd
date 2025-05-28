@@ -64,43 +64,57 @@ variable "tfe_encryption_password_secret_arn" {
 
 variable "tfe_image_repository_url" {
   type        = string
-  description = "Repository for the TFE image. Only change this if you are hosting the TFE container image in your own custom repository."
+  description = "Container registry hostname for the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify only the registry URI (e.g., '<account-id>.dkr.ecr.<region>.amazonaws.com'), not the full image path."
   default     = "images.releases.hashicorp.com"
 }
 
 variable "tfe_image_name" {
   type        = string
-  description = "Name of the TFE container image. Only set this if you are hosting the TFE container image in your own custom repository."
+  description = "Name of the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify only the repository name here (e.g., 'tfe-app'), not the full image path."
   default     = "hashicorp/terraform-enterprise"
+
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_name == "hashicorp/terraform-enterprise" : true
+    error_message = "`tfe_image_name` must be 'hashicorp/terraform-enterprise' when `tfe_image_repository_url` is set to 'images.releases.hashicorp.com'."
+  }
 }
 
 variable "tfe_image_tag" {
   type        = string
-  description = "Tag for the TFE image. This represents the version of TFE to deploy."
-  default     = "v202407-1"
+  description = "Tag for the TFE application container image, representing the specific version of Terraform Enterprise to install."
+  default     = "v202505-1"
 }
 
 variable "tfe_image_repository_username" {
   type        = string
-  description = "Username for container registry where TFE container image is hosted."
+  description = "Username for authenticating to the container registry that hosts the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify 'AWS'."
   default     = "terraform"
+
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_repository_username == "terraform" : true
+    error_message = "`tfe_image_repository_username` must be 'terraform' when `tfe_image_repository_url` is set to 'images.releases.hashicorp.com'."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)) ? var.tfe_image_repository_username == "AWS" : true
+    error_message = "`tfe_image_repository_username` must be 'AWS' when using Amazon ECR for `tfe_image_repository_url`."
+  }
 }
 
 variable "tfe_image_repository_password" {
   type        = string
-  description = "Password for container registry where TFE container image is hosted. Leave as `null` if using the default TFE registry as the default password is the TFE license."
+  description = "Password for authenticating to the container registry that hosts the TFE application container image. Leave as `null` if using the default TFE registry, as the TFE license will be used as the password. If you are using Amazon ECR, this should be a valid ECR token or leave as `null` to use the instance profile."
   default     = null
 
   validation {
-    condition     = var.tfe_image_repository_url != "images.releases.hashicorp.com" ? var.tfe_image_repository_password != null : true
-    error_message = "Value must be set when `tfe_image_repository_url` is not the default TFE registry (`images.releases.hashicorp.com`)."
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_repository_password == null : true
+    error_message = "`tfe_image_repository_password` must be 'null' when `tfe_image_repository_url` is set to default TFE registry ('images.releases.hashicorp.com')."
   }
-}
 
-variable "tfe_run_pipeline_image_ecr_repo_name" {
-  type        = string
-  description = "Name of the AWS ECR repository containing your custom TFE run pipeline image."
-  default     = null
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" || can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)) || var.tfe_image_repository_password != null
+    error_message = "`tfe_image_repository_password` must be specified when using a custom container registry that is not the default TFE registry ('images.releases.hashicorp.com') or Amazon ECR."
+  }
 }
 
 #------------------------------------------------------------------------------
@@ -148,7 +162,7 @@ variable "tfe_operational_mode" {
 
 variable "tfe_run_pipeline_image" {
   type        = string
-  description = "Name of the Docker image to use for the run pipeline driver."
+  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
   default     = null
 }
 
@@ -247,6 +261,12 @@ variable "lb_type" {
 variable "lb_is_internal" {
   type        = bool
   description = "Boolean to create an internal (private) load balancer. The `lb_subnet_ids` must be private subnets when this is `true`."
+  default     = true
+}
+
+variable "lb_stickiness_enabled" {
+  type        = bool
+  description = "Boolean to enable sticky sessions for the load balancer. When `lb_type` is `nlb`, sticky sessions enabled by client IP Address."
   default     = true
 }
 
@@ -427,7 +447,7 @@ variable "ec2_os_distro" {
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
-  default     = "24.0.9"
+  default     = "28.0.1"
 }
 
 variable "asg_instance_count" {
@@ -550,12 +570,12 @@ variable "ebs_iops" {
 
 variable "custom_tfe_startup_script_template" {
   type        = string
-  description = "Name of custom TFE startup script template file. File must exist within a directory named `./templates` within your current working directory."
+  description = "Filename of a custom TFE startup script template to use in place of of the built-in user_data script. The file must exist within a directory named './templates' in your current working directory."
   default     = null
 
   validation {
     condition     = var.custom_tfe_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_tfe_startup_script_template}") : true
-    error_message = "File not found. Ensure the file exists within a directory named `./templates` within your current working directory."
+    error_message = "File not found. Ensure the file exists within a directory named './templates' relative to your current working directory."
   }
 }
 
@@ -759,7 +779,6 @@ variable "rds_performance_insights_retention_period" {
   description = "Number of days to retain RDS performance insights data. Must be between 7 and 731."
   default     = 7
 }
-
 
 #------------------------------------------------------------------------------
 # S3
