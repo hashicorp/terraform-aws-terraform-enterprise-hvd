@@ -127,8 +127,18 @@ tfe_run_pipeline_image = "internal-registry.example.com/tfe-agent:latest"
 
 IMPORTANT: the container registry used to host this image must support anonymous (unathenticated) image pulls, as authenticated image pulls here are currently unsupported.
 
-## Custom Startup Script
-While this is not recommended, this module supports the ability to use your own custom startup script to install TFE. `var.custom_tfe_startup_script_template # defaults to /templates/tfe_custom_data.sh.tpl`
-- The script must exist in a folder named `./templates` within your current working directory that you are running Terraform from
-- The script must contain all of the variables (denoted by `${example-variable}`) in the module-level [TFE startup script](../templates/tfe_custom_data.sh.tpl)
-- Use at your own peril
+## Custom user_data (startup) script
+
+While not recommended, this module supports the use of custom `user_data` (startup) script to install TFE. To enable this behavior, set the `custom_tfe_startup_script_template` input to the filename of your custom script template.
+
+**Requirements**:
+
+- The file must exist in a directory named `./templates` relative to your current working directory (Terraform root)
+- The filename (not the path) should be passed to `custom_tfe_startup_script_template`
+- Your custom script must include all of the template variables (denoted by `${example-variable}`) used in the built-in [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script
+
+```hcl
+custom_tfe_startup_script_template = custom_tfe_user_data.sh.tpl"
+```
+
+> ⚠️ Use with caution and at your own peril. This should only be used if you have specific needs that the built-in script cannot accommodate.
