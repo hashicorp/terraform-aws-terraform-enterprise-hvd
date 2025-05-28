@@ -295,19 +295,19 @@ variable "cidr_allow_ingress_tfe_443" {
 variable "cidr_allow_ingress_ec2_ssh" {
   type        = list(string)
   description = "List of CIDR ranges to allow SSH ingress to TFE EC2 instance (i.e. bastion IP, client/workstation IP, etc.)."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_ingress_tfe_metrics_http" {
   type        = list(string)
   description = "List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_ingress_tfe_metrics_https" {
   type        = list(string)
   description = "List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_egress_ec2_http" {
@@ -325,7 +325,7 @@ variable "cidr_allow_egress_ec2_https" {
 variable "cidr_allow_egress_ec2_dns" {
   type        = list(string)
   description = "List of destination CIDR ranges to allow TCP/53 and UDP/53 (DNS) outbound from TFE EC2 instances. Only set if you want to use custom DNS servers instead of the AWS-provided DNS resolver within your VPC."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_egress_ec2_proxy" {
@@ -334,13 +334,13 @@ variable "cidr_allow_egress_ec2_proxy" {
   default     = null
 
   validation {
-    condition     = var.http_proxy != null || var.https_proxy != null ? var.cidr_allow_egress_ec2_proxy != null : true
+    condition     = var.http_proxy != null || var.https_proxy != null ? var.cidr_allow_egress_ec2_proxy != null : true # add AND statement for checking length of list
     error_message = "`cidr_allow_egress_ec2_proxy` must be set when `http_proxy` and/or `https_proxy` are set."
   }
 
   validation {
     condition     = var.http_proxy == null && var.https_proxy == null ? var.cidr_allow_egress_ec2_proxy == null : true
-    error_message = "`cidr_allow_egress_ec2_proxy` is not valid when `http_proxy` and `https_proxy` are not set."
+    error_message = "`cidr_allow_egress_ec2_proxy` must be null when `http_proxy` and `https_proxy` are not set."
   }
 }
 
