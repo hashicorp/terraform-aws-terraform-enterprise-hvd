@@ -275,7 +275,7 @@ resource "aws_security_group_rule" "ec2_allow_ingress_tfe_https_from_lb" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_ingress_ssh" {
-  count = length(var.cidr_allow_ingress_ec2_ssh) > 0 ? 1 : 0
+  count = var.cidr_allow_ingress_ec2_ssh != null ? 1 : 0
 
   type        = "ingress"
   from_port   = 22
@@ -405,7 +405,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_vault" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_egress_dns_tcp" {
-  count = length(var.cidr_allow_egress_ec2_dns) > 0 ? 1 : 0
+  count = var.cidr_allow_egress_ec2_dns != null ? 1 : 0
 
   type        = "egress"
   from_port   = 53
@@ -418,7 +418,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_dns_tcp" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_egress_dns_udp" {
-  count = length(var.cidr_allow_egress_ec2_dns) > 0 ? 1 : 0
+  count = var.cidr_allow_egress_ec2_dns != null ? 1 : 0
 
   type        = "egress"
   from_port   = 53
