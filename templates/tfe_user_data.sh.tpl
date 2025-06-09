@@ -499,8 +499,16 @@ spec:
       hostPort: 80
     - containerPort: ${tfe_https_port}
       hostPort: 443
+%{ if tfe_operational_mode == "active-active" ~}
     - containerPort: 8201
       hostPort: 8201
+%{ endif ~}
+%{ if tfe_metrics_enable ~}
+    - containerPort: ${tfe_metrics_http_port}
+      hostPort: ${tfe_metrics_http_port}
+    - containerPort: ${tfe_metrics_https_port}
+      hostPort: ${tfe_metrics_https_port}
+%{ endif ~}
     securityContext:
       capabilities:
         add:
