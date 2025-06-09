@@ -275,10 +275,13 @@ services:
       TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS: ${tfe_hostname}:$VM_PRIVATE_IP
 %{ endif ~}
 
-      # Network settings
+      # Initial admin creation token settings
+      TFE_IACT_TOKEN: ${tfe_iact_token}
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
       TFE_IACT_TRUSTED_PROXIES: ${tfe_iact_trusted_proxies}
       TFE_IACT_TIME_LIMIT: ${tfe_iact_time_limit}
+      
+      # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
@@ -469,13 +472,17 @@ spec:
     - name: "TFE_DISK_CACHE_VOLUME_NAME"
       value: terraform-enterprise-cache
     
-    # Network settings
+    # Initial admin creation token settings
+    - name: "TFE_IACT_TOKEN"
+      value: ${tfe_iact_token}
     - name: "TFE_IACT_SUBNETS"
       value: ${tfe_iact_subnets}
     - name: "TFE_IACT_TRUSTED_PROXIES"
       value: ${tfe_iact_trusted_proxies}
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
+    
+    # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
     - name:  "http_proxy"
       value: ${http_proxy}

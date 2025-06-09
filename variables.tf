@@ -205,6 +205,30 @@ variable "tfe_run_pipeline_docker_network" {
   default     = null
 }
 
+variable "tfe_iact_token" {
+  type        = string
+  description = "A pre-populated TFE initial admin creation token (IACT). Leave as `null` for the system to generate a random one."
+  default     = null
+}
+
+variable "tfe_iact_subnets" {
+  type        = string
+  description = "Comma-separated list of subnets in CIDR notation (e.g., `10.0.0.0/8,192.168.0.0/24`) that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients."
+  default     = null
+}
+
+variable "tfe_iact_time_limit" {
+  type        = number
+  description = "Number of minutes that the TFE initial admin creation token (IACT) can be retrieved via the API after the application starts."
+  default     = 60
+}
+
+variable "tfe_iact_trusted_proxies" {
+  type        = string
+  description = "Comma-separated list of proxy IP addresses that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients through a proxy."
+  default     = null
+}
+
 #------------------------------------------------------------------------------
 # Networking
 #------------------------------------------------------------------------------

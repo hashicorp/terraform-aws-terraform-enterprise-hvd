@@ -130,10 +130,13 @@ locals {
     tfe_hairpin_addressing          = var.tfe_hairpin_addressing
     #tfe_run_pipeline_docker_extra_hosts = "" // computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
+    # Initial admin creation token settings
+    tfe_iact_token           = var.tfe_iact_token == null ? "" : var.tfe_iact_token
+    tfe_iact_subnets         = var.tfe_iact_subnets == null ? "" : var.tfe_iact_subnets
+    tfe_iact_time_limit      = var.tfe_iact_time_limit
+    tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
+    
     # Network settings
-    tfe_iact_subnets         = ""
-    tfe_iact_time_limit      = 60
-    tfe_iact_trusted_proxies = ""
     http_proxy               = var.http_proxy != null ? var.http_proxy : ""
     https_proxy              = var.https_proxy != null ? var.https_proxy : ""
     no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
