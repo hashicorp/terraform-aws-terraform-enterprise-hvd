@@ -79,8 +79,8 @@ locals {
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""
     tfe_node_id                   = ""
-    tfe_http_port                 = 80
-    tfe_https_port                = 443
+    tfe_http_port                 = var.tfe_http_port
+    tfe_https_port                = var.tfe_https_port
 
     # Database settings
     tfe_database_host       = "${aws_rds_cluster.tfe.endpoint}:5432"
@@ -135,11 +135,11 @@ locals {
     tfe_iact_subnets         = var.tfe_iact_subnets == null ? "" : var.tfe_iact_subnets
     tfe_iact_time_limit      = var.tfe_iact_time_limit
     tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
-    
+
     # Network settings
-    http_proxy               = var.http_proxy != null ? var.http_proxy : ""
-    https_proxy              = var.https_proxy != null ? var.https_proxy : ""
-    no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    http_proxy  = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy    = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"

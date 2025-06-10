@@ -158,6 +158,28 @@ variable "tfe_run_pipeline_image" {
   default     = null
 }
 
+variable "tfe_http_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTP traffic. This is not the host port."
+  default     = 8080
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_http_port != 80 : true
+    error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
+  }
+}
+
+variable "tfe_https_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTPS traffic. This is not the host port."
+  default     = 8443
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_https_port != 443 : true
+    error_message = "Value must not be `443` when `container_runtime` is `podman` to avoid conflicts."
+  }
+}
+
 variable "tfe_metrics_enable" {
   type        = bool
   description = "Boolean to enable TFE metrics endpoints."

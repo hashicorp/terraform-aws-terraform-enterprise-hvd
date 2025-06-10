@@ -300,8 +300,8 @@ services:
       - /var/run
       - /var/log/terraform-enterprise
     ports:
-      - 80:80
-      - 443:443
+      - 80:${tfe_http_port}
+      - 443:${tfe_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -379,9 +379,9 @@ spec:
     - name: "TFE_NODE_ID"
       value: ${tfe_node_id}
     - name: "TFE_HTTP_PORT"
-      value: 8080
+      value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"
-      value: 8443
+      value: ${tfe_https_port}
 
     # Database settings
     - name: "TFE_DATABASE_HOST"
@@ -495,12 +495,20 @@ spec:
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
     ports:
-    - containerPort: 8080
-      hostPort: ${tfe_http_port}
-    - containerPort: 8443
-      hostPort: ${tfe_https_port}
+    - containerPort: ${tfe_http_port}
+      hostPort: 80
+    - containerPort: ${tfe_https_port}
+      hostPort: 443
+%{ if tfe_operational_mode == "active-active" ~}
     - containerPort: 8201
       hostPort: 8201
+%{ endif ~}
+%{ if tfe_metrics_enable ~}
+    - containerPort: ${tfe_metrics_http_port}
+      hostPort: ${tfe_metrics_http_port}
+    - containerPort: ${tfe_metrics_https_port}
+      hostPort: ${tfe_metrics_https_port}
+%{ endif ~}
     securityContext:
       capabilities:
         add:

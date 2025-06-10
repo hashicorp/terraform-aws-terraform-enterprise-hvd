@@ -9,6 +9,9 @@ variable "region" {
   description = "AWS region where TFE will be deployed."
 }
 
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 #------------------------------------------------------------------------------
 # Common
 #------------------------------------------------------------------------------
@@ -164,6 +167,28 @@ variable "tfe_run_pipeline_image" {
   type        = string
   description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
   default     = null
+}
+
+variable "tfe_http_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTP traffic. This is not the host port."
+  default     = 8080
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_http_port != 80 : true
+    error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
+  }
+}
+
+variable "tfe_https_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTPS traffic. This is not the host port."
+  default     = 8443
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_https_port != 443 : true
+    error_message = "Value must not be `443` when `container_runtime` is `podman` to avoid conflicts."
+  }
 }
 
 variable "tfe_metrics_enable" {
