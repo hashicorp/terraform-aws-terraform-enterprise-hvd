@@ -216,7 +216,6 @@ services:
       TFE_RUN_PIPELINE_DRIVER: ${tfe_run_pipeline_driver}
       TFE_RUN_PIPELINE_IMAGE: ${tfe_run_pipeline_image}
       TFE_BACKUP_RESTORE_TOKEN: ${tfe_backup_restore_token}
-      TFE_NODE_ID: ${tfe_node_id}
       TFE_HTTP_PORT: ${tfe_http_port}
       TFE_HTTPS_PORT: ${tfe_https_port}
 
@@ -376,8 +375,6 @@ spec:
       value: ${tfe_run_pipeline_image}
     - name: "TFE_BACKUP_RESTORE_TOKEN"
       value: ${tfe_backup_restore_token}
-    - name: "TFE_NODE_ID"
-      value: ${tfe_node_id}
     - name: "TFE_HTTP_PORT"
       value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"

@@ -78,7 +78,6 @@ locals {
     tfe_run_pipeline_driver       = "docker"
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""
-    tfe_node_id                   = ""
     tfe_http_port                 = var.tfe_http_port
     tfe_https_port                = var.tfe_https_port
 
