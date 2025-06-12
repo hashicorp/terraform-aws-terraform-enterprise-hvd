@@ -251,6 +251,12 @@ variable "tfe_iact_trusted_proxies" {
   default     = null
 }
 
+variable "tfe_ipv6_enabled" {
+  type        = bool
+  description = "Boolean to enable TFE to listen on IPv6 and IPv4 addresses. When `false`, TFE listens on IPv4 addresses only."
+  default     = false
+}
+
 #------------------------------------------------------------------------------
 # Networking
 #------------------------------------------------------------------------------

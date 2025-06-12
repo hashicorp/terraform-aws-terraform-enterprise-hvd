@@ -286,6 +286,7 @@ services:
       https_proxy: ${https_proxy}
       no_proxy: "$NO_PROXY"
 %{ endif ~}
+      TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -488,6 +489,8 @@ spec:
     - name:  "no_proxy"
       value: "$NO_PROXY"
 %{ endif ~}
+    - name: "TFE_IPV6_ENABLED"
+      value: ${tfe_ipv6_enabled}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
