@@ -75,6 +75,7 @@ locals {
     tfe_capacity_cpu              = var.tfe_capacity_cpu
     tfe_capacity_memory           = var.tfe_capacity_memory
     tfe_license_reporting_opt_out = var.tfe_license_reporting_opt_out
+    tfe_usage_reporting_opt_out   = var.tfe_usage_reporting_opt_out
     tfe_run_pipeline_driver       = "docker"
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""

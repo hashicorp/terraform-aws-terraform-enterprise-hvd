@@ -145,7 +145,13 @@ variable "tfe_capacity_memory" {
 
 variable "tfe_license_reporting_opt_out" {
   type        = bool
-  description = "Boolean to opt out of TFE license reporting."
+  description = "Boolean to opt out of reporting TFE licensing information to HashiCorp."
+  default     = false
+}
+
+variable "tfe_usage_reporting_opt_out" {
+  type        = bool
+  description = "Boolean to opt out of reporting TFE usage information to HashiCorp."
   default     = false
 }
 

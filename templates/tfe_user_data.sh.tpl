@@ -213,6 +213,7 @@ services:
       TFE_CAPACITY_CPU: ${tfe_capacity_cpu}
       TFE_CAPACITY_MEMORY: ${tfe_capacity_memory}
       TFE_LICENSE_REPORTING_OPT_OUT: ${tfe_license_reporting_opt_out}
+      TFE_USAGE_REPORTING_OPT_OUT: ${tfe_usage_reporting_opt_out}
       TFE_RUN_PIPELINE_DRIVER: ${tfe_run_pipeline_driver}
       TFE_RUN_PIPELINE_IMAGE: ${tfe_run_pipeline_image}
       TFE_BACKUP_RESTORE_TOKEN: ${tfe_backup_restore_token}
@@ -370,6 +371,8 @@ spec:
       value: ${tfe_capacity_memory}
     - name: "TFE_LICENSE_REPORTING_OPT_OUT"
       value: ${tfe_license_reporting_opt_out}
+    - name: "TFE_USAGE_REPORTING_OPT_OUT"
+      value: ${tfe_usage_reporting_opt_out}
     - name: "TFE_RUN_PIPELINE_DRIVER"
       value: ${tfe_run_pipeline_driver}
     - name: "TFE_RUN_PIPELINE_IMAGE"
