@@ -75,10 +75,10 @@ locals {
     tfe_capacity_cpu              = var.tfe_capacity_cpu
     tfe_capacity_memory           = var.tfe_capacity_memory
     tfe_license_reporting_opt_out = var.tfe_license_reporting_opt_out
+    tfe_usage_reporting_opt_out   = var.tfe_usage_reporting_opt_out
     tfe_run_pipeline_driver       = "docker"
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""
-    tfe_node_id                   = ""
     tfe_http_port                 = var.tfe_http_port
     tfe_https_port                = var.tfe_https_port
 
@@ -137,9 +137,10 @@ locals {
     tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
 
     # Network settings
-    http_proxy  = var.http_proxy != null ? var.http_proxy : ""
-    https_proxy = var.https_proxy != null ? var.https_proxy : ""
-    no_proxy    = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    http_proxy       = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy      = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy         = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    tfe_ipv6_enabled = var.tfe_ipv6_enabled
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"

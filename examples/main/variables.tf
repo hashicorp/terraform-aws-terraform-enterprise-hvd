@@ -9,9 +9,6 @@ variable "region" {
   description = "AWS region where TFE will be deployed."
 }
 
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
 #------------------------------------------------------------------------------
 # Common
 #------------------------------------------------------------------------------
@@ -148,7 +145,13 @@ variable "tfe_capacity_memory" {
 
 variable "tfe_license_reporting_opt_out" {
   type        = bool
-  description = "Boolean to opt out of TFE license reporting."
+  description = "Boolean to opt out of reporting TFE licensing information to HashiCorp."
+  default     = false
+}
+
+variable "tfe_usage_reporting_opt_out" {
+  type        = bool
+  description = "Boolean to opt out of reporting TFE usage information to HashiCorp."
   default     = false
 }
 
@@ -260,6 +263,12 @@ variable "tfe_iact_trusted_proxies" {
   type        = string
   description = "Comma-separated list of proxy IP addresses that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients through a proxy."
   default     = null
+}
+
+variable "tfe_ipv6_enabled" {
+  type        = bool
+  description = "Boolean to enable TFE to listen on IPv6 and IPv4 addresses. When `false`, TFE listens on IPv4 addresses only."
+  default     = false
 }
 
 #------------------------------------------------------------------------------
