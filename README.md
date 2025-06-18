@@ -195,13 +195,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.98 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.100 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.98 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.100 |
 
 ## Resources
 
@@ -322,7 +322,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_cidr_allow_egress_ec2_https"></a> [cidr\_allow\_egress\_ec2\_https](#input\_cidr\_allow\_egress\_ec2\_https) | List of destination CIDR ranges to allow TCP/443 outbound from TFE EC2 instances. Include the CIDR range of your VCS provider if you are configuring VCS integration with TFE. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cidr_allow_egress_ec2_proxy"></a> [cidr\_allow\_egress\_ec2\_proxy](#input\_cidr\_allow\_egress\_ec2\_proxy) | List of destination CIDR range(s) where proxy server exists. Required and only valid when `http_proxy` and/or `https_proxy` are set. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_ec2_ssh"></a> [cidr\_allow\_ingress\_ec2\_ssh](#input\_cidr\_allow\_ingress\_ec2\_ssh) | List of CIDR ranges to allow SSH ingress to TFE EC2 instance (i.e. bastion IP, client/workstation IP, etc.). | `list(string)` | `null` | no |
-| <a name="input_cidr_allow_ingress_tfe_443"></a> [cidr\_allow\_ingress\_tfe\_443](#input\_cidr\_allow\_ingress\_tfe\_443) | List of CIDR ranges to allow ingress traffic on port 443 to TFE server or load balancer. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
+| <a name="input_cidr_allow_ingress_tfe_443"></a> [cidr\_allow\_ingress\_tfe\_443](#input\_cidr\_allow\_ingress\_tfe\_443) | List of CIDR ranges allowed to access the TFE application over HTTPS (port 443). | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_http"></a> [cidr\_allow\_ingress\_tfe\_metrics\_http](#input\_cidr\_allow\_ingress\_tfe\_metrics\_http) | List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_https"></a> [cidr\_allow\_ingress\_tfe\_metrics\_https](#input\_cidr\_allow\_ingress\_tfe\_metrics\_https) | List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | Name of CloudWatch Log Group to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
@@ -390,6 +390,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_s3_enable_bucket_replication"></a> [s3\_enable\_bucket\_replication](#input\_s3\_enable\_bucket\_replication) | Boolean to enable cross-region replication for TFE S3 bucket. Do not enable when `is_secondary_region` is `true`. An `s3_destination_bucket_arn` is also required when `true`. | `bool` | `false` | no |
 | <a name="input_s3_kms_key_arn"></a> [s3\_kms\_key\_arn](#input\_s3\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE S3 bucket with. | `string` | `null` | no |
 | <a name="input_s3_log_fwd_bucket_name"></a> [s3\_log\_fwd\_bucket\_name](#input\_s3\_log\_fwd\_bucket\_name) | Name of S3 bucket to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
+| <a name="input_tfe_admin_https_port"></a> [tfe\_admin\_https\_port](#input\_tfe\_admin\_https\_port) | Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port. | `number` | `9443` | no |
 | <a name="input_tfe_alb_tls_certificate_arn"></a> [tfe\_alb\_tls\_certificate\_arn](#input\_tfe\_alb\_tls\_certificate\_arn) | ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`. | `string` | `null` | no |
 | <a name="input_tfe_capacity_concurrency"></a> [tfe\_capacity\_concurrency](#input\_tfe\_capacity\_concurrency) | Maximum number of concurrent Terraform runs to allow on a TFE node. | `number` | `10` | no |
 | <a name="input_tfe_capacity_cpu"></a> [tfe\_capacity\_cpu](#input\_tfe\_capacity\_cpu) | Maximum number of CPU cores that a Terraform run is allowed to consume in TFE. Set to `0` for no limit. | `number` | `0` | no |
