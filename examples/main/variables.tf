@@ -271,6 +271,17 @@ variable "tfe_ipv6_enabled" {
   default     = false
 }
 
+variable "tfe_admin_https_port" {
+  type         = number
+  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default      = 9443
+
+  validation {
+    condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
+    error_message = "`tfe_admin_https_port` must not be the same as `tfe_https_port` or `tfe_http_port` to avoid conflicts."
+  }
+}
+
 #------------------------------------------------------------------------------
 # Networking
 #------------------------------------------------------------------------------
@@ -346,7 +357,7 @@ variable "tfe_alb_tls_certificate_arn" {
 
 variable "cidr_allow_ingress_tfe_443" {
   type        = list(string)
-  description = "List of CIDR ranges to allow ingress traffic on port 443 to TFE server or load balancer."
+  description = "List of CIDR ranges allowed to access the TFE application over HTTPS (port 443)."
   default     = ["0.0.0.0/0"]
 }
 

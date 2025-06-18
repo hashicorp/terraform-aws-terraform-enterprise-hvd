@@ -288,6 +288,7 @@ services:
       no_proxy: "$NO_PROXY"
 %{ endif ~}
       TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
+      TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -303,6 +304,7 @@ services:
     ports:
       - 80:${tfe_http_port}
       - 443:${tfe_https_port}
+      - ${tfe_admin_https_port}:${tfe_admin_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -494,6 +496,8 @@ spec:
 %{ endif ~}
     - name: "TFE_IPV6_ENABLED"
       value: ${tfe_ipv6_enabled}
+    - name: "TFE_ADMIN_HTTPS_PORT"
+      value: ${tfe_admin_https_port}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
@@ -502,6 +506,8 @@ spec:
       hostPort: 80
     - containerPort: ${tfe_https_port}
       hostPort: 443
+    - containerPort: ${tfe_admin_https_port}
+      hostPort: ${tfe_admin_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
     - containerPort: 8201
       hostPort: 8201
