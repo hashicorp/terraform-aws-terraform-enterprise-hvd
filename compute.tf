@@ -137,10 +137,11 @@ locals {
     tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
 
     # Network settings
-    http_proxy       = var.http_proxy != null ? var.http_proxy : ""
-    https_proxy      = var.https_proxy != null ? var.https_proxy : ""
-    no_proxy         = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
-    tfe_ipv6_enabled = var.tfe_ipv6_enabled
+    http_proxy           = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy          = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy             = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    tfe_ipv6_enabled     = var.tfe_ipv6_enabled
+    tfe_admin_https_port = var.tfe_admin_https_port
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
