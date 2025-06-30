@@ -56,43 +56,57 @@ variable "tfe_encryption_password_secret_arn" {
 
 variable "tfe_image_repository_url" {
   type        = string
-  description = "Repository for the TFE image. Only change this if you are hosting the TFE container image in your own custom repository."
+  description = "Container registry hostname for the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify only the registry URI (e.g., '<account-id>.dkr.ecr.<region>.amazonaws.com'), not the full image path."
   default     = "images.releases.hashicorp.com"
 }
 
 variable "tfe_image_name" {
   type        = string
-  description = "Name of the TFE container image. Only set this if you are hosting the TFE container image in your own custom repository."
+  description = "Name of the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify only the repository name here (e.g., 'tfe-app'), not the full image path."
   default     = "hashicorp/terraform-enterprise"
+
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_name == "hashicorp/terraform-enterprise" : true
+    error_message = "`tfe_image_name` must be 'hashicorp/terraform-enterprise' when `tfe_image_repository_url` is set to 'images.releases.hashicorp.com'."
+  }
 }
 
 variable "tfe_image_tag" {
   type        = string
-  description = "Tag for the TFE image. This represents the version of TFE to deploy."
-  default     = "v202407-1"
+  description = "Tag for the TFE application container image, representing the specific version of Terraform Enterprise to install."
+  default     = "v202505-1"
 }
 
 variable "tfe_image_repository_username" {
   type        = string
-  description = "Username for container registry where TFE container image is hosted."
+  description = "Username for authenticating to the container registry that hosts the TFE application container image. Override this only if you are hosting the image in a custom registry. If you are using Amazon ECR, specify 'AWS'."
   default     = "terraform"
+
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_repository_username == "terraform" : true
+    error_message = "`tfe_image_repository_username` must be 'terraform' when `tfe_image_repository_url` is set to 'images.releases.hashicorp.com'."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)) ? var.tfe_image_repository_username == "AWS" : true
+    error_message = "`tfe_image_repository_username` must be 'AWS' when using Amazon ECR for `tfe_image_repository_url`."
+  }
 }
 
 variable "tfe_image_repository_password" {
   type        = string
-  description = "Password for container registry where TFE container image is hosted. Leave as `null` if using the default TFE registry as the default password is the TFE license."
+  description = "Password for authenticating to the container registry that hosts the TFE application container image. Leave as `null` if using the default TFE registry, as the TFE license will be used as the password. If you are using Amazon ECR, this should be a valid ECR token or leave as `null` to use the instance profile."
   default     = null
 
   validation {
-    condition     = var.tfe_image_repository_url != "images.releases.hashicorp.com" ? var.tfe_image_repository_password != null : true
-    error_message = "Value must be set when `tfe_image_repository_url` is not the default TFE registry (`images.releases.hashicorp.com`)."
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" ? var.tfe_image_repository_password == null : true
+    error_message = "`tfe_image_repository_password` must be 'null' when `tfe_image_repository_url` is set to default TFE registry ('images.releases.hashicorp.com')."
   }
-}
 
-variable "tfe_run_pipeline_image_ecr_repo_name" {
-  type        = string
-  description = "Name of the AWS ECR repository containing your custom TFE run pipeline image."
-  default     = null
+  validation {
+    condition     = var.tfe_image_repository_url == "images.releases.hashicorp.com" || can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)) || var.tfe_image_repository_password != null
+    error_message = "`tfe_image_repository_password` must be specified when using a custom container registry that is not the default TFE registry ('images.releases.hashicorp.com') or Amazon ECR."
+  }
 }
 
 #------------------------------------------------------------------------------
@@ -123,7 +137,13 @@ variable "tfe_capacity_memory" {
 
 variable "tfe_license_reporting_opt_out" {
   type        = bool
-  description = "Boolean to opt out of TFE license reporting."
+  description = "Boolean to opt out of reporting TFE licensing information to HashiCorp."
+  default     = false
+}
+
+variable "tfe_usage_reporting_opt_out" {
+  type        = bool
+  description = "Boolean to opt out of reporting TFE usage information to HashiCorp."
   default     = false
 }
 
@@ -140,8 +160,30 @@ variable "tfe_operational_mode" {
 
 variable "tfe_run_pipeline_image" {
   type        = string
-  description = "Name of the Docker image to use for the run pipeline driver."
+  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
   default     = null
+}
+
+variable "tfe_http_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTP traffic. This is not the host port."
+  default     = 8080
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_http_port != 80 : true
+    error_message = "Value must not be `80` when `container_runtime` is `podman` to avoid conflicts."
+  }
+}
+
+variable "tfe_https_port" {
+  type        = number
+  description = "Port the TFE application container listens on for HTTPS traffic. This is not the host port."
+  default     = 8443
+
+  validation {
+    condition     = var.container_runtime == "podman" ? var.tfe_https_port != 443 : true
+    error_message = "Value must not be `443` when `container_runtime` is `podman` to avoid conflicts."
+  }
 }
 
 variable "tfe_metrics_enable" {
@@ -189,6 +231,47 @@ variable "tfe_run_pipeline_docker_network" {
   type        = string
   description = "Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network created by TFE."
   default     = null
+}
+
+variable "tfe_iact_token" {
+  type        = string
+  description = "A pre-populated TFE initial admin creation token (IACT). Leave as `null` for the system to generate a random one."
+  default     = null
+}
+
+variable "tfe_iact_subnets" {
+  type        = string
+  description = "Comma-separated list of subnets in CIDR notation (e.g., `10.0.0.0/8,192.168.0.0/24`) that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients."
+  default     = null
+}
+
+variable "tfe_iact_time_limit" {
+  type        = number
+  description = "Number of minutes that the TFE initial admin creation token (IACT) can be retrieved via the API after the application starts."
+  default     = 60
+}
+
+variable "tfe_iact_trusted_proxies" {
+  type        = string
+  description = "Comma-separated list of proxy IP addresses that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients through a proxy."
+  default     = null
+}
+
+variable "tfe_ipv6_enabled" {
+  type        = bool
+  description = "Boolean to enable TFE to listen on IPv6 and IPv4 addresses. When `false`, TFE listens on IPv4 addresses only."
+  default     = false
+}
+
+variable "tfe_admin_https_port" {
+  type         = number
+  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default      = 9443
+
+  validation {
+    condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
+    error_message = "`tfe_admin_https_port` must not be the same as `tfe_https_port` or `tfe_http_port` to avoid conflicts."
+  }
 }
 
 #------------------------------------------------------------------------------
@@ -242,6 +325,12 @@ variable "lb_is_internal" {
   default     = true
 }
 
+variable "lb_stickiness_enabled" {
+  type        = bool
+  description = "Boolean to enable sticky sessions for the load balancer. When `lb_type` is `nlb`, sticky sessions enabled by client IP Address."
+  default     = true
+}
+
 variable "tfe_alb_tls_certificate_arn" {
   type        = string
   description = "ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`."
@@ -260,26 +349,26 @@ variable "tfe_alb_tls_certificate_arn" {
 
 variable "cidr_allow_ingress_tfe_443" {
   type        = list(string)
-  description = "List of CIDR ranges to allow ingress traffic on port 443 to TFE server or load balancer."
+  description = "List of CIDR ranges allowed to access the TFE application over HTTPS (port 443)."
   default     = ["0.0.0.0/0"]
 }
 
 variable "cidr_allow_ingress_ec2_ssh" {
   type        = list(string)
   description = "List of CIDR ranges to allow SSH ingress to TFE EC2 instance (i.e. bastion IP, client/workstation IP, etc.)."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_ingress_tfe_metrics_http" {
   type        = list(string)
   description = "List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_ingress_tfe_metrics_https" {
   type        = list(string)
   description = "List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_egress_ec2_http" {
@@ -297,7 +386,7 @@ variable "cidr_allow_egress_ec2_https" {
 variable "cidr_allow_egress_ec2_dns" {
   type        = list(string)
   description = "List of destination CIDR ranges to allow TCP/53 and UDP/53 (DNS) outbound from TFE EC2 instances. Only set if you want to use custom DNS servers instead of the AWS-provided DNS resolver within your VPC."
-  default     = []
+  default     = null
 }
 
 variable "cidr_allow_egress_ec2_proxy" {
@@ -306,13 +395,13 @@ variable "cidr_allow_egress_ec2_proxy" {
   default     = null
 
   validation {
-    condition     = var.http_proxy != null || var.https_proxy != null ? var.cidr_allow_egress_ec2_proxy != null : true
+    condition     = var.http_proxy != null || var.https_proxy != null ? var.cidr_allow_egress_ec2_proxy != null : true # add AND statement for checking length of list
     error_message = "`cidr_allow_egress_ec2_proxy` must be set when `http_proxy` and/or `https_proxy` are set."
   }
 
   validation {
     condition     = var.http_proxy == null && var.https_proxy == null ? var.cidr_allow_egress_ec2_proxy == null : true
-    error_message = "`cidr_allow_egress_ec2_proxy` is not valid when `http_proxy` and `https_proxy` are not set."
+    error_message = "`cidr_allow_egress_ec2_proxy` must be null when `http_proxy` and `https_proxy` are not set."
   }
 }
 
@@ -419,7 +508,7 @@ variable "ec2_os_distro" {
 variable "docker_version" {
   type        = string
   description = "Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`)."
-  default     = "24.0.9"
+  default     = "28.0.1"
 }
 
 variable "asg_instance_count" {
@@ -537,6 +626,17 @@ variable "ebs_iops" {
   validation {
     condition     = var.ebs_iops >= 3000 && var.ebs_iops <= 16000
     error_message = "Value must be greater than or equal to `3000` and less than or equal to `16000`."
+  }
+}
+
+variable "custom_tfe_startup_script_template" {
+  type        = string
+  description = "Filename of a custom TFE startup script template to use in place of of the built-in user_data script. The file must exist within a directory named './templates' in your current working directory."
+  default     = null
+
+  validation {
+    condition     = var.custom_tfe_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_tfe_startup_script_template}") : true
+    error_message = "File not found. Ensure the file exists within a directory named './templates' relative to your current working directory."
   }
 }
 

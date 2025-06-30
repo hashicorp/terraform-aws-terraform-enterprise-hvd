@@ -60,10 +60,10 @@ locals {
     tfe_tls_ca_bundle_secret_arn       = var.tfe_tls_ca_bundle_secret_arn
     tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
     tfe_image_repository_url           = var.tfe_image_repository_url
-    tfe_image_repository_username      = var.tfe_image_repository_username
-    tfe_image_repository_password      = var.tfe_image_repository_password != null ? var.tfe_image_repository_password : ""
     tfe_image_name                     = var.tfe_image_name
     tfe_image_tag                      = var.tfe_image_tag
+    tfe_image_repository_username      = var.tfe_image_repository_username
+    tfe_image_repository_password      = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
     container_runtime                  = var.container_runtime
     docker_version                     = var.docker_version
 
@@ -75,12 +75,12 @@ locals {
     tfe_capacity_cpu              = var.tfe_capacity_cpu
     tfe_capacity_memory           = var.tfe_capacity_memory
     tfe_license_reporting_opt_out = var.tfe_license_reporting_opt_out
+    tfe_usage_reporting_opt_out   = var.tfe_usage_reporting_opt_out
     tfe_run_pipeline_driver       = "docker"
     tfe_run_pipeline_image        = var.tfe_run_pipeline_image == null ? "" : var.tfe_run_pipeline_image
     tfe_backup_restore_token      = ""
-    tfe_node_id                   = ""
-    tfe_http_port                 = 80
-    tfe_https_port                = 443
+    tfe_http_port                 = var.tfe_http_port
+    tfe_https_port                = var.tfe_https_port
 
     # Database settings
     tfe_database_host       = "${aws_rds_cluster.tfe.endpoint}:5432"
@@ -130,16 +130,22 @@ locals {
     tfe_hairpin_addressing          = var.tfe_hairpin_addressing
     #tfe_run_pipeline_docker_extra_hosts = "" // computed inside of tfe_user_data script if `tfe_hairpin_addressing` is `true` because EC2 private IP is used
 
+    # Initial admin creation token settings
+    tfe_iact_token           = var.tfe_iact_token == null ? "" : var.tfe_iact_token
+    tfe_iact_subnets         = var.tfe_iact_subnets == null ? "" : var.tfe_iact_subnets
+    tfe_iact_time_limit      = var.tfe_iact_time_limit
+    tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
+
     # Network settings
-    tfe_iact_subnets         = ""
-    tfe_iact_time_limit      = 60
-    tfe_iact_trusted_proxies = ""
-    http_proxy               = var.http_proxy != null ? var.http_proxy : ""
-    https_proxy              = var.https_proxy != null ? var.https_proxy : ""
-    no_proxy                 = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    http_proxy           = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy          = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy             = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    tfe_ipv6_enabled     = var.tfe_ipv6_enabled
+    tfe_admin_https_port = var.tfe_admin_https_port
   }
 
-  user_data_template_rendered = templatefile("${path.module}/templates/tfe_user_data.sh.tpl", local.user_data_args)
+  tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
+  user_data_template_rendered = templatefile(local.tfe_startup_script_tpl, local.user_data_args)
 }
 
 #------------------------------------------------------------------------------
@@ -274,7 +280,7 @@ resource "aws_security_group_rule" "ec2_allow_ingress_tfe_https_from_lb" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_ingress_ssh" {
-  count = length(var.cidr_allow_ingress_ec2_ssh) > 0 ? 1 : 0
+  count = var.cidr_allow_ingress_ec2_ssh != null ? 1 : 0
 
   type        = "ingress"
   from_port   = 22
@@ -404,7 +410,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_vault" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_egress_dns_tcp" {
-  count = length(var.cidr_allow_egress_ec2_dns) > 0 ? 1 : 0
+  count = var.cidr_allow_egress_ec2_dns != null ? 1 : 0
 
   type        = "egress"
   from_port   = 53
@@ -417,7 +423,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_dns_tcp" {
 }
 
 resource "aws_security_group_rule" "ec2_allow_egress_dns_udp" {
-  count = length(var.cidr_allow_egress_ec2_dns) > 0 ? 1 : 0
+  count = var.cidr_allow_egress_ec2_dns != null ? 1 : 0
 
   type        = "egress"
   from_port   = 53

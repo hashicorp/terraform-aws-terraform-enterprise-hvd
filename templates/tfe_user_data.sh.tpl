@@ -213,10 +213,10 @@ services:
       TFE_CAPACITY_CPU: ${tfe_capacity_cpu}
       TFE_CAPACITY_MEMORY: ${tfe_capacity_memory}
       TFE_LICENSE_REPORTING_OPT_OUT: ${tfe_license_reporting_opt_out}
+      TFE_USAGE_REPORTING_OPT_OUT: ${tfe_usage_reporting_opt_out}
       TFE_RUN_PIPELINE_DRIVER: ${tfe_run_pipeline_driver}
       TFE_RUN_PIPELINE_IMAGE: ${tfe_run_pipeline_image}
       TFE_BACKUP_RESTORE_TOKEN: ${tfe_backup_restore_token}
-      TFE_NODE_ID: ${tfe_node_id}
       TFE_HTTP_PORT: ${tfe_http_port}
       TFE_HTTPS_PORT: ${tfe_https_port}
 
@@ -275,15 +275,20 @@ services:
       TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS: ${tfe_hostname}:$VM_PRIVATE_IP
 %{ endif ~}
 
-      # Network settings
+      # Initial admin creation token settings
+      TFE_IACT_TOKEN: ${tfe_iact_token}
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
       TFE_IACT_TRUSTED_PROXIES: ${tfe_iact_trusted_proxies}
       TFE_IACT_TIME_LIMIT: ${tfe_iact_time_limit}
+      
+      # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
       no_proxy: "$NO_PROXY"
 %{ endif ~}
+      TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
+      TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -297,8 +302,9 @@ services:
       - /var/run
       - /var/log/terraform-enterprise
     ports:
-      - 80:80
-      - 443:443
+      - 80:${tfe_http_port}
+      - 443:${tfe_https_port}
+      - ${tfe_admin_https_port}:${tfe_admin_https_port}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -367,18 +373,18 @@ spec:
       value: ${tfe_capacity_memory}
     - name: "TFE_LICENSE_REPORTING_OPT_OUT"
       value: ${tfe_license_reporting_opt_out}
+    - name: "TFE_USAGE_REPORTING_OPT_OUT"
+      value: ${tfe_usage_reporting_opt_out}
     - name: "TFE_RUN_PIPELINE_DRIVER"
       value: ${tfe_run_pipeline_driver}
     - name: "TFE_RUN_PIPELINE_IMAGE"
       value: ${tfe_run_pipeline_image}
     - name: "TFE_BACKUP_RESTORE_TOKEN"
       value: ${tfe_backup_restore_token}
-    - name: "TFE_NODE_ID"
-      value: ${tfe_node_id}
     - name: "TFE_HTTP_PORT"
-      value: 8080
+      value: ${tfe_http_port}
     - name: "TFE_HTTPS_PORT"
-      value: 8443
+      value: ${tfe_https_port}
 
     # Database settings
     - name: "TFE_DATABASE_HOST"
@@ -469,13 +475,17 @@ spec:
     - name: "TFE_DISK_CACHE_VOLUME_NAME"
       value: terraform-enterprise-cache
     
-    # Network settings
+    # Initial admin creation token settings
+    - name: "TFE_IACT_TOKEN"
+      value: ${tfe_iact_token}
     - name: "TFE_IACT_SUBNETS"
       value: ${tfe_iact_subnets}
     - name: "TFE_IACT_TRUSTED_PROXIES"
       value: ${tfe_iact_trusted_proxies}
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
+    
+    # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
     - name:  "http_proxy"
       value: ${http_proxy}
@@ -484,16 +494,30 @@ spec:
     - name:  "no_proxy"
       value: "$NO_PROXY"
 %{ endif ~}
+    - name: "TFE_IPV6_ENABLED"
+      value: ${tfe_ipv6_enabled}
+    - name: "TFE_ADMIN_HTTPS_PORT"
+      value: ${tfe_admin_https_port}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
     ports:
-    - containerPort: 8080
-      hostPort: ${tfe_http_port}
-    - containerPort: 8443
-      hostPort: ${tfe_https_port}
+    - containerPort: ${tfe_http_port}
+      hostPort: 80
+    - containerPort: ${tfe_https_port}
+      hostPort: 443
+    - containerPort: ${tfe_admin_https_port}
+      hostPort: ${tfe_admin_https_port}
+%{ if tfe_operational_mode == "active-active" ~}
     - containerPort: 8201
       hostPort: 8201
+%{ endif ~}
+%{ if tfe_metrics_enable ~}
+    - containerPort: ${tfe_metrics_http_port}
+      hostPort: ${tfe_metrics_http_port}
+    - containerPort: ${tfe_metrics_https_port}
+      hostPort: ${tfe_metrics_https_port}
+%{ endif ~}
     securityContext:
       capabilities:
         add:
@@ -566,27 +590,38 @@ Yaml=tfe-pod.yaml
 EOF
 }
 
-function pull_tfe_image {
+function pull_tfe_app_image {
   local TFE_CONTAINER_RUNTIME="$1"
+  local TFE_IMAGE_REPOSITORY_PASSWORD="$2"
+
+  log "INFO" "Detected TFE container image registry URL is '${tfe_image_repository_url}'."
+  log "INFO" "Detected TFE container image name is '${tfe_image_name}'."
+  log "INFO" "Detected TFE container image repository username is '${tfe_image_repository_username}'."
   
-  log "INFO" "Authenticating to '${tfe_image_repository_url}' container registry."
-  log "INFO" "Detected TFE image repository username is '${tfe_image_repository_username}'."
+  # Authenticate to container registry
   if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
-    log "INFO" "Detected default TFE registry in use. Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of TFE license."
-    TFE_IMAGE_REPOSITORY_PASSWORD=$TFE_LICENSE
+    log "INFO" "Detected default TFE container registry was specified. Using TFE license to authenticate to TFE container registry."
+    $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_LICENSE
+
+  elif [[ "${tfe_image_repository_url}" =~ ^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+    log "INFO" "Detected an AWS ECR registry was specified for TFE application container image repository."
+
+    if [[ "$TFE_IMAGE_REPOSITORY_PASSWORD" != "" ]]; then
+      log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
+      $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_IMAGE_REPOSITORY_PASSWORD
+    else
+      log "INFO" "No 'tfe_image_repository_password' was provided. Attempting to log in to AWS ECR registry using EC2 instance profile credentials."
+      aws ecr get-login-password --region $AWS_REGION | $TFE_CONTAINER_RUNTIME login --username ${tfe_image_repository_username} --password-stdin ${tfe_image_repository_url}
+    fi
+
   else
-    log "INFO" "Setting TFE_IMAGE_REPOSITORY_PASSWORD to value of 'tfe_image_repository_password' module input."
-    TFE_IMAGE_REPOSITORY_PASSWORD=${tfe_image_repository_password}
+    echo "Attempting to authenticate to '${tfe_image_repository_url}' container registry."
+    $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password ${tfe_image_repository_password}
   fi
-  if [[ "$TFE_CONTAINER_RUNTIME" == "podman" ]]; then
-    podman login --username ${tfe_image_repository_username} ${tfe_image_repository_url} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    podman pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
-  else
-    docker login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password $TFE_IMAGE_REPOSITORY_PASSWORD
-    log "INFO" "Pulling TFE container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
-    docker pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
-  fi
+  
+  # Download TFE application container image
+  log "INFO" "Pulling TFE application container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
+  $TFE_CONTAINER_RUNTIME pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
 }
 
 function exit_script { 
@@ -652,12 +687,13 @@ function main {
     configure_log_forwarding
   fi
   
+  log "INFO" "Preparing to download TFE application container image..."
+  pull_tfe_app_image "${container_runtime}" "${tfe_image_repository_password}"
+
   if [[ "${container_runtime}" == "podman" ]]; then
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/tfe-pod.yaml"
     log "INFO" "Generating '$TFE_SETTINGS_PATH' Kubernetes pod manifest for TFE on Podman."
     generate_tfe_podman_manifest "$TFE_SETTINGS_PATH"
-    log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
     log "INFO" "Configuring systemd service using Quadlet to manage TFE Podman containers."
     generate_tfe_podman_quadlet
     cp "$TFE_SETTINGS_PATH" "/etc/containers/systemd"
@@ -669,8 +705,6 @@ function main {
     TFE_SETTINGS_PATH="$TFE_CONFIG_DIR/docker-compose.yaml"
     log "INFO" "Generating '$TFE_SETTINGS_PATH' file for TFE on Docker."
     generate_tfe_docker_compose_file "$TFE_SETTINGS_PATH"
-    log "INFO" "Preparing to download TFE container image..."
-    pull_tfe_image "${container_runtime}"
     log "INFO" "Starting TFE application using Docker Compose."
     if command -v docker-compose > /dev/null; then
       docker-compose --file $TFE_SETTINGS_PATH up --detach
