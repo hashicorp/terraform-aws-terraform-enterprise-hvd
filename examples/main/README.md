@@ -1,6 +1,6 @@
 # Main Example
 
-This directory contains a ready-made Terraform configuration and an [example terraform.tfvars file](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/examples/main/terraform.tfvars.example) for deploying this module.
+This directory contains a ready-made Terraform configuration and an [example terraform.tfvars file](./terraform.tfvars.example) for deploying this module.
 Refer to the **Architectural decisions** section below for details on some of the key settings and their corresponding input variables to deploy your TFE instance.
 
 ## Architectural decisions
