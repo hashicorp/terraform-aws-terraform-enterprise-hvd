@@ -898,13 +898,8 @@ variable "s3_kms_key_arn" {
 
 variable "s3_enable_bucket_replication" {
   type        = bool
-  description = "Boolean to enable cross-region replication for TFE S3 bucket. Do not enable when `is_secondary_region` is `true`. An `s3_destination_bucket_arn` is also required when `true`."
+  description = "Boolean to enable cross-region replication for TFE S3 bucket. An `s3_destination_bucket_arn` is required when `true`."
   default     = false
-
-  validation {
-    condition     = var.is_secondary_region ? var.s3_enable_bucket_replication == false : true
-    error_message = "Cross-region replication should not be enabled when `is_secondary_region` is `true`."
-  }
 
   validation {
     condition     = var.s3_enable_bucket_replication ? var.s3_destination_bucket_arn != "" : true
@@ -922,6 +917,28 @@ variable "s3_destination_bucket_kms_key_arn" {
   type        = string
   description = "ARN of KMS key of destination S3 bucket for cross-region replication configuration if it is encrypted with a customer managed key (CMK)."
   default     = null
+}
+
+variable "s3_enable_bucket_replication_rtc" {
+  type        = bool
+  description = "Boolean to enable real-time change (RTC) monitoring for TFE S3 bucket replication. Only valid when `s3_enable_bucket_replication` is `true`."
+  default     = false
+
+  validation {
+    condition     = var.s3_enable_bucket_replication_rtc ? var.s3_enable_bucket_replication : true
+    error_message = "If true, s3_enable_bucket_replication must also be true."
+  }
+}
+
+variable "s3_enable_bucket_replication_bidirectional" {
+  type        = bool
+  description = "Enables bidirectional replication from secondary region to primary region. Only valid when `s3_enable_bucket_replication` and  `is_secondary_region` are true."
+  default     = false
+
+  validation {
+    condition     = var.s3_enable_bucket_replication_bidirectional ? var.is_secondary_region && var.s3_enable_bucket_replication : true
+    error_message = "If true, is_secondary_region must also be true and s3_enable_bucket_replication must be true."
+  }
 }
 
 #------------------------------------------------------------------------------
