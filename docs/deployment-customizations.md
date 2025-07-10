@@ -49,7 +49,7 @@ If your TFE environment has limited to no egress connectivity to the public inte
 
 ### TFE application container image
 
-By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to pull the TFE application container image from its publicly hosted location of `images.releases.hashicorp.com` (which is a canonical endpoint that is backed by various AWS S3 buckets across four regions). To override this default behavior and pull the TFE application container from a custom location instead, set the following inputs:
+By default, the [tfe_user_data](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/templates/tfe_user_data.sh.tpl) (cloud-init) script will attempt to pull the TFE application container image from its publicly hosted location of `images.releases.hashicorp.com` (which is a canonical endpoint that is backed by various AWS S3 buckets across four regions). To override this default behavior and pull the TFE application container from a custom location instead, set the following inputs:
 
 ```hcl
 tfe_image_repository_url      = "internal-registry.example.com"
@@ -71,7 +71,7 @@ tfe_image_repository_password = null # Set to null to use the EC2 instance profi
 
 ### OS software dependencies
 
-By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script attempts to install the required operating system software dependencies for TFE:
+By default, the [tfe_user_data](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/templates/tfe_user_data.sh.tpl) (cloud-init) script attempts to install the required operating system software dependencies for TFE:
 
 - `unzip` - used to unpack and install `aws-cli`
 - `aws-cli` - used to fetch the required bootstrap secrets from AWS Secrets Manager
@@ -135,7 +135,7 @@ While not recommended, this module supports the use of custom `user_data` (start
 
 - The file must exist in a directory named `./templates` relative to your current working directory (Terraform root)
 - The filename (not the path) should be passed to `custom_tfe_startup_script_template`
-- Your custom script must include all of the template variables (denoted by `${example-variable}`) used in the built-in [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) script
+- Your custom script must include all of the template variables (denoted by `${example-variable}`) used in the built-in [tfe_user_data](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/templates/tfe_user_data.sh.tpl) (cloud-init) script
 
 ```hcl
 custom_tfe_startup_script_template = custom_tfe_user_data.sh.tpl"

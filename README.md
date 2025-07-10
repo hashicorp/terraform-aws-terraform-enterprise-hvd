@@ -60,7 +60,7 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
 
->📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
+>📝 Note: See the [TFE bootstrap secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
 ### Compute
 
@@ -83,7 +83,7 @@ One of the following logging destinations:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Refer to the ready-made Terraform configuration provided in the [main](./examples/main) example subdirectory within the [examples](./examples) directory for how to deploy this module. To get started, copy all of the Terraform files from the [main](./examples/main) example into a new destination directory. This will serve as your root Terraform configuration for managing your TFE deployment. Below is a common directory structure for managing multiple TFE deployments:
+2. Refer to the ready-made Terraform configuration provided in the [main](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/examples/main) example subdirectory within the [examples](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/examples) directory for how to deploy this module. To get started, copy all of the Terraform files from the [main](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/examples/main) example into a new destination directory. This will serve as your root Terraform configuration for managing your TFE deployment. Below is a common directory structure for managing multiple TFE deployments:
 
     ```pre
     .
@@ -106,7 +106,7 @@ One of the following logging destinations:
 
 3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
-4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
+4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/deployment-customizations.md) documentation.
   
 5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
    
@@ -174,11 +174,11 @@ One of the following logging destinations:
 
 Below are links to various docs related to the customization and management of your TFE deployment:
 
-- [Deployment customizations](./docs/deployment-customizations.md)
-- [TFE version upgrades](./docs/tfe-version-upgrades.md)
-- [TFE TLS certificate rotation](./docs/tfe-cert-rotation.md)
-- [TFE configuration settings](./docs/tfe-config-settings.md)
-- [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md)
+- [Deployment customizations](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/deployment-customizations.md)
+- [TFE version upgrades](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/tfe-version-upgrades.md)
+- [TFE TLS certificate rotation](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/tfe-cert-rotation.md)
+- [TFE configuration settings](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/tfe-config-settings.md)
+- [TFE bootstrap secrets](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.3.0/docs/tfe-bootstrap-secrets.md)
 
 ## Module support
 
