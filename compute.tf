@@ -53,23 +53,26 @@ locals {
 
   user_data_args = {
     # Bootstrap
-    aws_region                         = data.aws_region.current.name
-    tfe_license_secret_arn             = var.tfe_license_secret_arn
-    tfe_tls_cert_secret_arn            = var.tfe_tls_cert_secret_arn
-    tfe_tls_privkey_secret_arn         = var.tfe_tls_privkey_secret_arn
-    tfe_tls_ca_bundle_secret_arn       = var.tfe_tls_ca_bundle_secret_arn
-    tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
-    tfe_image_repository_url           = var.tfe_image_repository_url
-    tfe_image_name                     = var.tfe_image_name
-    tfe_image_tag                      = var.tfe_image_tag
-    tfe_image_repository_username      = var.tfe_image_repository_username
-    tfe_image_repository_password      = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
-    container_runtime                  = var.container_runtime
-    docker_version                     = var.docker_version
+    aws_region                           = data.aws_region.current.name
+    tfe_license_secret_arn               = var.tfe_license_secret_arn
+    tfe_tls_cert_secret_arn              = var.tfe_tls_cert_secret_arn
+    tfe_tls_privkey_secret_arn           = var.tfe_tls_privkey_secret_arn
+    tfe_tls_cert_secret_arn_secondary    = var.tfe_tls_cert_secret_arn_secondary == null ? "" : var.tfe_tls_cert_secret_arn_secondary
+    tfe_tls_privkey_secret_arn_secondary = var.tfe_tls_privkey_secret_arn_secondary == null ? "" : var.tfe_tls_privkey_secret_arn_secondary
+    tfe_tls_ca_bundle_secret_arn         = var.tfe_tls_ca_bundle_secret_arn
+    tfe_encryption_password_secret_arn   = var.tfe_encryption_password_secret_arn
+    tfe_image_repository_url             = var.tfe_image_repository_url
+    tfe_image_name                       = var.tfe_image_name
+    tfe_image_tag                        = var.tfe_image_tag
+    tfe_image_repository_username        = var.tfe_image_repository_username
+    tfe_image_repository_password        = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
+    container_runtime                    = var.container_runtime
+    docker_version                       = var.docker_version
 
     # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
     # Application settings
     tfe_hostname                  = var.tfe_fqdn
+    tfe_hostname_secondary        = var.tfe_fqdn_secondary == null ? "" : var.tfe_fqdn_secondary
     tfe_operational_mode          = var.tfe_operational_mode
     tfe_capacity_concurrency      = var.tfe_capacity_concurrency
     tfe_capacity_cpu              = var.tfe_capacity_cpu
@@ -107,12 +110,14 @@ locals {
     tfe_redis_use_tls  = var.tfe_operational_mode == "active-active" && var.redis_transit_encryption_enabled ? true : false
 
     # TLS settings
-    tfe_tls_cert_file      = "/etc/ssl/private/terraform-enterprise/cert.pem"
-    tfe_tls_key_file       = "/etc/ssl/private/terraform-enterprise/key.pem"
-    tfe_tls_ca_bundle_file = "/etc/ssl/private/terraform-enterprise/bundle.pem"
-    tfe_tls_enforce        = var.tfe_tls_enforce
-    tfe_tls_ciphers        = "" # Leave blank to use the default ciphers
-    tfe_tls_version        = "" # Leave blank to use both TLS v1.2 and TLS v1.3
+    tfe_tls_cert_file           = "/etc/ssl/private/terraform-enterprise/cert.pem"
+    tfe_tls_key_file            = "/etc/ssl/private/terraform-enterprise/key.pem"
+    tfe_tls_cert_file_secondary = var.tfe_tls_cert_secret_arn_secondary == null ? "" : "/etc/ssl/private/terraform-enterprise/cert_secondary.pem"
+    tfe_tls_key_file_secondary  = var.tfe_tls_privkey_secret_arn_secondary == null ? "" : "/etc/ssl/private/terraform-enterprise/key_secondary.pem"
+    tfe_tls_ca_bundle_file      = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_enforce             = var.tfe_tls_enforce
+    tfe_tls_ciphers             = "" # Leave blank to use the default ciphers
+    tfe_tls_version             = "" # Leave blank to use both TLS v1.2 and TLS v1.3
 
     # Observability settings
     tfe_log_forwarding_enabled = var.tfe_log_forwarding_enabled
@@ -137,11 +142,14 @@ locals {
     tfe_iact_trusted_proxies = var.tfe_iact_trusted_proxies == null ? "" : var.tfe_iact_trusted_proxies
 
     # Network settings
-    http_proxy           = var.http_proxy != null ? var.http_proxy : ""
-    https_proxy          = var.https_proxy != null ? var.https_proxy : ""
-    no_proxy             = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
-    tfe_ipv6_enabled     = var.tfe_ipv6_enabled
-    tfe_admin_https_port = var.tfe_admin_https_port
+    http_proxy                   = var.http_proxy != null ? var.http_proxy : ""
+    https_proxy                  = var.https_proxy != null ? var.https_proxy : ""
+    no_proxy                     = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
+    tfe_ipv6_enabled             = var.tfe_ipv6_enabled
+    tfe_oidc_hostname_choice     = var.tfe_oidc_hostname_choice
+    tfe_vcs_hostname_choice      = var.tfe_vcs_hostname_choice
+    tfe_run_task_hostname_choice = var.tfe_run_task_hostname_choice
+    tfe_admin_https_port         = var.tfe_admin_https_port
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
@@ -226,6 +234,21 @@ resource "aws_launch_template" "tfe" {
 #------------------------------------------------------------------------------
 # Autoscaling group
 #------------------------------------------------------------------------------
+locals {
+  tg_arn_primary = var.lb_type == "alb" ? aws_lb_target_group.alb_443[0].arn : aws_lb_target_group.nlb_443[0].arn
+
+  tg_arn_secondary = (
+    var.tfe_fqdn_secondary != null && var.lb_type_secondary == "alb" ? aws_lb_target_group.alb_443_secondary[0].arn :
+    var.tfe_fqdn_secondary != null && var.lb_type_secondary == "nlb" ? aws_lb_target_group.nlb_443_secondary[0].arn :
+    null
+  )
+
+  lb_target_group_arns = compact([
+    local.tg_arn_primary,
+    local.tg_arn_secondary
+  ])
+}
+
 resource "aws_autoscaling_group" "tfe" {
   name                      = "${var.friendly_name_prefix}-tfe-asg"
   min_size                  = 0
@@ -240,7 +263,7 @@ resource "aws_autoscaling_group" "tfe" {
     version = "$Latest"
   }
 
-  target_group_arns = [var.lb_type == "alb" ? aws_lb_target_group.alb_443[0].arn : aws_lb_target_group.nlb_443[0].arn]
+  target_group_arns = local.lb_target_group_arns
 
   tag {
     key                 = "Name"
@@ -274,7 +297,20 @@ resource "aws_security_group_rule" "ec2_allow_ingress_tfe_https_from_lb" {
   to_port                  = 443
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_allow_ingress.id
-  description              = "Allow TCP/443 (HTTPS) inbound to TFE EC2 instances from TFE load balancer."
+  description              = "Allow TCP/443 (HTTPS) inbound to TFE EC2 instances from primary TFE load balancer."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+
+resource "aws_security_group_rule" "ec2_allow_ingress_tfe_https_from_lb_secondary" {
+  count = var.tfe_fqdn_secondary != null && var.cidr_allow_ingress_tfe_lb_secondary_443 != null ? 1 : 0
+  
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lb_secondary_allow_ingress[0].id
+  description              = "Allow TCP/443 (HTTPS) inbound to TFE EC2 instances from secondary TFE load balancer."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }

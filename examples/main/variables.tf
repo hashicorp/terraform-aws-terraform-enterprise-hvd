@@ -44,12 +44,34 @@ variable "tfe_license_secret_arn" {
 
 variable "tfe_tls_cert_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  description = "ARN of AWS Secrets Manager secret for primary TFE hostname (FQDN) TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
 }
 
 variable "tfe_tls_privkey_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  description = "ARN of AWS Secrets Manager secret for primary TFE hostname (FQDN) TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+}
+
+variable "tfe_tls_cert_secret_arn_secondary" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for optional, secondary TFE hostname (FQDN) TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  default     = null
+
+  validation {
+    condition     = var.tfe_fqdn_secondary != null ? var.tfe_tls_cert_secret_arn_secondary != null : true
+    error_message = "Value must be set when `tfe_fqdn_secondary` is not `null`."
+  }
+}
+
+variable "tfe_tls_privkey_secret_arn_secondary" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for optional, secondary TFE hostname (FQDN) TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  default     = null
+
+  validation {
+    condition     = var.tfe_fqdn_secondary != null ? var.tfe_tls_privkey_secret_arn_secondary != null : true
+    error_message = "Value must be set when `tfe_fqdn_secondary` is not `null`."
+  }
 }
 
 variable "tfe_tls_ca_bundle_secret_arn" {
@@ -124,6 +146,13 @@ variable "tfe_fqdn" {
   type        = string
   description = "Fully qualified domain name (FQDN) of TFE instance. This name should resolve to the DNS name or IP address of the TFE load balancer and will be what clients use to access TFE."
 }
+
+variable "tfe_fqdn_secondary" {
+  type        = string
+  description = "Fully qualified domain name (FQDN) of optional, secondary TFE hostname that is used for external-facing endpoints if the primary hostname and load balancer are internal. This name should resolve to the DNS name or IP address of the secondary, external-facing TFE load balancer."
+  default     = null
+}
+
 
 variable "tfe_capacity_concurrency" {
   type        = number
@@ -272,13 +301,61 @@ variable "tfe_ipv6_enabled" {
 }
 
 variable "tfe_admin_https_port" {
-  type         = number
-  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
-  default      = 9443
+  type        = number
+  description = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default     = 9443
 
   validation {
     condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
     error_message = "`tfe_admin_https_port` must not be the same as `tfe_https_port` or `tfe_http_port` to avoid conflicts."
+  }
+}
+
+variable "tfe_oidc_hostname_choice" {
+  type        = string
+  description = "Specifies which hostname Terraform Enterprise should use to federate OIDC workloads for OIDC-related integrations. Valid values are `primary` or `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = var.tfe_oidc_hostname_choice == "primary" || var.tfe_oidc_hostname_choice == "secondary"
+    error_message = "Value must be `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_fqdn_secondary == null ? var.tfe_oidc_hostname_choice == "primary" : true
+    error_message = "Value must be `primary` when `tfe_fqdn_secondary` is `null`."
+  }
+}
+
+variable "tfe_vcs_hostname_choice" {
+  type        = string
+  description = "Specifies which hostname TFE should use to federate version control system (VCS) workloads for VCS-related integrations. Valid values are `primary` or `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = var.tfe_vcs_hostname_choice == "primary" || var.tfe_vcs_hostname_choice == "secondary"
+    error_message = "Value must be `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_fqdn_secondary == null ? var.tfe_vcs_hostname_choice == "primary" : true
+    error_message = "Value must be `primary` when `tfe_fqdn_secondary` is `null`."
+  }
+}
+
+variable "tfe_run_task_hostname_choice" {
+  type        = string
+  description = "Specifies which hostname TFE should use to federate run task workloads for custom integrations. Valid values are `primary` or `secondary`."
+  default     = "primary"
+
+  validation {
+    condition     = var.tfe_run_task_hostname_choice == "primary" || var.tfe_run_task_hostname_choice == "secondary"
+    error_message = "Value must be `primary` or `secondary`."
+  }
+
+  validation {
+    condition     = var.tfe_fqdn_secondary == null ? var.tfe_run_task_hostname_choice == "primary" : true
+    error_message = "Value must be `primary` when `tfe_fqdn_secondary` is `null`."
   }
 }
 
@@ -292,22 +369,28 @@ variable "vpc_id" {
 
 variable "lb_subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherwise, these should be private subnets."
+  description = "List of subnet IDs for the primary TFE load balancer. When `lb_is_internal` is `true`, these should reference private subnets; otherwise, public subnets."
+}
+
+variable "lb_secondary_subnet_ids" {
+  type        = list(string)
+  description = "List of subnet IDs for the optional, secondary TFE load balancer. When `lb_secondary_is_internal` is `false`, these should reference public subnets; otherwise, private subnets. In most cases, these should be public subnets."
+  default     = null
 }
 
 variable "ec2_subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs to use for the EC2 instance. Private subnets is the best practice here."
+  description = "List of subnet IDs for the EC2 instance. Private subnets is the best practice here."
 }
 
 variable "rds_subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs to use for RDS database subnet group. Private subnets is the best practice here."
+  description = "List of subnet IDs for the RDS database subnet group. Private subnets is the best practice here."
 }
 
 variable "redis_subnet_ids" {
   type        = list(string)
-  description = "List of subnet IDs to use for Redis cluster subnet group. Private subnets is the best practice here."
+  description = "List of subnet IDs for Redis cluster subnet group. Private subnets is the best practice here."
   default     = []
 
   validation {
@@ -318,7 +401,7 @@ variable "redis_subnet_ids" {
 
 variable "lb_type" {
   type        = string
-  description = "Indicates which type of AWS load balancer is created: Application Load Balancer (`alb`) or Network Load Balancer (`nlb`)."
+  description = "Indicates which type of AWS load balancer is created for the primary TFE load balancer: Application Load Balancer (`alb`) or Network Load Balancer (`nlb`)."
   default     = "nlb"
 
   validation {
@@ -327,10 +410,27 @@ variable "lb_type" {
   }
 }
 
+variable "lb_type_secondary" {
+  type        = string
+  description = "Indicates which type of AWS load balancer is created for the optional, secondary TFE load balancer: Application Load Balancer (`alb`) or Network Load Balancer (`nlb`)."
+  default     = "nlb"
+
+  validation {
+    condition     = var.lb_type_secondary == "alb" || var.lb_type == "nlb"
+    error_message = "Supported values are `alb` or `nlb`."
+  }
+}
+
 variable "lb_is_internal" {
   type        = bool
-  description = "Boolean to create an internal (private) load balancer. The `lb_subnet_ids` must be private subnets when this is `true`."
+  description = "Boolean to configure primary TFE load balancer as internal-facing. When `true`, `lb_subnet_ids` must reference private subnets."
   default     = true
+}
+
+variable "lb_secondary_is_internal" {
+  type        = bool
+  description = "Boolean to configure optional, secondary TFE load balancer as internal-facing. When `false`, `lb_secondary_subnet_ids` must reference public subnets. In most cases, this should remain `false` to allow external access to the secondary TFE load balancer when the primary TFE load balancer is internal-facing."
+  default     = false
 }
 
 variable "lb_stickiness_enabled" {
@@ -341,7 +441,7 @@ variable "lb_stickiness_enabled" {
 
 variable "tfe_alb_tls_certificate_arn" {
   type        = string
-  description = "ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`."
+  description = "ARN of existing ACM TLS certificate corresponding to `tfe_fqdn` to be used for primary application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`."
   default     = null
 
   validation {
@@ -355,10 +455,37 @@ variable "tfe_alb_tls_certificate_arn" {
   }
 }
 
-variable "cidr_allow_ingress_tfe_443" {
+variable "tfe_alb_secondary_tls_certificate_arn" {
+  type        = string
+  description = "ARN of existing ACM TLS certificate corresponding to `tfe_fqdn_secondary` used for optional, secondary application load balancer (ALB) HTTPS listeners. Required when `lb_type_secondary` is `alb`."
+  default     = null
+
+  validation {
+    condition     = var.lb_type_secondary == "alb" ? var.tfe_alb_secondary_tls_certificate_arn != null : true
+    error_message = "Value must be set when `lb_type_secondary` is `alb`."
+  }
+
+  validation {
+    condition     = var.lb_type_secondary == "nlb" ? var.tfe_alb_secondary_tls_certificate_arn == null : true
+    error_message = "Value must be `null` when `lb_type_secondary` is `nlb`."
+  }
+}
+
+variable "cidr_allow_ingress_tfe_lb_443" {
   type        = list(string)
   description = "List of CIDR ranges allowed to access the TFE application over HTTPS (port 443)."
   default     = ["0.0.0.0/0"]
+}
+
+variable "cidr_allow_ingress_tfe_lb_secondary_443" {
+  type        = list(string)
+  description = "List of CIDR ranges allowed to access the optional, secondary TFE load balancer over HTTPS (port 443)."
+  default     = null
+
+  validation {
+    condition     = var.tfe_fqdn_secondary != null ? var.cidr_allow_ingress_tfe_lb_secondary_443 != null : true
+    error_message = "Value must be set when `tfe_fqdn_secondary` is not `null`."
+  }
 }
 
 variable "cidr_allow_ingress_ec2_ssh" {
@@ -462,13 +589,13 @@ variable "additional_no_proxy" {
 #------------------------------------------------------------------------------
 variable "create_route53_tfe_dns_record" {
   type        = bool
-  description = "Boolean to create Route53 Alias Record for `tfe_hostname` resolving to Load Balancer DNS name. If `true`, `route53_tfe_hosted_zone_name` is also required."
+  description = "Boolean to create Route53 alias record for `tfe_fqdn` resolving to the primary TFE load balancer DNS name. When `true`, `route53_tfe_hosted_zone_name` must also be set."
   default     = false
 }
 
 variable "route53_tfe_hosted_zone_name" {
   type        = string
-  description = "Route53 Hosted Zone name to create `tfe_hostname` Alias record in. Required if `create_route53_tfe_dns_record` is `true`."
+  description = "Name of Route53 hosted zone in which to create `tfe_fqdn` alias record in. Required when `create_route53_tfe_dns_record` is `true`."
   default     = null
 
   validation {
@@ -479,8 +606,41 @@ variable "route53_tfe_hosted_zone_name" {
 
 variable "route53_tfe_hosted_zone_is_private" {
   type        = bool
-  description = "Boolean indicating if `route53_tfe_hosted_zone_name` is a private hosted zone."
+  description = "Boolean indicating whether `route53_tfe_hosted_zone_name` refers to a private hosted zone. Must be `true` when `lb_is_internal` is `true`."
+  default     = true
+
+  validation {
+    condition     = var.lb_is_internal ? var.route53_tfe_hosted_zone_is_private : true
+    error_message = "Value must be `true` when `lb_is_internal` is `true`."
+  }
+}
+
+variable "create_route53_tfe_secondary_dns_record" {
+  type        = bool
+  description = "Boolean to create Route53 alias record for `tfe_fqdn_secondary` resolving to the optional, secondary TFE load balancer DNS name. When `true`, `route53_tfe_secondary_hosted_zone_name` must also be set."
   default     = false
+}
+
+variable "route53_tfe_secondary_hosted_zone_name" {
+  type        = string
+  description = "Name of Route53 hosted zone in which to create `tfe_fqdn_secondary` alias record in. Required when `create_route53_tfe_secondary_dns_record` is `true`."
+  default     = null
+
+  validation {
+    condition     = var.create_route53_tfe_secondary_dns_record ? var.route53_tfe_secondary_hosted_zone_name != null : true
+    error_message = "Value must be set when `create_route53_tfe_secondary_dns_record` is `true`."
+  }
+}
+
+variable "route53_tfe_secondary_hosted_zone_is_private" {
+  type        = bool
+  description = "Boolean indicating whether `route53_tfe_secondary_hosted_zone_name` refers to a private hosted zone. Must be `false` when `lb_secondary_is_internal` is `false`. In most cases, the secondary hosted zone should be public and this should remain `false`."
+  default     = false
+
+  validation {
+    condition     = !var.lb_secondary_is_internal ? !var.route53_tfe_secondary_hosted_zone_is_private : true
+    error_message = "Value must be `false` when `lb_secondary_is_internal` is `false`."
+  }
 }
 
 #------------------------------------------------------------------------------

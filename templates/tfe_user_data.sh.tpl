@@ -125,15 +125,16 @@ function install_podman {
   local OS_DISTRO="$1"
   local OS_MAJOR_VERSION="$2"
 
-  if command -v podman > /dev/null; then
-    log "INFO" "Detected 'podman' is already installed. Skipping."
+  if command -v podman > /dev/null && rpm -q podman-docker > /dev/null; then
+    log "INFO" "Detected 'podman' and 'podman-docker' are already installed. Skipping."
   else
     if [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
-      log "INFO" "Installing Podman for RHEL $OS_MAJOR_VERSION."
       dnf update -y
       if [[ "$OS_MAJOR_VERSION" == "9" ]]; then
+        log "INFO" "Installing Podman meta-package ('container-tools') group for RHEL $OS_MAJOR_VERSION."
         dnf install -y container-tools
       elif [[ "$OS_MAJOR_VERSION" == "8" ]]; then
+        log "INFO" "Installing Podman via 'container-tools' module and 'podman-docker' for RHEL $OS_MAJOR_VERSION."
         dnf module install -y container-tools
         dnf install -y podman-docker
       else
@@ -144,8 +145,8 @@ function install_podman {
       log "ERROR" "Podman install for $OS_DISTRO $OS_MAJOR_VERSION is currently not supported."
       exit_script 3
     fi
-    systemctl enable --now podman.socket
   fi
+  systemctl enable --now podman.socket
 }
 
 function retrieve_license_from_awssm {
@@ -205,6 +206,9 @@ services:
     environment:
       # Application settings
       TFE_HOSTNAME: ${tfe_hostname}
+%{ if tfe_hostname_secondary != "" ~}
+      TFE_HOSTNAME_SECONDARY: ${tfe_hostname_secondary}
+%{ endif ~}
       TFE_LICENSE: $TFE_LICENSE
       TFE_LICENSE_PATH: ""
       TFE_OPERATIONAL_MODE: ${tfe_operational_mode}
@@ -254,6 +258,10 @@ services:
       # TLS settings
       TFE_TLS_CERT_FILE: ${tfe_tls_cert_file}
       TFE_TLS_KEY_FILE: ${tfe_tls_key_file}
+%{ if tfe_tls_cert_file_secondary != "" && tfe_tls_key_file_secondary != "" ~}
+      TFE_TLS_CERT_FILE_SECONDARY: ${tfe_tls_cert_file_secondary}
+      TFE_TLS_KEY_FILE_SECONDARY: ${tfe_tls_key_file_secondary}
+%{ endif ~}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
       TFE_TLS_ENFORCE: ${tfe_tls_enforce}
@@ -288,6 +296,9 @@ services:
       no_proxy: "$NO_PROXY"
 %{ endif ~}
       TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
+      TFE_OIDC_HOSTNAME_CHOICE: ${tfe_oidc_hostname_choice}
+      TFE_VCS_HOSTNAME_CHOICE: ${tfe_vcs_hostname_choice}
+      TFE_RUN_TASK_HOSTNAME_CHOICE: ${tfe_run_task_hostname_choice}
       TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
 
 %{ if tfe_hairpin_addressing ~}
@@ -357,6 +368,10 @@ spec:
     # Application settings
     - name: "TFE_HOSTNAME"
       value: ${tfe_hostname}
+%{ if tfe_hostname_secondary != "" ~}
+    - name: "TFE_HOSTNAME_SECONDARY"
+      value: ${tfe_hostname_secondary}
+%{ endif ~}
     - name: "TFE_LICENSE"
       value: $TFE_LICENSE
     - name: "TFE_LICENSE_PATH"
@@ -441,6 +456,12 @@ spec:
       value: ${tfe_tls_cert_file}
     - name: "TFE_TLS_KEY_FILE"
       value: ${tfe_tls_key_file}
+%{ if tfe_tls_cert_file_secondary != "" && tfe_tls_key_file_secondary != "" ~}
+    - name: "TFE_TLS_CERT_FILE_SECONDARY"
+      value: ${tfe_tls_cert_file_secondary}
+    - name: "TFE_TLS_KEY_FILE_SECONDARY"
+      value: ${tfe_tls_key_file_secondary}
+%{ endif ~}
     - name: "TFE_TLS_CA_BUNDLE_FILE"
       value: ${tfe_tls_ca_bundle_file}
     - name: "TFE_TLS_CIPHERS"
@@ -496,6 +517,12 @@ spec:
 %{ endif ~}
     - name: "TFE_IPV6_ENABLED"
       value: ${tfe_ipv6_enabled}
+    - name: "TFE_OIDC_HOSTNAME_CHOICE"
+      value: ${tfe_oidc_hostname_choice}
+    - name: "TFE_VCS_HOSTNAME_CHOICE"
+      value: ${tfe_vcs_hostname_choice}
+    - name: "TFE_RUN_TASK_HOSTNAME_CHOICE"
+      value: ${tfe_run_task_hostname_choice}
     - name: "TFE_ADMIN_HTTPS_PORT"
       value: ${tfe_admin_https_port}
 
@@ -546,7 +573,7 @@ spec:
   restartPolicy: "Never"
   volumes:
 %{ if tfe_log_forwarding_enabled ~}
-  - hostpath:
+  - hostPath:
       path: "$TFE_LOG_FORWARDING_CONFIG_PATH"
       type: "File"
     name: "fluent-bit"
@@ -672,10 +699,18 @@ function main {
   log "INFO" "Retrieving TFE license file..."
   retrieve_license_from_awssm "${tfe_license_secret_arn}"
 
-  log "INFO" "Retrieving TFE TLS certificate..."
+  log "INFO" "Retrieving TLS certificate for primary TFE hostname..."
   retrieve_certs_from_awssm "${tfe_tls_cert_secret_arn}" "$TFE_TLS_CERTS_DIR/cert.pem"
-  log "INFO" "Retrieving TFE TLS private key..."
+  log "INFO" "Retrieving TLS private key for primary TFE hostname..."
   retrieve_certs_from_awssm "${tfe_tls_privkey_secret_arn}" "$TFE_TLS_CERTS_DIR/key.pem"
+  if [[ "${tfe_tls_cert_secret_arn_secondary}" != "" ]]; then
+    log "INFO" "Retrieving TLS certificate for secondary TFE hostname..."
+    retrieve_certs_from_awssm "${tfe_tls_cert_secret_arn_secondary}" "$TFE_TLS_CERTS_DIR/cert_secondary.pem"
+  fi
+  if [[ "${tfe_tls_privkey_secret_arn_secondary}" != "" ]]; then  
+    log "INFO" "Retrieving TLS private key for secondary TFE hostname..."
+    retrieve_certs_from_awssm "${tfe_tls_privkey_secret_arn_secondary}" "$TFE_TLS_CERTS_DIR/key_secondary.pem"
+  fi
   log "INFO" "Retrieving TFE TLS CA bundle..."
   retrieve_certs_from_awssm "${tfe_tls_ca_bundle_secret_arn}" "$TFE_TLS_CERTS_DIR/bundle.pem"
 
