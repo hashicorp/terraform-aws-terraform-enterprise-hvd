@@ -1,0 +1,130 @@
+version: '3'
+
+env:
+  TERM: screen-256color
+dotenv:
+  - ".env.local"
+
+tasks:
+  default:
+    desc: List all tasks
+    cmds:
+      - task --list-all
+
+  test:
+    desc: Run tests.
+    cmds:
+      - task: test-terraform
+
+  clean:
+    desc: Clean the environment.
+    cmds:
+      - task: clean-terraform
+
+  terraform-docs:
+    desc: Update terraform docs
+    preconditions:
+      - sh: test -f ".terraform-docs.yml"
+        msg: '.terraform-docs.yml required. Run "task generate-terraform-docs-config" to create it.'
+    cmds:
+      - cat .terraform-docs.yml
+      - terraform-docs .
+
+  generate-terraform-docs-config:
+    desc: Generate terraform docs configuration
+    cmds:
+      - |
+        cat << EOF > .terraform-docs.yml
+        formatter: "markdown table"
+        sort:
+          by: required
+        output:
+          file: README.md
+        settings:
+          hide-empty: true
+          lockfile: false
+        EOF
+
+
+  clean-terraform:
+    desc: Clean the terraform environment (remove terraform directories and files)
+    cmds:
+      - find . -type d -name .terraform -exec rm -rf {} +
+      - find . -type f -name .terraform.lock.hcl -delete
+
+  test-terraform:
+    desc: Run tests for all terraform directories.
+    silent: true
+    env:
+      DIRECTORIES:
+        sh: find . -path '*/.terraform/*' -prune -o -name '*.tf' -type f -exec dirname {} \; | sort -u
+    cmds:
+      - |
+        BOLD=$(tput bold)
+        NORM=$(tput sgr0)
+
+        CWD=$PWD
+
+        for d in $DIRECTORIES; do
+          cd $d
+          echo "${BOLD}$PWD:${NORM}"
+
+          if ! terraform fmt -check=true -list=false -recursive=false; then
+            echo "  ✗ terraform fmt" && exit 1
+          else
+            echo "  √ terraform fmt"
+          fi
+
+          if ! terraform init -backend=false -input=false -get=true -no-color > /dev/null; then
+            echo "  ✗ terraform init" && exit 1
+          else
+            echo "  √ terraform init"
+          fi
+
+          if ! terraform validate > /dev/null; then
+            echo "  ✗ terraform validate" && exit 1
+          else
+            echo "  √ terraform validate"
+          fi
+
+          cd $CWD
+        done
+
+  release:
+    desc: Create a new release.
+    preconditions:
+      - sh: test -x "$(which gh 2>/dev/null)"
+        msg: 'GH CLI required. See https://cli.github.com/.'
+      - sh: test -n "{{.MOD_RELEASE}}"
+        msg: 'MOD_RELEASE environment variable required. MOD_RELEASE should be a semver tag like `1.2.3`` and greater than current tag {{.PREV_TAG}}. either pass with `MOD_RELEASE=1.2.3 task release` or set in .env.local file.'
+    vars:
+      MOD_REPO:
+        sh: echo "${PWD##*/}"
+      REPO_OWNER:
+        sh: git config --local remote.origin.url | cut -d':' -f2 | cut -d'/' -f1
+      PREV_TAG:
+        sh: git describe --tags $(git rev-list --tags --max-count=1)
+    env:
+      MOD_RELEASE: '{{.MOD_RELEASE}}'
+    cmds:
+      - |
+        export MOD_REPO="{{.MOD_REPO}}"
+        export MOD_RELEASE="{{.MOD_RELEASE}}"
+        export REPO_OWNER="{{.REPO_OWNER}}"
+        echo "Releasing {{.REPO_OWNER}}/{{.MOD_REPO}} version {{.MOD_RELEASE}}"
+      - git checkout -b rel-${MOD_RELEASE}
+      - |
+        python .github/scripts/markdown-url-converter/markdown-url-converter.py --repo="{{.REPO_OWNER}}/{{.MOD_REPO}}" --release="{{.MOD_RELEASE}}" --overwrite .
+      - git commit  --allow-empty -am "Release version ${MOD_RELEASE}"
+      - git tag -a ${MOD_RELEASE} -m "${MOD_RELEASE} release"
+      - git revert HEAD --no-edit -n
+      - git push origin --tags
+      - git push origin rel-${MOD_RELEASE}
+      - |
+        gh release create {{.MOD_RELEASE}} \
+        --repo {{.REPO_OWNER}}/{{.MOD_REPO}} \
+        --title "{{.MOD_RELEASE}}" \
+        --generate-notes --notes-start-tag {{.PREV_TAG}} --verify-tag
+      - git push origin --delete rel-${MOD_RELEASE}
+      - git checkout main
+      - git branch -D rel-${MOD_RELEASE}
