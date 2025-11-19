@@ -387,6 +387,7 @@ No modules.
 | <a name="input_s3_enable_bucket_replication"></a> [s3\_enable\_bucket\_replication](#input\_s3\_enable\_bucket\_replication) | Boolean to enable cross-region replication for TFE S3 bucket. An `s3_destination_bucket_arn` is required when `true`. | `bool` | `false` | no |
 | <a name="input_s3_enable_bucket_replication_bidirectional"></a> [s3\_enable\_bucket\_replication\_bidirectional](#input\_s3\_enable\_bucket\_replication\_bidirectional) | Enables bidirectional replication from secondary region to primary region. Only valid when `s3_enable_bucket_replication` and  `is_secondary_region` are true. | `bool` | `false` | no |
 | <a name="input_s3_enable_bucket_replication_rtc"></a> [s3\_enable\_bucket\_replication\_rtc](#input\_s3\_enable\_bucket\_replication\_rtc) | Boolean to enable real-time change (RTC) monitoring for TFE S3 bucket replication. Only valid when `s3_enable_bucket_replication` is `true`. | `bool` | `false` | no |
+| <a name="input_s3_force_destroy"></a> [s3\_force\_destroy](#input\_s3\_force\_destroy) | Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects. | `bool` | `false` | no |
 | <a name="input_s3_kms_key_arn"></a> [s3\_kms\_key\_arn](#input\_s3\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE S3 bucket with. | `string` | `null` | no |
 | <a name="input_s3_log_fwd_bucket_name"></a> [s3\_log\_fwd\_bucket\_name](#input\_s3\_log\_fwd\_bucket\_name) | Name of S3 bucket to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
 | <a name="input_tfe_admin_https_port"></a> [tfe\_admin\_https\_port](#input\_tfe\_admin\_https\_port) | Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port. | `number` | `9443` | no |
@@ -433,7 +434,6 @@ No modules.
 | <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
-| <a name="input_s3_force_destroy"></a> [s3\_force\_destroy](#input\_s3\_force\_destroy) | Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects. | `bool` | `false` | no |
 
 ## Outputs
 
