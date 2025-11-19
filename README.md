@@ -433,6 +433,7 @@ No modules.
 | <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
+| <a name="input_s3_force_destroy"></a> [s3\_force\_destroy](#input\_s3\_force\_destroy) | Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects. | `bool` | `false` | no |
 
 ## Outputs
 
