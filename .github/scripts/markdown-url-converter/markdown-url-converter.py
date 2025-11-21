@@ -7,6 +7,44 @@ from pathlib import Path
 from typing import List, Tuple
 import argparse
 
+"""
+Markdown URL Converter
+
+This script converts relative URLs in Markdown files to absolute URLs. It's useful
+for preparing documentation that will be displayed in different contexts (e.g., on
+GitHub, documentation websites, or repositories).
+
+The script supports:
+  - Converting relative links to absolute URLs using a base URL
+  - Generating GitHub URLs from repository and release information
+  - Processing single files or entire directory trees
+  - Dry-run mode to preview changes without modifying files
+  - Overwriting original files or creating new files with _converted suffix
+
+Supported Markdown URL formats:
+  - Inline links: [text](url)
+  - Image links: ![alt](image-url)
+  - Reference-style definitions: [text]: url
+
+Usage examples:
+  # Convert using a base URL
+  python3 markdown-url-converter.py ./docs --base-url https://example.com/docs/
+
+  # Convert using GitHub repository info
+  python3 markdown-url-converter.py ./docs --repo owner/repo --release main
+
+  # Dry run to preview changes
+  python3 markdown-url-converter.py ./docs --base-url https://example.com/ --dry-run
+
+  # Overwrite original files
+  python3 markdown-url-converter.py ./docs --base-url https://example.com/ --overwrite
+
+Environment variables:
+  BASE_URL: Default base URL for relative links (can be overridden with --base-url)
+
+Author: HashiCorp
+"""
+
 def construct_github_url(repo: str, release: str) -> str:
     """
     Construct GitHub URL from repo and release information.

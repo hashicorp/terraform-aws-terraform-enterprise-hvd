@@ -8,14 +8,14 @@ to make via issue, email, or any other method with the owners of this repository
 Do note that this project has a code of conduct; please be sure to follow it
 in all of your project interactions.
 
-## Pull Request Process
+## Pull request process
 
 1. Ensure any install or build artifacts are removed before the end of
    the layer when doing a build
-2. Update the README.md, any relevant `./docs/`entry or `./examples` with details of changes to the
+1. Update the README.md, any relevant `./docs/`entry or `./examples` with details of changes to the
    interface, this includes running `terraform-docs` to update the `README.md`
-3. Releases use versioning tags. The versioning scheme we use is (mostly) [SemVer](http://semver.org/)
-4. You may merge the Pull Request in once you have the sign-off of two other
+1. Releases use versioning tags. The versioning scheme we use is (mostly) [SemVer](http://semver.org/)
+1. You may merge the pull request in once you have the sign-off of two other
    project contributors, or if you do not have permission to do that, you can
    request the second reviewer to merge it for you and release.
 
@@ -23,10 +23,9 @@ in all of your project interactions.
 
 There is a basic issue template to post issues.
 
-## Pull-request
+## Pull request
 
-The repo includes a pull-request template with basic requirments for testing and validation which we provide config for basic smoke test such as `terarform fmt, validate` and `terraform-docs`
-
+The repository includes a pull request template with basic requirements for testing and validation which we provide config for basic smoke test such as `terraform fmt`, `terraform validate` and `terraform-docs`
 
 ## Tooling
 
@@ -34,57 +33,42 @@ This repository uses [Task](https://taskfile.dev/) to manage development tasks.
 
 ### Requirements
 
-The `release` task requires;
+The `release` task requires the following.
 
 - Make sure you have Task installed before proceeding, <https://taskfile.dev/docs/installation>.
 - This also relies on the GitHub cli `GH`, <https://cli.github.com/>, do not forget to authenticate `gh`
 - The `markdown-url-converter.py` requires `python` in your `$PATH`.
 
-## Available Tasks
+## Available tasks
 
-You can list all available tasks by running:
+You can list all available tasks by running the following.
 
 ```bash
 task
 task default
 task --list-all
-```
 
 ## Testing
 
-To run all tests:
-
-```bash
-task test
-```
-
+To run all tests, run `task test`.
 This will run Terraform tests:
-- `task test-terraform`: Runs formatting checks, initialization, and validation for all Terraform directories
+- `task test-terraform`: Runs formatting checks, initialization, and validation for all Terraform directories.
 
 ## Cleaning
 
-To clean the environment:
-
-```bash
-task clean
-```
-
-This includes:
-- `task clean-terraform`: Removes Terraform directories and lock files
+To clean the environment, run `task clean`.
+This includes `task clean-terraform` which removes Terraform directories and lock files.
 
 ## Documentation
 
-To update Terraform documentation:
+To update Terraform documentation, run the following.
 
 ```bash
 task terraform-docs
 ```
 
-Note: This requires a `.terraform-docs.yml` configuration file. If you don't have one, you can generate it with:
+Note: This requires a `.terraform-docs.yml` configuration file. If you do not have one, you can generate it with `task generate-terraform-docs-config`.
 
-```bash
-task generate-terraform-docs-config
-```
 
 ## Creating a Release
 
@@ -100,13 +84,13 @@ Requirements:
 - `MOD_RELEASE` variable must be set to a valid semver tag (e.g., `1.2.3`), it can be set as an env var `export MOD_RELEASE`, in `env.local`, or passsed at the command line `MOD_RELEASE=x.x.x. task release`
 - The new version must be greater than the current tag
 
-The release process will:
+The release process will do the following.
 1. Create a release branch
-2. Update documentation URLs
-3. Create a tagged release
-4. Generate release notes
-5. Create a GitHub release
-6. Clean up the temporary release branch
+1. Update documentation URLs
+1. Create a tagged release
+1. Generate release notes
+1. Create a GitHub release
+1. Clean up the temporary release branch
 
 ```
 MOD_RELEASE=0.1.2 task release -n
@@ -134,9 +118,9 @@ task: [release] git push origin --delete rel-${MOD_RELEASE}
 > You can also set the `MOD_RELEASE` variable in a `.env.local` file for convenience.
 
 
-## Code of Conduct
+## Code of conduct
 
-### Our Pledge
+### Our pledge
 
 In the interest of fostering an open and welcoming environment, we as
 contributors and maintainers pledge to making participation in our project
@@ -145,27 +129,27 @@ body size, disability, ethnicity, gender identity and expression, level of
 experience, nationality, personal appearance, race, religion, or sexual
 identity and orientation.
 
-### Our Standards
+### Our standards
 
 Examples of behavior that contributes to creating a positive environment
 include:
 
-* Showing empathy towards other community members
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
+- Showing empathy towards other community members.
+- Using welcoming and inclusive language.
+- Being respectful of differing viewpoints and experiences.
+- Gracefully accepting constructive criticism.
+- Focusing on what is best for the community.
 
-Examples of unacceptable behavior by participants include:
+Examples of unacceptable behavior by participants include the following.
 
-* Use of sexualized language or imagery and unwelcome sexual attention
-  or advances
-* Insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
-  address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+- Use of sexualized language or imagery and unwelcome sexual attention
+  or advances.
+- Insulting/derogatory comments, and personal or political attacks.
+- Public or private harassment.
+- Publishing others' private information, such as a physical or electronic
+  address, without explicit permission.
+- Other conduct which could reasonably be considered inappropriate in a
+  professional setting.
 
 ### Our Responsibilities
 

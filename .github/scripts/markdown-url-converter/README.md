@@ -1,6 +1,6 @@
-# Markdown URL Converter
+# Markdown URL converter
 
-A Python script that converts relative URLs in Markdown files to absolute URLs. This is particularly useful for documentation that needs to reference files from a specific base URL, such as GitHub repository documentation or hosted documentation sites.
+A Python script that converts relative URLs in markdown files to absolute URLs. This is particularly useful for documentation that needs to reference files from a specific base URL, such as GitHub repository documentation or hosted documentation sites.
 
 ## Features
 
@@ -15,8 +15,8 @@ A Python script that converts relative URLs in Markdown files to absolute URLs. 
 ## Installation
 
 1. Ensure you have Python 3.6 or later installed
-2. Download the `convert_markdown_urls.py` script
-3. Make it executable (Unix-like systems):
+1. Download the `convert_markdown_urls.py` script
+1. Make it executable (Unix-like systems):
 
    ```bash
    chmod +x convert_markdown_urls.py
