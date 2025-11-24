@@ -850,6 +850,12 @@ variable "tfe_object_storage_s3_use_instance_profile" {
   default     = true
 }
 
+variable "s3_force_destroy" {
+  type        = bool
+  description = "Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects."
+  default     = false
+}
+
 variable "tfe_object_storage_s3_access_key_id" {
   type        = string
   description = "Access key ID for S3 bucket. Required when `tfe_object_storage_s3_use_instance_profile` is `false`."
