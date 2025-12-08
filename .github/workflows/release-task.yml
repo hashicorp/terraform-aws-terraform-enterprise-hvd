@@ -1,0 +1,25 @@
+name: Release Task
+on:
+  workflow_dispatch:
+    inputs:
+      mod_release:
+        description: 'Update the version and release `semver:major.minor.patch`, i.e. x.x.x format'
+        required: true
+        type: string
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+
+permissions:
+  actions: write
+  contents: write
+  packages: write
+  pull-requests: read
+  issues: read
+
+jobs:
+  release:
+    uses: hashicorp/hvd-module-gha/.github/workflows/release.yml@main
