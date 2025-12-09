@@ -6,6 +6,11 @@ on:
     types: [opened, closed, reopened]
   issue_comment: # Also triggers when commenting on a PR from the conversation view
     types: [created]
+
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   sync:
     uses: hashicorp/hvd-module-gha/.github/workflows/jira-sync.yml@main
