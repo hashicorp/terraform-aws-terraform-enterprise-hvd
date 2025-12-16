@@ -1,0 +1,26 @@
+- id: terraform_fmt
+  name: Terraform fmt
+  description: Rewrites all Terraform configuration files to a canonical format.
+  entry: .github/scripts/pre_commit_hooks/terraform_fmt.sh
+  language: script
+  files: (\.tf|\.tfvars)$
+  exclude: \.terraform\/.*$
+
+- id: terraform_validate
+  name: Terraform validate
+  description: Validates all Terraform configuration files.
+  entry: .github/scripts/pre_commit_hooks/terraform_validate.sh
+  language: script
+  files: (\.tf|\.tfvars)$
+  exclude: \.terraform\/.*$
+
+- id: terraform_tflint
+  name: Terraform validate with tflint
+  description: Validates all Terraform configuration files with TFLint.
+  entry: .github/scripts/pre_commit_hooks/terraform_tflint.sh
+  language: script
+  files: (\.tf|\.tfvars)$
+  exclude: \.terraform\/.*$
+
+# https://github.com/azrdo-github-ce/terraform-pre-commit/tree/master
+

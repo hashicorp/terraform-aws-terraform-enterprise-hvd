@@ -15,20 +15,31 @@ repos:
       exclude: "templates/.*"
     - id: check-vcs-permalinks
 
-- repo: https://github.com/antonbabenko/pre-commit-terraform
-  rev: v1.104.0
+- repo: local
   hooks:
     - id: terraform_fmt
-      name: Format Terraform Configuration
+      name: Terraform fmt
+      description: Rewrites all Terraform configuration files to a canonical format.
+      entry: .github/scripts/pre_commit_hooks/terraform_fmt.sh
+      language: script
+
+- repo: local
+  hooks:
     - id: terraform_validate
-      name: Validate Terraform Configuration
-      args:
-        - --hook-config=--retry-once-with-cleanup=true
-        - --envs=VAULT_ADDR="" # For local checks
-        - --envs=GITHUB_APP_ID=""
-        - --envs=GITHUB_APP_INSTALLATION_ID=""
-        - --envs=GITHUB_APP_PEM_FILE=""
+      name: Terraform validate
+      description: Validates all Terraform configuration files.
+      entry: .github/scripts/pre_commit_hooks/terraform_validate.sh
+      language: script
+
+- repo: local
+  hooks:
     - id: terraform_tflint
+      name: Terraform validate with tflint
+      description: Validates all Terraform configuration files with TFLint.
+      entry: .github/scripts/pre_commit_hooks/terraform_tflint.sh
+      language: script
+      files: (\.tf|\.tfvars)$
+      exclude: \.terraform\/.*$
       args:
         - '--args=--only=terraform_deprecated_interpolation'
         - '--args=--only=terraform_deprecated_index'
@@ -44,9 +55,11 @@ repos:
         # - '--args=--only=terraform_standard_module_structure'
         - '--args=--only=terraform_workspace_remote'
         - '--args=--config=.tflint.hcl'
-    - id: terraform_docs
-      name: Generate Terraform README files
+
+- repo: https://github.com/terraform-docs/terraform-docs
+  rev: "v0.21.0"             # e.g. "v0.11.2"
+  hooks:
+    - id: terraform-docs-go
       args:
-        - "--args=--config=.terraform-docs.yml"
-        - "--args=--lockfile=false"
-        - --hook-config=--create-file-if-not-exist=true
+       - "--args=--config=.terraform-docs.yml"
+      # - --hook-config=--create-file-if-not-exist=true
