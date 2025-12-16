@@ -105,67 +105,55 @@ This is an infrastructure module project and the Terraform AI-Assisted Developme
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
+specs/001-admin-console/
 ├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── research.md          # Phase 0 output - Admin console TFE docs, port selection, security patterns
+├── data-model.md        # Phase 1 output - Admin console configuration data model
+├── quickstart.md        # Phase 1 output - Quick start guide for operators
+└── contracts/           # Phase 1 output - Variable contracts, security group rules schema
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+# Terraform module structure (existing)
+/
+├── variables.tf         # NEW: Admin console variables (tfe_admin_console_*)
+├── compute.tf           # MODIFIED: Security group rules for admin console port
+├── load_balancer.tf     # NO CHANGES: Admin console bypasses LB (direct EC2 access)
+├── outputs.tf           # NEW: Admin console outputs (port, access pattern)
+├── templates/
+│   └── tfe_user_data.sh.tpl  # MODIFIED: Add admin console environment variables
+├── examples/
+│   └── admin-console-enabled/  # NEW: Example configuration
+│       ├── main.tf
+│       ├── variables.tf
+│       └── README.md
+├── tests/
+│   └── admin_console_test.go   # NEW: Integration tests
+└── README.md            # MODIFIED: Document new admin console variables
 
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+# Files NOT modified (no admin console impact)
+├── data.tf             # No changes needed
+├── iam.tf              # No changes needed (existing instance profile sufficient)
+├── rds_aurora.tf       # No changes needed
+├── redis.tf            # No changes needed
+├── route53.tf          # No changes needed
+├── s3.tf               # No changes needed
+└── versions.tf         # No changes needed
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Single Terraform module structure (existing pattern maintained). Admin console is a cross-cutting configuration feature that touches variables (new), compute (security groups), templates (user_data), outputs (new), and testing. This follows the existing module organization where features are integrated across multiple files by functional area rather than creating feature-specific modules.
 
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+**No complexity violations.** This feature introduces no architectural complexity beyond standard Terraform module patterns:
+
+- Variables, security groups, outputs follow existing module conventions
+- User data template modification follows established pattern
+- No new dependencies or infrastructure components
+- No deviation from HashiCorp best practices
+
+All changes are additive and maintain backward compatibility.
