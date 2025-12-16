@@ -5,7 +5,7 @@
 # Log forwarding (Fluent Bit) config
 #------------------------------------------------------------------------------
 locals {
-  // CloudWatch destination
+  # CloudWatch destination
   fluent_bit_cloudwatch_args = {
     aws_region                = data.aws_region.current.name
     cloudwatch_log_group_name = var.cloudwatch_log_group_name == null ? "" : var.cloudwatch_log_group_name
@@ -15,7 +15,7 @@ locals {
     : ""
   )
 
-  // S3 destination
+  # S3 destination
   fluent_bit_s3_args = {
     aws_region             = data.aws_region.current.name
     s3_log_fwd_bucket_name = var.s3_log_fwd_bucket_name == null ? "" : var.s3_log_fwd_bucket_name
@@ -25,13 +25,13 @@ locals {
     : ""
   )
 
-  // Custom destination
+  # Custom destination
   fluent_bit_custom_config = (var.tfe_log_forwarding_enabled && var.log_fwd_destination_type == "custom" ?
     var.custom_fluent_bit_config
     : ""
   )
 
-  // Final rendered config
+  # Final rendered config
   fluent_bit_rendered_config = join("", [local.fluent_bit_cloudwatch_config, local.fluent_bit_s3_config, local.fluent_bit_custom_config])
 }
 
@@ -152,17 +152,17 @@ locals {
 # Launch template
 #------------------------------------------------------------------------------
 locals {
-  // If an AMI ID is provided via `var.ec2_ami_id`, use it. Otherwise,
-  // use the latest AMI for the specified OS distro via `var.ec2_os_distro`.
+  # If an AMI ID is provided via `var.ec2_ami_id`, use it. Otherwise,
+  # use the latest AMI for the specified OS distro via `var.ec2_os_distro`.
   ami_id_list = tolist([
     var.ec2_ami_id,
-    join("", data.aws_ami.ubuntu.*.image_id),
-    join("", data.aws_ami.rhel.*.image_id),
-    join("", data.aws_ami.al2023.*.image_id),
+    join("", data.aws_ami.ubuntu[*].image_id),
+    join("", data.aws_ami.rhel[*].image_id),
+    join("", data.aws_ami.al2023[*].image_id),
   ])
 }
 
-// Query the specific AMI being used to retrieve root_device_name.
+# Query the specific AMI being used to retrieve root_device_name.
 data "aws_ami" "selected" {
   filter {
     name   = "image-id"

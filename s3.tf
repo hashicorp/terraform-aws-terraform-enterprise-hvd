@@ -5,9 +5,9 @@
 # S3 bucket
 #------------------------------------------------------------------------------
 resource "aws_s3_bucket" "tfe" {
-  bucket = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}"
   force_destroy = var.s3_force_destroy
-  
+
   tags = merge(
     { "Name" = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}" },
     var.common_tags
@@ -57,10 +57,11 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
     id     = "tfe-s3-crr"
     status = "Enabled"
 
-    // Filter, delete marker replication, and priority are required to be specified if RTC is enabled. 
-    // https://stackoverflow.com/questions/68537825/replicationtime-cannot-be-used-for-this-version-of-the-replication-configuration
-    // Nevertheless, using the defaults whether RTC is enabled or not. This is the same behavior the module had before.
-
+    # ------------------------------------------------------------------------------
+    # Filter, delete marker replication, and priority are required to be specified if RTC is enabled.
+    # https://stackoverflow.com/questions/68537825/replicationtime-cannot-be-used-for-this-version-of-the-replication-configuration
+    # Nevertheless, using the defaults whether RTC is enabled or not. This is the same behavior the module had before.
+    # ------------------------------------------------------------------------------
     filter {
     }
 
@@ -91,7 +92,7 @@ resource "aws_s3_bucket_replication_configuration" "tfe" {
         }
       }
 
-      # Optional decision, gives a better control over the replication and lowers the RPO. 
+      # Optional decision, gives a better control over the replication and lowers the RPO.
       # https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-time-control.html
       dynamic "replication_time" {
         for_each = var.s3_enable_bucket_replication_rtc ? [1] : []

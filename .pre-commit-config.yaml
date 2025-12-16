@@ -43,7 +43,7 @@ repos:
         - '--args=--only=terraform_required_providers'
         # - '--args=--only=terraform_standard_module_structure'
         - '--args=--only=terraform_workspace_remote'
-        - '--args=--config=./.tflint.hcl'
+        - '--args=--config=.tflint.hcl'
     - id: terraform_docs
       name: Generate Terraform README files
       args:
