@@ -328,25 +328,58 @@ data "aws_secretsmanager_secret_version" "tfe_admin_console_token" {
 
 **Template additions (tfe_user_data.sh.tpl):**
 
-Add environment variables section for admin console (location: after TFE network settings section):
+The template generates Docker Compose and Podman manifest configuration files, not shell exports.
 
-```bash
+**For Docker Compose (function generate_tfe_docker_compose_config):**
+
+Add to environment section (location: after TFE_ADMIN_HTTPS_PORT, line ~291):
+
+```yaml
 %{ if tfe_admin_console_enabled ~}
-# Admin Console configuration
-export TFE_ADMIN_CONSOLE_ENABLED="true"
-export TFE_ADMIN_CONSOLE_PORT="${tfe_admin_console_port}"
+      # Admin Console settings
+      TFE_ADMIN_CONSOLE_ENABLED: "true"
+      TFE_ADMIN_CONSOLE_PORT: ${tfe_admin_console_port}
 %{ if tfe_admin_console_token != "" ~}
-export TFE_ADMIN_CONSOLE_TOKEN="${tfe_admin_console_token}"
+      TFE_ADMIN_CONSOLE_TOKEN: ${tfe_admin_console_token}
 %{ endif ~}
-export TFE_ADMIN_CONSOLE_TOKEN_TIMEOUT="${tfe_admin_console_token_timeout}"
+      TFE_ADMIN_CONSOLE_TOKEN_TIMEOUT: ${tfe_admin_console_token_timeout}
 %{ endif ~}
 ```
 
-Add port mapping to container run command (location: in Docker/Podman run command section):
+Add to ports section (location: after metrics ports, line ~314):
 
-```bash
+```yaml
 %{ if tfe_admin_console_enabled ~}
-  -p ${tfe_admin_console_port}:${tfe_admin_console_port} \
+      - ${tfe_admin_console_port}:${tfe_admin_console_port}
+%{ endif ~}
+```
+
+**For Podman manifest (function generate_tfe_podman_manifest):**
+
+Add to env list (location: after TFE_ADMIN_HTTPS_PORT, line ~500):
+
+```yaml
+%{ if tfe_admin_console_enabled ~}
+    # Admin Console settings
+    - name: "TFE_ADMIN_CONSOLE_ENABLED"
+      value: "true"
+    - name: "TFE_ADMIN_CONSOLE_PORT"
+      value: ${tfe_admin_console_port}
+%{ if tfe_admin_console_token != "" ~}
+    - name: "TFE_ADMIN_CONSOLE_TOKEN"
+      value: ${tfe_admin_console_token}
+%{ endif ~}
+    - name: "TFE_ADMIN_CONSOLE_TOKEN_TIMEOUT"
+      value: ${tfe_admin_console_token_timeout}
+%{ endif ~}
+```
+
+Add to ports list (location: after metrics ports, line ~520):
+
+```yaml
+%{ if tfe_admin_console_enabled ~}
+    - containerPort: ${tfe_admin_console_port}
+      hostPort: ${tfe_admin_console_port}
 %{ endif ~}
 ```
 
@@ -501,10 +534,12 @@ output "tfe_admin_console_url_pattern" {
 - [ ] Update user_data_args local with admin console variables
 
 **User Data Template (templates/tfe_user_data.sh.tpl):**
-- [ ] Add admin console environment variables section
-- [ ] Add admin console port mapping to container run command
-- [ ] Test template rendering with admin console enabled
-- [ ] Test template rendering with admin console disabled
+- [ ] Add admin console environment variables to Docker Compose config (generate_tfe_docker_compose_config function)
+- [ ] Add admin console port mapping to Docker Compose ports section
+- [ ] Add admin console environment variables to Podman manifest (generate_tfe_podman_manifest function)
+- [ ] Add admin console port mapping to Podman manifest ports section
+- [ ] Test template rendering with admin console enabled (both Docker and Podman)
+- [ ] Test template rendering with admin console disabled (both Docker and Podman)
 
 **Outputs (outputs.tf):**
 - [ ] Add `tfe_admin_console_enabled` output

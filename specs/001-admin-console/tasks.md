@@ -31,9 +31,8 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 **Purpose**: Project initialization and validation tooling setup
 
-- [ ] T001 Run terraform fmt on all existing .tf files to establish baseline formatting
-- [ ] T002 Run terraform validate to confirm existing module structure is valid
-- [ ] T003 [P] Review existing security group patterns in compute.tf for consistency
+- [ ] T001 Run pre-commit run --all-files to establish baseline (includes terraform fmt, validate, tflint)
+- [ ] T002 [P] Review existing security group patterns in compute.tf for consistency
 
 ---
 
@@ -43,9 +42,9 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Add port validation helper locals in variables.tf for port conflict checking
-- [ ] T005 Add data sources for AWS Secrets Manager in compute.tf for admin console token retrieval
-- [ ] T006 Update user_data_args local in compute.tf to support admin console template variables
+- [ ] T003 Add port validation helper locals in variables.tf for port conflict checking
+- [ ] T004 Add data sources for AWS Secrets Manager in compute.tf for admin console token retrieval
+- [ ] T005 Update user_data_args local in compute.tf to support admin console template variables
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -59,17 +58,20 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Add tfe_admin_console_enabled variable in variables.tf
-- [ ] T008 [P] [US1] Add tfe_admin_console_port variable with validation in variables.tf
-- [ ] T009 [US1] Update templates/tfe_user_data.sh.tpl with admin console environment variables section
-- [ ] T010 [US1] Update templates/tfe_user_data.sh.tpl with admin console port mapping in container run command
-- [ ] T011 [P] [US1] Add tfe_admin_console_enabled output in outputs.tf
-- [ ] T012 [P] [US1] Add tfe_admin_console_port output in outputs.tf
-- [ ] T013 [P] [US1] Add tfe_admin_console_url_pattern output in outputs.tf
-- [ ] T014 [US1] Create examples/admin-console-enabled/ directory structure
-- [ ] T015 [US1] Create examples/admin-console-enabled/main.tf with basic admin console configuration
-- [ ] T016 [P] [US1] Create examples/admin-console-enabled/variables.tf with example variable values
-- [ ] T017 [P] [US1] Create examples/admin-console-enabled/README.md with usage instructions
+- [ ] T006 [P] [US1] Add tfe_admin_console_enabled variable in variables.tf
+- [ ] T007 [P] [US1] Add tfe_admin_console_port variable with validation in variables.tf
+- [ ] T008 [US1] Add admin console environment variables to Docker Compose config in templates/tfe_user_data.sh.tpl (generate_tfe_docker_compose_config function)
+- [ ] T009 [US1] Add admin console port mapping to Docker Compose ports section in templates/tfe_user_data.sh.tpl
+- [ ] T010 [US1] Add admin console environment variables to Podman manifest in templates/tfe_user_data.sh.tpl (generate_tfe_podman_manifest function)
+- [ ] T011 [US1] Add admin console port mapping to Podman manifest ports section in templates/tfe_user_data.sh.tpl
+- [ ] T012 [P] [US1] Add tfe_admin_console_enabled output in outputs.tf
+- [ ] T013 [P] [US1] Add tfe_admin_console_port output in outputs.tf
+- [ ] T014 [P] [US1] Add tfe_admin_console_url_pattern output in outputs.tf
+- [ ] T015 [US1] Create examples/admin-console-enabled/ directory structure
+- [ ] T016 [US1] Create examples/admin-console-enabled/main.tf with basic admin console configuration
+- [ ] T017 [P] [US1] Create examples/admin-console-enabled/variables.tf with example variable values
+- [ ] T018 [P] [US1] Create examples/admin-console-enabled/README.md with usage instructions
+- [ ] T019 [US1] Run pre-commit run --files variables.tf outputs.tf templates/tfe_user_data.sh.tpl
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - admin console can be enabled and will start listening on configured port
 
@@ -83,12 +85,13 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Add cidr_allow_ingress_tfe_admin_console variable with CIDR validation in variables.tf
-- [ ] T019 [US2] Add validation rule in variables.tf requiring CIDR when admin console enabled
-- [ ] T020 [P] [US2] Add aws_security_group_rule.ec2_allow_ingress_tfe_admin_console resource in compute.tf
-- [ ] T021 [P] [US2] Add aws_security_group_rule.ec2_allow_ingress_tfe_admin_console_ipv6 resource in compute.tf
-- [ ] T022 [US2] Update examples/admin-console-enabled/main.tf to include CIDR configuration examples
-- [ ] T023 [US2] Update examples/admin-console-enabled/README.md with network security documentation
+- [ ] T020 [US2] Add cidr_allow_ingress_tfe_admin_console variable with CIDR validation in variables.tf
+- [ ] T021 [US2] Add validation rule in variables.tf requiring CIDR when admin console enabled
+- [ ] T022 [P] [US2] Add aws_security_group_rule.ec2_allow_ingress_tfe_admin_console resource in compute.tf
+- [ ] T023 [P] [US2] Add aws_security_group_rule.ec2_allow_ingress_tfe_admin_console_ipv6 resource in compute.tf
+- [ ] T024 [US2] Update examples/admin-console-enabled/main.tf to include CIDR configuration examples
+- [ ] T025 [US2] Update examples/admin-console-enabled/README.md with network security documentation
+- [ ] T026 [US2] Run pre-commit run --files variables.tf compute.tf
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - admin console access is now restricted by security groups to specified CIDRs
 
@@ -102,13 +105,15 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 ### Implementation for User Story 3
 
-- [ ] T024 [P] [US3] Add tfe_admin_console_token_secret_arn variable in variables.tf
-- [ ] T025 [P] [US3] Add tfe_admin_console_token_timeout variable with range validation in variables.tf
-- [ ] T026 [US3] Add data.aws_secretsmanager_secret.tfe_admin_console_token data source in compute.tf
-- [ ] T027 [US3] Add data.aws_secretsmanager_secret_version.tfe_admin_console_token data source in compute.tf
-- [ ] T028 [US3] Update templates/tfe_user_data.sh.tpl to include conditional token and timeout environment variables
-- [ ] T029 [US3] Create examples/admin-console-enabled/secrets.tf example for Secrets Manager token configuration
-- [ ] T030 [US3] Update examples/admin-console-enabled/README.md with authentication token documentation
+- [ ] T027 [P] [US3] Add tfe_admin_console_token_secret_arn variable in variables.tf
+- [ ] T028 [P] [US3] Add tfe_admin_console_token_timeout variable with range validation in variables.tf
+- [ ] T029 [US3] Add data.aws_secretsmanager_secret.tfe_admin_console_token data source in compute.tf
+- [ ] T030 [US3] Add data.aws_secretsmanager_secret_version.tfe_admin_console_token data source in compute.tf
+- [ ] T031 [US3] Update Docker Compose config in templates/tfe_user_data.sh.tpl to include conditional token and timeout environment variables
+- [ ] T032 [US3] Update Podman manifest in templates/tfe_user_data.sh.tpl to include conditional token and timeout environment variables
+- [ ] T033 [US3] Create examples/admin-console-enabled/secrets.tf example for Secrets Manager token configuration
+- [ ] T034 [US3] Update examples/admin-console-enabled/README.md with authentication token documentation
+- [ ] T035 [US3] Run pre-commit run --files variables.tf compute.tf templates/tfe_user_data.sh.tpl
 
 **Checkpoint**: All authentication features are now functional - tokens can be provided or system-generated, with configurable expiration
 
@@ -122,11 +127,11 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Verify all admin console variables have secure defaults (false/null) in variables.tf
-- [ ] T032 [US4] Test existing module examples to confirm they still work without modifications
-- [ ] T033 [US4] Add conditional logic validation in templates/tfe_user_data.sh.tpl to ensure no admin console config when disabled
-- [ ] T034 [US4] Document upgrade path in README.md for existing deployments
-- [ ] T035 [US4] Add backward compatibility test scenario to examples/
+- [ ] T036 [US4] Verify all admin console variables have secure defaults (false/null) in variables.tf
+- [ ] T037 [US4] Test existing module examples to confirm they still work without modifications
+- [ ] T038 [US4] Add conditional logic validation in templates/tfe_user_data.sh.tpl to ensure no admin console config when disabled (both Docker and Podman)
+- [ ] T039 [US4] Document upgrade path in README.md for existing deployments
+- [ ] T040 [US4] Add backward compatibility test scenario to examples/
 
 **Checkpoint**: Backward compatibility verified - existing deployments are not affected by admin console additions
 
@@ -136,21 +141,21 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 **Purpose**: Documentation, validation, and quality improvements that affect multiple user stories
 
-- [ ] T036 [P] Update README.md with Admin Console Configuration section documenting new variables
-- [ ] T037 [P] Run terraform-docs to regenerate variables reference documentation
-- [ ] T038 [P] Create docs/admin-console-configuration.md with detailed configuration guide
-- [ ] T039 [P] Create docs/admin-console-security.md with security best practices
-- [ ] T040 [P] Create docs/admin-console-troubleshooting.md with troubleshooting guidance
-- [ ] T041 Update CHANGELOG.md with admin console feature additions
-- [ ] T042 Run terraform fmt on all modified .tf files
-- [ ] T043 Run terraform validate to confirm module validity
-- [ ] T044 Manual test: Deploy with admin console disabled (default) - verify no changes to existing behavior
-- [ ] T045 Manual test: Deploy with admin console enabled - verify port accessible from allowed CIDR
-- [ ] T046 Manual test: Deploy with admin console enabled - verify port blocked from non-allowed CIDR
-- [ ] T047 Manual test: Verify admin console authentication with provided token from Secrets Manager
-- [ ] T048 Manual test: Test upgrade path from existing deployment without admin console variables
-- [ ] T049 Manual test: Verify admin console works in active-active operational mode
-- [ ] T050 Manual test: Verify admin console works in external operational mode
+- [ ] T041 [P] Update README.md with Admin Console Configuration section documenting new variables
+- [ ] T042 [P] Create docs/admin-console-configuration.md with detailed configuration guide
+- [ ] T043 [P] Create docs/admin-console-security.md with security best practices
+- [ ] T044 [P] Create docs/admin-console-troubleshooting.md with troubleshooting guidance
+- [ ] T045 Update CHANGELOG.md with admin console feature additions
+- [ ] T046 Run pre-commit run --all-files to validate all changes (terraform fmt, validate, tflint, terraform-docs)
+- [ ] T047 Manual test: Deploy with admin console disabled (default) - verify no changes to existing behavior
+- [ ] T048 Manual test: Deploy with admin console enabled - verify port accessible from allowed CIDR
+- [ ] T049 Manual test: Deploy with admin console enabled - verify port blocked from non-allowed CIDR
+- [ ] T050 Manual test: Verify admin console authentication with provided token from Secrets Manager
+- [ ] T051 Manual test: Test upgrade path from existing deployment without admin console variables
+- [ ] T052 Manual test: Verify admin console works in active-active operational mode
+- [ ] T053 Manual test: Verify admin console works in external operational mode
+- [ ] T054 Manual test: Verify admin console with Podman runtime
+- [ ] T055 Manual test: Verify admin console with Docker runtime
 
 ---
 
@@ -282,26 +287,26 @@ With multiple developers:
 
 ## Summary Statistics
 
-- **Total Tasks**: 50
-- **User Story 1 (Enable Admin Console)**: 11 tasks
-- **User Story 2 (Network Access)**: 6 tasks
-- **User Story 3 (Authentication)**: 7 tasks
+- **Total Tasks**: 55
+- **User Story 1 (Enable Admin Console)**: 14 tasks (includes Docker + Podman template updates, pre-commit validation)
+- **User Story 2 (Network Access)**: 7 tasks (includes pre-commit validation)
+- **User Story 3 (Authentication)**: 9 tasks (includes Docker + Podman template updates, pre-commit validation)
 - **User Story 4 (Backward Compatibility)**: 5 tasks
-- **Setup Phase**: 3 tasks
+- **Setup Phase**: 2 tasks (consolidated with pre-commit)
 - **Foundational Phase**: 3 tasks
-- **Polish Phase**: 15 tasks
+- **Polish Phase**: 15 tasks (includes comprehensive pre-commit validation, Docker + Podman runtime testing)
 
 **Parallel Opportunities Identified**: 
 - Phase 1: 1 parallel task
 - User Story 1: 7 parallel tasks
 - User Story 2: 2 parallel tasks
 - User Story 3: 2 parallel tasks
-- Phase 7: 5 parallel tasks
-- **Total parallelizable**: 17 tasks (34% of all tasks)
+- Phase 7: 4 parallel tasks
+- **Total parallelizable**: 16 tasks (29% of all tasks)
 
-**Suggested MVP Scope**: User Story 1 (Enable Admin Console) + User Story 4 (Backward Compatibility) = 16 tasks
+**Suggested MVP Scope**: User Story 1 (Enable Admin Console) + User Story 4 (Backward Compatibility) = 19 tasks (includes Docker + Podman support, pre-commit validation)
 
-**Format Validation**: ✅ All 50 tasks follow the checklist format with checkbox, Task ID, optional [P] marker, [Story] label (where appropriate), and file paths
+**Format Validation**: ✅ All 55 tasks follow the checklist format with checkbox, Task ID, optional [P] marker, [Story] label (where appropriate), and file paths
 
 ---
 
@@ -310,6 +315,13 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
+- **pre-commit integration**: Repository uses pre-commit hooks that run terraform fmt, validate, tflint, and terraform-docs automatically
+  - Run `pre-commit run --all-files` at setup to establish baseline
+  - Run `pre-commit run --files <files>` after each user story implementation
+  - Final validation with `pre-commit run --all-files` ensures all checks pass
+- **Container runtime support**: Template supports both Docker Compose and Podman manifest configurations
+  - Updates required in both `generate_tfe_docker_compose_config` and `generate_tfe_podman_manifest` functions
+  - Manual testing should verify both runtimes
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - All changes are additive - no breaking changes to existing module functionality
