@@ -22,6 +22,8 @@ repos:
       description: Rewrites all Terraform configuration files to a canonical format.
       entry: .github/scripts/pre_commit_hooks/terraform_fmt.sh
       language: script
+      files: (\.tf|\.tfvars)$
+      exclude: (^helpers/|\.terraform\/.*$)
 
 - repo: local
   hooks:
@@ -30,8 +32,11 @@ repos:
       description: Validates all Terraform configuration files.
       entry: .github/scripts/pre_commit_hooks/terraform_validate.sh
       language: script
+      files: (\.tf|\.tfvars)$
+      exclude: (^helpers/|\.terraform\/.*$)
 
 - repo: local
+
   hooks:
     - id: terraform_tflint
       name: Terraform validate with tflint
@@ -57,9 +62,59 @@ repos:
         - '--args=--config=.tflint.hcl'
 
 - repo: https://github.com/terraform-docs/terraform-docs
-  rev: "v0.21.0"             # e.g. "v0.11.2"
+  rev: "v0.21.0"          # e.g. "v0.11.2"
+
   hooks:
     - id: terraform-docs-go
+      exclude: ^helpers/
       args:
        - "--args=--config=.terraform-docs.yml"
       # - --hook-config=--create-file-if-not-exist=true
+- repo: local
+# ------------
+# markdown linters
+# Hooks are set to manual stage to avoid slowing down regular commits, and also due to prerequisite requirments on local machines
+# markdownlint requires nodejs and npm, and can be installed via npm install -g markdownlint-cli and configured via .markdownlint.json file
+# mdl requires ruby and gem package manager, and .mdlrc configuration file
+# mdl_docker requires docker to be installed and running.
+# vscode markdown uses https://github.com/yzhang-gh/vscode-markdown, the generate TOC command creates invalid markdown according to mdl and markdownlint, so TOC generation should be avoided or manually fixed.
+# ------------
+  hooks:
+    - id: mdl
+      name: mdl
+      description: Run markdownlint on your Markdown files
+      entry: mdl
+      language: ruby
+      stages: [ manual ]
+      # stages: [pre-commit, pre-merge-commit, pre-push, commit-msg, manual]
+      files: \.(md|mdown|markdown)$
+      # language_version: 3.3.0
+    - id: mdl_docker
+      name: mdl Docker
+      description: Run markdown lint on your Markdown files using the project docker image
+      language: docker_image
+      files: \.(md|mdown|markdown)$
+      stages: [ manual ]
+      entry: markdownlint/markdownlint
+    - id: markdownlint-fix
+      name: markdownlint-fix
+      description: "Fixes the style of Markdown/Commonmark files."
+      entry: markdownlint --fix
+      language: node
+      types: [ markdown ]
+      stages: [ manual ]
+      files: \.(md|mdown|markdown)$
+      exclude: (^specs/|^.*/)
+      # additional_dependencies: [ "markdownlint@0.32.1" ]
+      # require_serial: true
+    - id: markdownlint
+      name: markdownlint
+      description: "Fixes the style of Markdown/Commonmark files."
+      entry: markdownlint
+      language: node
+      types: [ markdown ]
+      stages: [ manual ]
+      files: \.(md|mdown|markdown)$
+      exclude: (^specs/|^.*/)
+      # additional_dependencies: [ "markdownlint@0.32.1" ]
+      # require_serial: true

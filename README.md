@@ -8,7 +8,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### General
 
-- TFE license file (_e.g._ `terraform.hclic`)
+- TFE license file (*e.g.* `terraform.hclic`)
 - Terraform CLI `>= 1.9` installed on clients/workstations that will be used to deploy TFE
 - General understanding of how to use Terraform (Community Edition)
 - General understanding of how to use AWS
@@ -25,7 +25,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
   - Redis subnet IDs (can be the same as RDS subnets if desirable)
 - (Optional) S3 VPC endpoint configured within VPC
 - (Optional) AWS Route53 hosted zone for TFE DNS record creation
-- Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.aws.example.com`)
+- Chosen fully qualified domain name (FQDN) for your TFE instance (*e.g.* `tfe.aws.example.com`)
 
 >📝 Note: It is recommended to specify a minimum of two subnets for each subnet input to enable high availability.
 
@@ -39,20 +39,20 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### TLS certificates
 
-- TLS certificate (_e.g._ `cert.pem`) and private key (_e.g._ `privkey.pem`) that matches your chosen fully qualified domain name (FQDN) for TFE
+- TLS certificate (*e.g.* `cert.pem`) and private key (*e.g.* `privkey.pem`) that matches your chosen fully qualified domain name (FQDN) for TFE
   - TLS certificate and private key must be in PEM format
   - Private key must **not** be password protected
-- TLS certificate authority (CA) bundle (_e.g._ `ca_bundle.pem`) corresponding with the CA that issues your TFE TLS certificates
+- TLS certificate authority (CA) bundle (*e.g.* `ca_bundle.pem`) corresponding with the CA that issues your TFE TLS certificates
   - CA bundle must be in PEM format
-  - You may include additional certificate chains corresponding to external systems that TFE will make outbound connections to (_e.g._ your self-hosted VCS, if its certificate was issued by a different CA than your TFE certificate).
+  - You may include additional certificate chains corresponding to external systems that TFE will make outbound connections to (*e.g.* your self-hosted VCS, if its certificate was issued by a different CA than your TFE certificate).
 
 >📝 Note: All three of these files will be created as secrets in AWS Secrets Manager per the next section.
 
 ### Secrets management
 
-The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment and installation:
+The following *bootstrap* secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment and installation:
 
-- **TFE license file** - raw contents of license file stored as a plaintext secret (_e.g._ `cat terraform.hclic`)
+- **TFE license file** - raw contents of license file stored as a plaintext secret (*e.g.* `cat terraform.hclic`)
 - **TFE encryption password** - random characters stored as a plaintext secret (used to protect internally-managed Vault unseal key and root token)
 - **TFE database password** - used to create RDS Aurora (PostgreSQL) database cluster; random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
 - **TFE Redis password** - used to create Redis (Elasticache Replication Group) cluster; random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
@@ -107,9 +107,9 @@ One of the following logging destinations:
 3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
 4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
-  
+
 5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
-   
+
    ```hcl
    module "tfe" {
      source  = "hashicorp/terraform-enterprise-hvd/aws"
@@ -151,7 +151,7 @@ One of the following logging destinations:
     journalctl -xu cloud-final -f
     ```
 
-    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+    >📝 Note: The `-f` argument is to *follow* the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
     **Successful install log message**
 
@@ -168,7 +168,7 @@ One of the following logging destinations:
     sudo docker compose exec tfe tfe-health-check-status
     ```
 
-9.  Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
+9. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
 ## Docs
 
