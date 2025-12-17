@@ -137,7 +137,45 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 ---
 
-## Phase 7: Polish & Cross-Cutting Concerns
+## Phase 8: User Story 5 - Optional Load Balancer Integration (Priority: P3 - OPTIONAL)
+
+**Goal**: Allow platform operators to route admin console traffic through the existing load balancer instead of direct EC2 access to consolidate network entry points and leverage load balancer features
+
+**⚠️ IMPORTANT**: This is an OPTIONAL enhancement. Core admin console functionality (US1-US4) works without this feature. Direct EC2 access remains the default and recommended approach for administrative interfaces.
+
+**Dependencies**: Depends on User Story 1 (Enable Admin Console) and User Story 2 (Network Access) completion
+
+**Independent Test**: Enable admin console with LB routing option, deploy with both NLB and ALB configurations separately, and verify admin console is accessible through the load balancer endpoint with proper health checks
+
+### Implementation for User Story 5
+
+- [ ] T056 [P] [US5] Add tfe_admin_console_use_lb variable with validation in variables.tf
+- [ ] T057 [P] [US5] Add aws_lb_listener.lb_nlb_admin_console resource in load_balancer.tf (conditional on NLB + LB routing)
+- [ ] T058 [P] [US5] Add aws_lb_target_group.nlb_admin_console resource in load_balancer.tf with health checks and stickiness
+- [ ] T059 [P] [US5] Add aws_lb_listener.alb_admin_console resource in load_balancer.tf (conditional on ALB + LB routing)
+- [ ] T060 [P] [US5] Add aws_lb_target_group.alb_admin_console resource in load_balancer.tf with health checks and stickiness
+- [ ] T061 [US5] Add target group attachment resources for admin console target groups in load_balancer.tf (same pattern as 443 TGs)
+- [ ] T062 [P] [US5] Add aws_security_group_rule.lb_allow_ingress_admin_console_from_cidr resource in load_balancer.tf
+- [ ] T063 [P] [US5] Add aws_security_group_rule.lb_allow_ingress_admin_console_from_ipv6 resource in load_balancer.tf
+- [ ] T064 [US5] Update aws_security_group_rule.ec2_allow_ingress_tfe_admin_console to be conditional on !var.tfe_admin_console_use_lb in compute.tf
+- [ ] T065 [US5] Add aws_security_group_rule.ec2_allow_ingress_admin_console_from_lb resource in compute.tf for LB-routed access
+- [ ] T066 [US5] Update tfe_admin_console_url_pattern output in outputs.tf to return LB DNS when LB routing enabled
+- [ ] T067 [US5] Create examples/admin-console-with-lb/ example directory with main.tf for NLB configuration
+- [ ] T068 [P] [US5] Create examples/admin-console-with-lb/variables.tf with example variable values
+- [ ] T069 [P] [US5] Create examples/admin-console-with-lb/README.md explaining LB routing option
+- [ ] T070 [US5] Add LB routing option documentation section to README.md
+- [ ] T071 [US5] Create docs/admin-console-lb-routing.md explaining when to use LB routing vs direct access
+- [ ] T072 [US5] Run pre-commit run --files variables.tf load_balancer.tf compute.tf outputs.tf
+- [ ] T073 [US5] Manual test: Deploy with NLB and tfe_admin_console_use_lb=true, verify access through NLB DNS
+- [ ] T074 [US5] Manual test: Deploy with ALB and tfe_admin_console_use_lb=true, verify access through ALB DNS
+- [ ] T075 [US5] Manual test: Verify admin console health checks working on both NLB and ALB target groups
+- [ ] T076 [US5] Manual test: Verify traffic fails over correctly between EC2 instances through load balancer
+
+**Checkpoint**: User Story 5 (optional LB integration) is complete - admin console can now optionally route through load balancer while maintaining direct EC2 access as default
+
+---
+
+## Phase 9: Polish & Cross-Cutting Concerns
 
 **Purpose**: Documentation, validation, and quality improvements that affect multiple user stories
 
@@ -165,11 +203,12 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - User stories can then proceed in priority order: US1 (P1) → US2 (P2) → US3 (P2) → US4 (P1)
+- **User Stories (Phase 3-7)**: All depend on Foundational phase completion
+  - User stories can then proceed in priority order: US1 (P1) → US2 (P2) → US3 (P2) → US4 (P1) → US5 (P3, OPTIONAL)
   - US1 and US4 are P1 (highest priority)
   - US2 and US3 are P2 (can be done after P1 stories)
-- **Polish (Phase 7)**: Depends on all user stories being complete
+  - US5 is P3 (optional enhancement - can be skipped entirely)
+- **Polish (Phase 9)**: Depends on all required user stories being complete (US1-US4; US5 is optional)
 
 ### User Story Dependencies
 
@@ -177,6 +216,7 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 - **User Story 2 (P2)**: Depends on US1 (needs basic enable functionality) - Extends with security group rules
 - **User Story 3 (P2)**: Depends on US1 (needs basic enable functionality) - Extends with authentication features
 - **User Story 4 (P1)**: Can be validated after US1-3 complete - Verifies backward compatibility
+- **User Story 5 (P3, OPTIONAL)**: Depends on US1 (enable functionality) and US2 (security group patterns) - Adds optional LB routing
 
 ### Within Each User Story
 
@@ -198,6 +238,13 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 #### User Story 4 (Backward Compatibility)
 - All validation tasks can proceed in parallel after US1-3 complete
 
+#### User Story 5 (Optional Load Balancer Integration - OPTIONAL)
+- Variables can be created in parallel with load balancer resources
+- NLB resources (listener, target group) can be created in parallel
+- ALB resources (listener, target group) can be created in parallel
+- Security group rules (LB and EC2) can be created in parallel
+- Documentation and examples can be created in parallel
+
 ### Parallel Opportunities
 
 - All Setup tasks marked [P] can run in parallel
@@ -205,7 +252,8 @@ description: "Task list for Terraform Enterprise Admin Console Configuration Sup
 - Within User Story 1: T007, T008 (variables), T011, T012, T013 (outputs), T016, T017 (examples) can run in parallel
 - Within User Story 2: T020, T021 (security group rules) can run in parallel
 - Within User Story 3: T024, T025 (variables) can run in parallel
-- Within Phase 7: All documentation tasks marked [P] can run in parallel
+- Within User Story 5: T056 (variable), T057, T058 (NLB resources), T059, T060 (ALB resources), T062, T063 (LB security group rules), T068, T069 (examples) can run in parallel
+- Within Phase 9: All documentation tasks marked [P] can run in parallel
 
 ---
 
@@ -236,7 +284,26 @@ Task: "Add aws_security_group_rule.ec2_allow_ingress_tfe_admin_console_ipv6 reso
 
 ---
 
-## Parallel Example: Phase 7 (Polish)
+## Parallel Example: User Story 5 (Optional LB Integration)
+
+```bash
+# Launch variables, load balancer resources, and security group rules together:
+Task: "Add tfe_admin_console_use_lb variable with validation in variables.tf"
+Task: "Add aws_lb_listener.lb_nlb_admin_console resource in load_balancer.tf"
+Task: "Add aws_lb_target_group.nlb_admin_console resource in load_balancer.tf"
+Task: "Add aws_lb_listener.alb_admin_console resource in load_balancer.tf"
+Task: "Add aws_lb_target_group.alb_admin_console resource in load_balancer.tf"
+Task: "Add aws_security_group_rule.lb_allow_ingress_admin_console_from_cidr resource"
+Task: "Add aws_security_group_rule.lb_allow_ingress_admin_console_from_ipv6 resource"
+
+# After EC2 security group updates, launch documentation in parallel:
+Task: "Create examples/admin-console-with-lb/variables.tf with example variable values"
+Task: "Create examples/admin-console-with-lb/README.md explaining LB routing option"
+```
+
+---
+
+## Parallel Example: Phase 9 (Polish)
 
 ```bash
 # Launch all documentation tasks together:
@@ -267,8 +334,9 @@ Task: "Create docs/admin-console-troubleshooting.md with troubleshooting guidanc
 3. Add User Story 4 → Test independently → Backward compatibility confirmed (MVP!)
 4. Add User Story 2 → Test independently → Network access controls working
 5. Add User Story 3 → Test independently → Authentication features working
-6. Add Polish → Complete documentation and validation
-7. Each story adds value without breaking previous stories
+6. (Optional) Add User Story 5 → Test independently → Load balancer routing working
+7. Add Polish → Complete documentation and validation
+8. Each story adds value without breaking previous stories
 
 ### Parallel Team Strategy
 
@@ -281,17 +349,20 @@ With multiple developers:
 3. After US1 + US4 complete (MVP checkpoint):
    - Developer A: User Story 2 (Network Access)
    - Developer B: User Story 3 (Authentication)
-4. Final: Team completes Polish together
+4. (Optional) After US2 + US3 complete:
+   - Developer A or B: User Story 5 (Optional LB Integration)
+5. Final: Team completes Polish together
 
 ---
 
 ## Summary Statistics
 
-- **Total Tasks**: 55
+- **Total Tasks**: 76
 - **User Story 1 (Enable Admin Console)**: 14 tasks (includes Docker + Podman template updates, pre-commit validation)
 - **User Story 2 (Network Access)**: 7 tasks (includes pre-commit validation)
 - **User Story 3 (Authentication)**: 9 tasks (includes Docker + Podman template updates, pre-commit validation)
 - **User Story 4 (Backward Compatibility)**: 5 tasks
+- **User Story 5 (Optional LB Integration)**: 21 tasks (OPTIONAL - includes NLB, ALB, security groups, examples, documentation, testing)
 - **Setup Phase**: 2 tasks (consolidated with pre-commit)
 - **Foundational Phase**: 3 tasks
 - **Polish Phase**: 15 tasks (includes comprehensive pre-commit validation, Docker + Podman runtime testing)
@@ -301,12 +372,15 @@ With multiple developers:
 - User Story 1: 7 parallel tasks
 - User Story 2: 2 parallel tasks
 - User Story 3: 2 parallel tasks
-- Phase 7: 4 parallel tasks
-- **Total parallelizable**: 16 tasks (29% of all tasks)
+- User Story 5: 8 parallel tasks
+- Phase 9: 4 parallel tasks
+- **Total parallelizable**: 24 tasks (32% of all tasks)
 
 **Suggested MVP Scope**: User Story 1 (Enable Admin Console) + User Story 4 (Backward Compatibility) = 19 tasks (includes Docker + Podman support, pre-commit validation)
 
-**Format Validation**: ✅ All 55 tasks follow the checklist format with checkbox, Task ID, optional [P] marker, [Story] label (where appropriate), and file paths
+**Note**: User Story 5 (Optional LB Integration) is P3 priority and completely optional. Core admin console functionality works without it. Include only if load balancer routing is specifically required.
+
+**Format Validation**: ✅ All 76 tasks follow the checklist format with checkbox, Task ID, optional [P] marker, [Story] label (where appropriate), and file paths
 
 ---
 
@@ -315,6 +389,7 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
+- **User Story 5 (P3)**: OPTIONAL enhancement for LB routing. Core admin console works without it. Direct EC2 access is the default and recommended approach.
 - **pre-commit integration**: Repository uses pre-commit hooks that run terraform fmt, validate, tflint, and terraform-docs automatically
   - Run `pre-commit run --all-files` at setup to establish baseline
   - Run `pre-commit run --files <files>` after each user story implementation
@@ -326,4 +401,4 @@ With multiple developers:
 - Stop at any checkpoint to validate story independently
 - All changes are additive - no breaking changes to existing module functionality
 - Security-first: Admin console disabled by default, no default CIDR access
-- Terraform module pattern: Changes span variables.tf, compute.tf, templates/, outputs.tf, examples/, docs/
+- Terraform module pattern: Changes span variables.tf, compute.tf, load_balancer.tf, templates/, outputs.tf, examples/, docs/

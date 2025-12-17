@@ -73,6 +73,23 @@ Existing TFE deployments using this module must continue to work without modific
 
 ---
 
+### User Story 5 - Optional Load Balancer Integration for Admin Console (Priority: P3)
+
+Platform operators may want to route admin console traffic through the existing load balancer instead of direct EC2 access to consolidate network entry points and leverage load balancer features like TLS termination and access logging.
+
+**Why this priority**: This is an optional enhancement that provides architectural flexibility. Direct EC2 access remains the default and recommended approach for administrative interfaces, making this a nice-to-have rather than essential capability.
+
+**Independent Test**: Can be tested by enabling admin console with LB routing option, deploying with both NLB and ALB configurations separately, and verifying admin console is accessible through the load balancer endpoint with proper health checks.
+
+**Acceptance Scenarios**:
+
+1. **Given** admin console is enabled with LB routing, **When** configured for NLB, **Then** a TCP listener on the admin console port forwards to an admin console target group
+2. **Given** admin console is enabled with LB routing, **When** configured for ALB, **Then** an HTTPS listener on the admin console port forwards to an admin console target group
+3. **Given** admin console LB routing is disabled (default), **When** deployed, **Then** admin console uses direct EC2 access pattern (current behavior)
+4. **Given** admin console LB routing is enabled, **When** health checks are performed, **Then** the load balancer validates admin console endpoint availability
+
+---
+
 ### Edge Cases
 
 - What happens when admin console port conflicts with other configured ports (TFE HTTP, HTTPS, metrics ports)?
@@ -104,6 +121,7 @@ Existing TFE deployments using this module must continue to work without modific
 - **FR-015**: Module MUST support admin console in both `active-active` and `external` operational modes
 - **FR-016**: Module MUST handle admin console configuration in secondary region deployments for HA/DR scenarios
 - **FR-017**: Module MUST add admin console configuration to outputs to provide necessary information for operators (port, access URL pattern)
+- **FR-018**: Module SHOULD optionally support routing admin console traffic through the load balancer as an alternative to direct EC2 access for enhanced security and simplified network architecture (Note: Direct EC2 access remains the default and recommended approach)
 
 ### Key Entities
 
@@ -155,7 +173,6 @@ Existing TFE deployments using this module must continue to work without modific
 - Custom TLS certificate configuration specifically for admin console (uses TFE's TLS configuration)
 - Admin console high availability configuration (follows TFE's HA configuration)
 - Admin console-specific monitoring or alerting beyond standard TFE metrics
-- Load balancer configuration for admin console traffic (direct EC2 access is assumed)
 - Custom admin console UI or API modifications
 - Admin console backup and restore functionality
 - Multi-region admin console failover automation

@@ -518,6 +518,236 @@ output "tfe_admin_console_url_pattern" {
 - None - all changes are additive
 - Backward compatible with existing configurations
 
+### 11. Optional Load Balancer Integration (P3 - OPTIONAL)
+
+**Priority**: P3 (Optional enhancement)  
+**User Story**: User Story 5 - Optional Load Balancer Integration for Admin Console
+
+**Note**: This section supplements Section 6 which establishes direct EC2 access as the DEFAULT approach. Section 6 remains the recommended pattern. This section provides an OPTIONAL alternative for users who prefer load balancer routing.
+
+**Overview**: Provides an optional architectural pattern for routing admin console traffic through the existing AWS load balancer instead of direct EC2 access. This feature is OPTIONAL and disabled by default. Direct EC2 access remains the default and recommended approach for administrative interfaces.
+
+**Implementation Approach**:
+
+#### 11.1 New Variable
+
+**Variable**: `tfe_admin_console_use_lb`
+- **Type**: `bool`
+- **Default**: `false`
+- **Description**: "Enable routing admin console traffic through load balancer. When false (default), admin console uses direct EC2 access pattern."
+- **Condition**: Only effective when `tfe_admin_console_enabled = true`
+- **Validation**:
+  ```hcl
+  validation {
+    condition     = !var.tfe_admin_console_use_lb || var.tfe_admin_console_enabled
+    error_message = "Admin console must be enabled (tfe_admin_console_enabled = true) when tfe_admin_console_use_lb is true."
+  }
+  ```
+
+#### 11.2 Load Balancer Configuration (load_balancer.tf)
+
+**NLB Configuration** (when `var.lb_type == "nlb"` and `tfe_admin_console_use_lb == true`):
+
+```hcl
+# TCP Listener for Admin Console
+resource "aws_lb_listener" "lb_nlb_admin_console" {
+  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb ? 1 : 0
+
+  load_balancer_arn = aws_lb.nlb[0].arn
+  port              = var.tfe_admin_console_port
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.nlb_admin_console[0].arn
+  }
+}
+
+# TCP Target Group for Admin Console
+resource "aws_lb_target_group" "nlb_admin_console" {
+  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb ? 1 : 0
+
+  name     = "${var.friendly_name_prefix}-tfe-nlb-tg-admin"
+  protocol = "TCP"
+  port     = var.tfe_admin_console_port
+  vpc_id   = var.vpc_id
+
+  health_check {
+    protocol            = "HTTPS"
+    path                = "/_health_check"
+    port                = var.tfe_admin_console_port
+    matcher             = "200"
+    healthy_threshold   = 5
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
+  }
+
+  stickiness {
+    enabled = var.lb_stickiness_enabled
+    type    = "source_ip"
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-nlb-tg-admin" },
+    { "Description" = "Load balancer target group for TFE admin console traffic." },
+    var.common_tags
+  )
+}
+```
+
+**ALB Configuration** (when `var.lb_type == "alb"` and `tfe_admin_console_use_lb == true`):
+
+```hcl
+# HTTPS Listener for Admin Console
+resource "aws_lb_listener" "alb_admin_console" {
+  count = var.lb_type == "alb" && var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb ? 1 : 0
+
+  load_balancer_arn = aws_lb.alb[0].arn
+  port              = var.tfe_admin_console_port
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.tfe_alb_tls_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alb_admin_console[0].arn
+  }
+}
+
+# HTTPS Target Group for Admin Console
+resource "aws_lb_target_group" "alb_admin_console" {
+  count = var.lb_type == "alb" && var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb ? 1 : 0
+
+  name     = "${var.friendly_name_prefix}-tfe-alb-tg-admin"
+  port     = var.tfe_admin_console_port
+  protocol = "HTTPS"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    protocol            = "HTTPS"
+    path                = "/_health_check"
+    port                = var.tfe_admin_console_port
+    healthy_threshold   = 2
+    unhealthy_threshold = 7
+    timeout             = 5
+    interval            = 30
+    matcher             = 200
+  }
+
+  stickiness {
+    enabled = true
+    type    = "lb_cookie"
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-alb-tg-admin" },
+    { "Description" = "Load balancer target group for TFE admin console traffic." },
+    var.common_tags
+  )
+}
+```
+
+#### 11.3 Target Group Attachments
+
+**Pattern**: Apply same target attachment pattern as existing 443 target groups:
+- Attach to same EC2 instances as main TFE application
+- Use conditional logic matching existing `aws_lb_target_group_attachment` resources
+- Reference the new admin console target groups (`nlb_admin_console` or `alb_admin_console`)
+- Location: Wherever existing target group attachments are defined (likely compute.tf or load_balancer.tf)
+
+#### 11.4 Security Group Updates
+
+**Load Balancer Security Group** (`aws_security_group.lb_allow_ingress` in load_balancer.tf):
+
+```hcl
+# Allow admin console traffic from specified CIDR ranges to LB
+resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
+  count = var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb && var.cidr_allow_ingress_tfe_admin_console != null ? 1 : 0
+
+  type        = "ingress"
+  from_port   = var.tfe_admin_console_port
+  to_port     = var.tfe_admin_console_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
+  description = "Allow TCP/${var.tfe_admin_console_port} (Admin Console) inbound to TFE load balancer from specified CIDR ranges."
+
+  security_group_id = aws_security_group.lb_allow_ingress.id
+}
+
+# IPv6 variant (if IPv6 enabled)
+resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_ipv6" {
+  count = var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb && var.cidr_allow_ingress_tfe_admin_console_ipv6 != null ? 1 : 0
+
+  type             = "ingress"
+  from_port        = var.tfe_admin_console_port
+  to_port          = var.tfe_admin_console_port
+  protocol         = "tcp"
+  ipv6_cidr_blocks = var.cidr_allow_ingress_tfe_admin_console_ipv6
+  description      = "Allow TCP/${var.tfe_admin_console_port} (Admin Console) inbound to TFE load balancer from specified IPv6 ranges."
+
+  security_group_id = aws_security_group.lb_allow_ingress.id
+}
+```
+
+**EC2 Security Group** (`aws_security_group.ec2_allow_ingress` in compute.tf):
+
+**Note**: Modify existing direct CIDR ingress rule to be conditional on `!var.tfe_admin_console_use_lb`:
+
+```hcl
+# Direct EC2 access (when LB routing is NOT used) - UPDATE EXISTING RULE
+resource "aws_security_group_rule" "ec2_allow_ingress_admin_console_from_cidr" {
+  count = var.tfe_admin_console_enabled && !var.tfe_admin_console_use_lb && var.cidr_allow_ingress_tfe_admin_console != null ? 1 : 0
+  
+  # ... existing direct CIDR access rule configuration
+}
+
+# LB-routed access (when LB routing IS used) - NEW RULE
+resource "aws_security_group_rule" "ec2_allow_ingress_admin_console_from_lb" {
+  count = var.tfe_admin_console_enabled && var.tfe_admin_console_use_lb ? 1 : 0
+
+  type                     = "ingress"
+  from_port                = var.tfe_admin_console_port
+  to_port                  = var.tfe_admin_console_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lb_allow_ingress.id
+  description              = "Allow TCP/${var.tfe_admin_console_port} (Admin Console) inbound to TFE EC2 from load balancer."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+```
+
+#### 11.5 Certificate Handling
+
+**For ALB**: Reuse existing `var.tfe_alb_tls_certificate_arn` certificate for admin console listener. No additional certificate variables needed.
+
+**For NLB**: TCP passthrough mode - TLS handled by TFE application layer. No certificate configuration at load balancer level.
+
+#### 11.6 Output Updates
+
+Update `tfe_admin_console_url_pattern` output to reflect LB DNS when LB routing is enabled:
+
+```hcl
+output "tfe_admin_console_url_pattern" {
+  value = var.tfe_admin_console_enabled ? (
+    var.tfe_admin_console_use_lb ? 
+      "https://${var.lb_type == "nlb" ? aws_lb.nlb[0].dns_name : aws_lb.alb[0].dns_name}:${var.tfe_admin_console_port}" :
+      "https://<ec2-instance-ip>:${var.tfe_admin_console_port}"
+  ) : null
+  description = "URL pattern for accessing TFE admin console. Use LB DNS when LB routing enabled, otherwise use EC2 instance IP."
+}
+```
+
+**Implementation Notes**:
+- This feature is OPTIONAL and disabled by default (`tfe_admin_console_use_lb = false`)
+- Direct EC2 access (Section 6) remains the recommended pattern for administrative interfaces
+- When LB routing is enabled, traffic flows: CIDR → LB → Target Group → EC2
+- When LB routing is disabled (default), traffic flows: CIDR → EC2 (direct)
+- Health checks use existing `/_health_check` endpoint on admin console port
+- Target group stickiness follows established patterns (source_ip for NLB, lb_cookie for ALB)
+- No new certificate variables needed - reuses existing TFE certificate for ALB
+- Backward compatible - existing deployments unaffected when variable not set
+
 ## Phase 2: Implementation Checklist
 
 **Variables (variables.tf):**
@@ -577,6 +807,35 @@ output "tfe_admin_console_url_pattern" {
 - [ ] Test upgrade path from previous version
 - [ ] Manual testing of admin console access
 - [ ] Review all validation rules trigger correctly
+
+**Optional Load Balancer Integration (P3 - OPTIONAL):**
+
+*Note: These tasks should be implemented ONLY after all above core tasks are complete and tested. This is an optional enhancement.*
+
+- [ ] **Variables**: Add `tfe_admin_console_use_lb` variable to variables.tf with validation
+- [ ] **Load Balancer - NLB**: Add `aws_lb_listener.lb_nlb_admin_console` resource to load_balancer.tf
+- [ ] **Load Balancer - NLB**: Add `aws_lb_target_group.nlb_admin_console` resource to load_balancer.tf
+- [ ] **Load Balancer - ALB**: Add `aws_lb_listener.alb_admin_console` resource to load_balancer.tf
+- [ ] **Load Balancer - ALB**: Add `aws_lb_target_group.alb_admin_console` resource to load_balancer.tf
+- [ ] **Target Attachments**: Add target group attachments for admin console target groups (same pattern as 443 TGs)
+- [ ] **LB Security Group**: Add `aws_security_group_rule.lb_allow_ingress_admin_console_from_cidr` to load_balancer.tf
+- [ ] **LB Security Group**: Add IPv6 variant for LB ingress (if IPv6 enabled)
+- [ ] **EC2 Security Group**: Update existing direct CIDR rule to be conditional on `!var.tfe_admin_console_use_lb`
+- [ ] **EC2 Security Group**: Add `aws_security_group_rule.ec2_allow_ingress_admin_console_from_lb` to compute.tf
+- [ ] **Outputs**: Update `tfe_admin_console_url_pattern` to return LB DNS when LB routing enabled
+- [ ] **Tests**: Add NLB configuration test with LB routing enabled
+- [ ] **Tests**: Add ALB configuration test with LB routing enabled
+- [ ] **Tests**: Verify health check configuration for admin console target groups
+- [ ] **Tests**: Test security group rules with LB routing enabled vs disabled
+- [ ] **Tests**: Verify default behavior (LB routing disabled) unchanged
+- [ ] **Documentation**: Add section explaining optional LB routing feature
+- [ ] **Documentation**: Document when to use LB routing vs direct access
+- [ ] **Documentation**: Provide example configurations for NLB + LB routing
+- [ ] **Documentation**: Provide example configurations for ALB + LB routing
+- [ ] **Examples**: Create example configuration with LB routing enabled
+- [ ] **Validation**: Test admin console access through NLB with LB routing
+- [ ] **Validation**: Test admin console access through ALB with LB routing
+- [ ] **Validation**: Verify certificate reuse works correctly for ALB HTTPS listener
 
 ## Success Criteria Validation
 
