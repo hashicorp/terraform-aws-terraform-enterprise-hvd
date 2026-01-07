@@ -88,17 +88,8 @@ output "elasticache_replication_group_primary_endpoint_address" {
 #------------------------------------------------------------------------------
 # Admin Console
 #------------------------------------------------------------------------------
-output "tfe_admin_console_enabled" {
-  value       = var.tfe_admin_console_enabled
-  description = "Boolean indicating whether the TFE Admin Console is enabled."
-}
-
-output "tfe_admin_console_port" {
-  value       = var.tfe_admin_console_port
-  description = "Port the TFE Admin Console listens on."
-}
 
 output "tfe_admin_console_url_pattern" {
-  value       = var.tfe_admin_console_enabled ? "https://<EC2_INSTANCE_IP>:${var.tfe_admin_console_port}" : null
-  description = "URL pattern to access the TFE Admin Console. Replace <EC2_INSTANCE_IP> with the actual EC2 instance IP address."
+  value       = var.tfe_admin_console_enabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_console_port}" : null
+  description = "URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_enabled` is set to true."
 }

@@ -36,15 +36,6 @@ locals {
 }
 
 #------------------------------------------------------------------------------
-# Admin Console token data source
-#------------------------------------------------------------------------------
-data "aws_secretsmanager_secret_version" "tfe_admin_console_token" {
-  count = var.tfe_admin_console_enabled && var.tfe_admin_console_token_secret_arn != null ? 1 : 0
-
-  secret_id = var.tfe_admin_console_token_secret_arn
-}
-
-#------------------------------------------------------------------------------
 # User data (cloud-init) script arguments
 #------------------------------------------------------------------------------
 locals {
@@ -153,10 +144,8 @@ locals {
     tfe_admin_https_port = var.tfe_admin_https_port
 
     # Admin Console settings
-    tfe_admin_console_enabled       = var.tfe_admin_console_enabled
-    tfe_admin_console_port          = var.tfe_admin_console_port
-    tfe_admin_console_token         = var.tfe_admin_console_enabled && var.tfe_admin_console_token_secret_arn != null ? data.aws_secretsmanager_secret_version.tfe_admin_console_token[0].secret_string : ""
-    tfe_admin_console_token_timeout = var.tfe_admin_console_token_timeout
+    tfe_admin_console_enabled = var.tfe_admin_console_enabled
+    tfe_admin_console_port    = var.tfe_admin_console_port
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"

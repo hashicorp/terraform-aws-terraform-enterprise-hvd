@@ -1157,20 +1157,3 @@ variable "cidr_allow_ingress_tfe_admin_console" {
     error_message = "All values must be valid CIDR notation (e.g., '10.0.0.0/8')."
   }
 }
-
-variable "tfe_admin_console_token_secret_arn" {
-  type        = string
-  description = "ARN of AWS Secrets Manager secret containing the admin console authentication token. If not provided, TFE will generate a token automatically. Secret type should be plaintext."
-  default     = null
-}
-
-variable "tfe_admin_console_token_timeout" {
-  type        = number
-  description = "Admin console authentication token timeout in seconds. Valid range is 60-3600 seconds (1-60 minutes)."
-  default     = 900
-
-  validation {
-    condition     = var.tfe_admin_console_token_timeout >= 60 && var.tfe_admin_console_token_timeout <= 3600
-    error_message = "Token timeout must be between 60 and 3600 seconds (1-60 minutes)."
-  }
-}
