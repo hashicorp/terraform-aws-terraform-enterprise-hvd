@@ -5,6 +5,9 @@
 
 set -e
 
+# Disable git pager to prevent hanging
+export GIT_PAGER=cat
+
 # Colors for output
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
