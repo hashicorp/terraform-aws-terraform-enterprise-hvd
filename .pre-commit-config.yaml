@@ -17,6 +17,14 @@ repos:
 
 - repo: local
   hooks:
+    - id: check_variables_consistency
+      name: Check variables.tf consistency
+      description: Check for differences between root and example variables.tf files.
+      entry: .github/scripts/pre_commit_hooks/check_variables_consistency.sh
+      language: script
+      files: (^variables\.tf$|^examples/.*/variables\.tf$)
+      pass_filenames: true
+
     - id: terraform_fmt
       name: Terraform fmt
       description: Rewrites all Terraform configuration files to a canonical format.
