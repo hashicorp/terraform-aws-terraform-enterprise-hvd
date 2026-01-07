@@ -68,7 +68,7 @@ repos:
     - id: terraform-docs-go
       exclude: ^helpers/
       args:
-       - "--args=--config=.terraform-docs.yml"
+       - "--config=.terraform-docs.yml"
       # - --hook-config=--create-file-if-not-exist=true
 - repo: local
 # ------------
