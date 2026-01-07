@@ -26,6 +26,7 @@ variable "is_secondary_region" {
   default     = false
 }
 
+#test
 #------------------------------------------------------------------------------
 # Bootstrap
 #------------------------------------------------------------------------------
@@ -1144,12 +1145,6 @@ variable "cidr_allow_ingress_tfe_admin_console" {
     condition     = var.tfe_admin_console_enabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
     error_message = "Value must be set when `tfe_admin_console_enabled` is `true`. Admin console requires explicit CIDR ranges for security."
   }
-
-  validation {
-    condition     = !var.tfe_admin_console_enabled ? var.cidr_allow_ingress_tfe_admin_console == null : true
-    error_message = "Value must be `null` when `tfe_admin_console_enabled` is `false`."
-  }
-
   validation {
     condition = var.cidr_allow_ingress_tfe_admin_console != null ? alltrue([
       for cidr in var.cidr_allow_ingress_tfe_admin_console : can(cidrhost(cidr, 0))
