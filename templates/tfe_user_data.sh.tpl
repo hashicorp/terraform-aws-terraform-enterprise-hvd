@@ -293,7 +293,6 @@ services:
 %{ if tfe_admin_console_enabled ~}
       # Admin Console settings
       TFE_ADMIN_CONSOLE_ENABLED: "true"
-      TFE_ADMIN_CONSOLE_PORT: ${tfe_admin_console_port}
 %{ endif ~}
 
 %{ if tfe_hairpin_addressing ~}
@@ -311,9 +310,6 @@ services:
       - 80:${tfe_http_port}
       - 443:${tfe_https_port}
       - ${tfe_admin_https_port}:${tfe_admin_https_port}
-%{ if tfe_admin_console_enabled ~}
-      - ${tfe_admin_console_port}:${tfe_admin_console_port}
-%{ endif ~}
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -512,8 +508,6 @@ spec:
     # Admin Console settings
     - name: "TFE_ADMIN_CONSOLE_ENABLED"
       value: "true"
-    - name: "TFE_ADMIN_CONSOLE_PORT"
-      value: ${tfe_admin_console_port}
 %{ endif ~}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
@@ -525,10 +519,6 @@ spec:
       hostPort: 443
     - containerPort: ${tfe_admin_https_port}
       hostPort: ${tfe_admin_https_port}
-%{ if tfe_admin_console_enabled ~}
-    - containerPort: ${tfe_admin_console_port}
-      hostPort: ${tfe_admin_console_port}
-%{ endif ~}
 %{ if tfe_operational_mode == "active-active" ~}
     - containerPort: 8201
       hostPort: 8201
