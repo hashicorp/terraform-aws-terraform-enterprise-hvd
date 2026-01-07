@@ -44,7 +44,7 @@ repos:
       entry: .github/scripts/pre_commit_hooks/terraform_tflint.sh
       language: script
       files: (\.tf|\.tfvars)$
-      exclude: \.terraform\/.*$
+      exclude: (\.terraform\/.*)$
       args:
         - '--args=--only=terraform_deprecated_interpolation'
         - '--args=--only=terraform_deprecated_index'
