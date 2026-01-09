@@ -99,7 +99,7 @@ resource "aws_lb_target_group" "nlb_admin_console" {
   health_check {
     protocol            = "HTTPS"
     path                = "/_health_check"
-    port                = "traffic-port"
+    port                = "443"
     matcher             = "200"
     healthy_threshold   = 5
     unhealthy_threshold = 5
@@ -215,6 +215,7 @@ resource "aws_lb_target_group" "alb_admin_console" {
   health_check {
     protocol            = "HTTPS"
     path                = "/_health_check"
+    port                = "443"
     healthy_threshold   = 2
     unhealthy_threshold = 7
     timeout             = 5
