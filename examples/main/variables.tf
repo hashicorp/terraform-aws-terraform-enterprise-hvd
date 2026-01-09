@@ -2,14 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 #------------------------------------------------------------------------------
-# Provider
-#------------------------------------------------------------------------------
-variable "region" {
-  type        = string
-  description = "AWS region where TFE will be deployed."
-}
-
-#------------------------------------------------------------------------------
 # Common
 #------------------------------------------------------------------------------
 variable "friendly_name_prefix" {
@@ -34,6 +26,7 @@ variable "is_secondary_region" {
   default     = false
 }
 
+#test
 #------------------------------------------------------------------------------
 # Bootstrap
 #------------------------------------------------------------------------------
@@ -272,9 +265,9 @@ variable "tfe_ipv6_enabled" {
 }
 
 variable "tfe_admin_https_port" {
-  type         = number
-  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
-  default      = 9443
+  type        = number
+  description = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default     = 9443
 
   validation {
     condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
@@ -858,6 +851,12 @@ variable "tfe_object_storage_s3_use_instance_profile" {
   default     = true
 }
 
+variable "s3_force_destroy" {
+  type        = bool
+  description = "Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects."
+  default     = false
+}
+
 variable "tfe_object_storage_s3_access_key_id" {
   type        = string
   description = "Access key ID for S3 bucket. Required when `tfe_object_storage_s3_use_instance_profile` is `false`."
@@ -1101,4 +1100,30 @@ variable "tfe_cost_estimation_iam_enabled" {
   type        = string
   description = "Boolean to add AWS pricing actions to TFE IAM instance profile for cost estimation feature."
   default     = true
+}
+
+#------------------------------------------------------------------------------
+# Admin Console
+#------------------------------------------------------------------------------
+variable "tfe_admin_console_enabled" {
+  type        = bool
+  description = "Boolean to enable the TFE Admin Console for advanced troubleshooting and diagnostics. When enabled, the admin console will be accessible on the configured port."
+  default     = false
+}
+
+variable "cidr_allow_ingress_tfe_admin_console" {
+  type        = list(string)
+  description = "List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_enabled` is `true`."
+  default     = null
+
+  validation {
+    condition     = var.tfe_admin_console_enabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
+    error_message = "Value must be set when `tfe_admin_console_enabled` is `true`. Admin console requires explicit CIDR ranges for security."
+  }
+  validation {
+    condition = var.cidr_allow_ingress_tfe_admin_console != null ? alltrue([
+      for cidr in var.cidr_allow_ingress_tfe_admin_console : can(cidrhost(cidr, 0))
+    ]) : true
+    error_message = "All values must be valid CIDR notation (e.g., '10.0.0.0/8')."
+  }
 }
