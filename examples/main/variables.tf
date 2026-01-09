@@ -1111,31 +1111,6 @@ variable "tfe_admin_console_enabled" {
   default     = false
 }
 
-variable "tfe_admin_console_port" {
-  type        = number
-  description = "Port the TFE Admin Console listens on for HTTPS traffic. This value is used for both the host and container port."
-  default     = 9200
-
-  validation {
-    condition = (
-      var.tfe_admin_console_port != var.tfe_http_port &&
-      var.tfe_admin_console_port != var.tfe_https_port &&
-      var.tfe_admin_console_port != var.tfe_admin_https_port &&
-      var.tfe_admin_console_port != var.tfe_metrics_http_port &&
-      var.tfe_admin_console_port != var.tfe_metrics_https_port &&
-      var.tfe_admin_console_port != 8201 && # Vault cluster port
-      var.tfe_admin_console_port != 6379 && # Redis port
-      var.tfe_admin_console_port != 5432    # PostgreSQL port
-    )
-    error_message = "Admin console port must not conflict with existing TFE ports (HTTP, HTTPS, admin API, metrics, Vault, Redis, PostgreSQL)."
-  }
-
-  validation {
-    condition     = var.tfe_admin_console_port >= 1024 && var.tfe_admin_console_port <= 65535
-    error_message = "Admin console port must be between 1024 and 65535."
-  }
-}
-
 variable "cidr_allow_ingress_tfe_admin_console" {
   type        = list(string)
   description = "List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_enabled` is `true`."
