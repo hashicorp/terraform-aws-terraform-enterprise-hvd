@@ -506,7 +506,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_admin_console" {
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
-resource "aws_security_group_rule" "ec2_allow_egress_admin_console" {
+resource "aws_security_group_rule" "ec2_allow_egress_tfe_admin_console" {
   count       = var.tfe_admin_console_enabled ? 1 : 0
   type        = "egress"
   from_port   = var.tfe_admin_https_port
