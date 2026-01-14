@@ -264,9 +264,9 @@ variable "tfe_ipv6_enabled" {
 }
 
 variable "tfe_admin_https_port" {
-  type         = number
-  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
-  default      = 9443
+  type        = number
+  description = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default     = 9443
 
   validation {
     condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
@@ -674,7 +674,7 @@ variable "rds_deletion_protection" {
 variable "rds_aurora_engine_version" {
   type        = number
   description = "Engine version of RDS Aurora PostgreSQL."
-  default     = 16.2
+  default     = 16.10
 }
 
 variable "rds_force_destroy" {
