@@ -28,6 +28,28 @@ main() {
 }
 
 tflint_() {
+  # Find repository root
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  
+  # Extract config file from args if specified
+  local config_file=""
+  local other_args=""
+  local in_config=false
+  
+  for arg in $args; do
+    if [[ "$in_config" == true ]]; then
+      config_file="$arg"
+      in_config=false
+    elif [[ "$arg" == "--config" ]]; then
+      in_config=true
+    elif [[ "$arg" == --config=* ]]; then
+      config_file="${arg#*=}"
+    else
+      other_args="$other_args $arg"
+    fi
+  done
+  
   for file_with_path in $files; do
     file_with_path="${file_with_path// /__REPLACED__SPACE__}"
 
@@ -40,7 +62,24 @@ tflint_() {
     path_uniq="${path_uniq//__REPLACED__SPACE__/ }"
 
     pushd "$path_uniq" > /dev/null
-    tflint $args
+    
+    # Determine config file to use
+    local tflint_config=""
+    if [[ -n "$config_file" ]]; then
+      # Config file provided - treat as relative to current directory
+      if [[ -f "$config_file" ]]; then
+        tflint_config="--config=$config_file"
+      else
+        echo "Warning: Config file '$config_file' not found in $path_uniq" >&2
+      fi
+    else
+      # No config specified - default to repository root .tflint.hcl
+      if [[ -f "$repo_root/.tflint.hcl" ]]; then
+        tflint_config="--config=$repo_root/.tflint.hcl"
+      fi
+    fi
+    
+    tflint $tflint_config $other_args
     popd > /dev/null
   done
 }
