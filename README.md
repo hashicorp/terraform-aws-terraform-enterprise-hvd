@@ -8,7 +8,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### General
 
-- TFE license file (_e.g._ `terraform.hclic`)
+- TFE license file (*e.g.* `terraform.hclic`)
 - Terraform CLI `>= 1.9` installed on clients/workstations that will be used to deploy TFE
 - General understanding of how to use Terraform (Community Edition)
 - General understanding of how to use AWS
@@ -25,7 +25,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
   - Redis subnet IDs (can be the same as RDS subnets if desirable)
 - (Optional) S3 VPC endpoint configured within VPC
 - (Optional) AWS Route53 hosted zone for TFE DNS record creation
-- Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.aws.example.com`)
+- Chosen fully qualified domain name (FQDN) for your TFE instance (*e.g.* `tfe.aws.example.com`)
 
 >📝 Note: It is recommended to specify a minimum of two subnets for each subnet input to enable high availability.
 
@@ -39,20 +39,20 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### TLS certificates
 
-- TLS certificate (_e.g._ `cert.pem`) and private key (_e.g._ `privkey.pem`) that matches your chosen fully qualified domain name (FQDN) for TFE
+- TLS certificate (*e.g.* `cert.pem`) and private key (*e.g.* `privkey.pem`) that matches your chosen fully qualified domain name (FQDN) for TFE
   - TLS certificate and private key must be in PEM format
   - Private key must **not** be password protected
-- TLS certificate authority (CA) bundle (_e.g._ `ca_bundle.pem`) corresponding with the CA that issues your TFE TLS certificates
+- TLS certificate authority (CA) bundle (*e.g.* `ca_bundle.pem`) corresponding with the CA that issues your TFE TLS certificates
   - CA bundle must be in PEM format
-  - You may include additional certificate chains corresponding to external systems that TFE will make outbound connections to (_e.g._ your self-hosted VCS, if its certificate was issued by a different CA than your TFE certificate).
+  - You may include additional certificate chains corresponding to external systems that TFE will make outbound connections to (*e.g.* your self-hosted VCS, if its certificate was issued by a different CA than your TFE certificate).
 
 >📝 Note: All three of these files will be created as secrets in AWS Secrets Manager per the next section.
 
 ### Secrets management
 
-The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment and installation:
+The following *bootstrap* secrets stored in **AWS Secrets Manager** in order to bootstrap the TFE deployment and installation:
 
-- **TFE license file** - raw contents of license file stored as a plaintext secret (_e.g._ `cat terraform.hclic`)
+- **TFE license file** - raw contents of license file stored as a plaintext secret (*e.g.* `cat terraform.hclic`)
 - **TFE encryption password** - random characters stored as a plaintext secret (used to protect internally-managed Vault unseal key and root token)
 - **TFE database password** - used to create RDS Aurora (PostgreSQL) database cluster; random characters stored as a plaintext secret; value must be between 8 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
 - **TFE Redis password** - used to create Redis (Elasticache Replication Group) cluster; random characters stored as a plaintext secret; value must be between 16 and 128 characters long and must **not** contain `@`, `"`, or `/` characters
@@ -107,9 +107,9 @@ One of the following logging destinations:
 3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
 4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
-  
+
 5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
-   
+
    ```hcl
    module "tfe" {
      source  = "hashicorp/terraform-enterprise-hvd/aws"
@@ -151,7 +151,7 @@ One of the following logging destinations:
     journalctl -xu cloud-final -f
     ```
 
-    >📝 Note: The `-f` argument is to _follow_ the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+    >📝 Note: The `-f` argument is to *follow* the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
     **Successful install log message**
 
@@ -168,7 +168,7 @@ One of the following logging destinations:
     sudo docker compose exec tfe tfe-health-check-status
     ```
 
-9.  Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
+9. Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
 ## Docs
 
@@ -201,12 +201,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.84.0 |
-
-## Modules
-
-No modules.
-=======
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.100 |
 
 ## Resources
 
@@ -254,12 +249,16 @@ No modules.
 | [aws_security_group_rule.ec2_allow_egress_dns_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_egress_proxy_admin_console](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_proxy_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_proxy_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_rds](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_redis](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_egress_tfe_admin_console](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_ssh](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_ingress_tfe_admin_console](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_ingress_tfe_admin_console_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_tfe_https_from_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.lb_allow_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -306,6 +305,18 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_ec2_subnet_ids"></a> [ec2\_subnet\_ids](#input\_ec2\_subnet\_ids) | List of subnet IDs to use for the EC2 instance. Private subnets is the best practice here. | `list(string)` | n/a | yes |
+| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
+| <a name="input_lb_subnet_ids"></a> [lb\_subnet\_ids](#input\_lb\_subnet\_ids) | List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherwise, these should be private subnets. | `list(string)` | n/a | yes |
+| <a name="input_rds_subnet_ids"></a> [rds\_subnet\_ids](#input\_rds\_subnet\_ids) | List of subnet IDs to use for RDS database subnet group. Private subnets is the best practice here. | `list(string)` | n/a | yes |
+| <a name="input_tfe_database_password_secret_arn"></a> [tfe\_database\_password\_secret\_arn](#input\_tfe\_database\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE database password used to create RDS Aurora (PostgreSQL) database cluster. Secret type should be plaintext. Value of secret must be from 8 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | n/a | yes |
+| <a name="input_tfe_encryption_password_secret_arn"></a> [tfe\_encryption\_password\_secret\_arn](#input\_tfe\_encryption\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE encryption password. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_fqdn"></a> [tfe\_fqdn](#input\_tfe\_fqdn) | Fully qualified domain name (FQDN) of TFE instance. This name should resolve to the DNS name or IP address of the TFE load balancer and will be what clients use to access TFE. | `string` | n/a | yes |
+| <a name="input_tfe_license_secret_arn"></a> [tfe\_license\_secret\_arn](#input\_tfe\_license\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE license file. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_ca_bundle_secret_arn"></a> [tfe\_tls\_ca\_bundle\_secret\_arn](#input\_tfe\_tls\_ca\_bundle\_secret\_arn) | ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_cert_secret_arn"></a> [tfe\_tls\_cert\_secret\_arn](#input\_tfe\_tls\_cert\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
 | <a name="input_additional_no_proxy"></a> [additional\_no\_proxy](#input\_additional\_no\_proxy) | Comma-separated list of domains, IP addresses, or CIDR ranges that TFE should bypass the proxy when making outbound requests, provided `http_proxy` or `https_proxy` are set. This list is in addition to automatically included addresses like RDS, S3, and Redis, which are dynamically added to `no_proxy` by the user\_data script. Do not set if `http_proxy` and/or `https_proxy` are not configured. | `string` | `null` | no |
 | <a name="input_asg_health_check_grace_period"></a> [asg\_health\_check\_grace\_period](#input\_asg\_health\_check\_grace\_period) | The amount of time to wait for a new TFE EC2 instance to become healthy. If this threshold is breached, the ASG will terminate the instance and launch a new one. | `number` | `900` | no |
 | <a name="input_asg_instance_count"></a> [asg\_instance\_count](#input\_asg\_instance\_count) | Desired number of TFE EC2 instances to run in autoscaling group. Must be `1` when `tfe_operational_mode` is `external`. | `number` | `1` | no |
@@ -316,6 +327,7 @@ No modules.
 | <a name="input_cidr_allow_egress_ec2_proxy"></a> [cidr\_allow\_egress\_ec2\_proxy](#input\_cidr\_allow\_egress\_ec2\_proxy) | List of destination CIDR range(s) where proxy server exists. Required and only valid when `http_proxy` and/or `https_proxy` are set. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_ec2_ssh"></a> [cidr\_allow\_ingress\_ec2\_ssh](#input\_cidr\_allow\_ingress\_ec2\_ssh) | List of CIDR ranges to allow SSH ingress to TFE EC2 instance (i.e. bastion IP, client/workstation IP, etc.). | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_tfe_443"></a> [cidr\_allow\_ingress\_tfe\_443](#input\_cidr\_allow\_ingress\_tfe\_443) | List of CIDR ranges allowed to access the TFE application over HTTPS (port 443). | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
+| <a name="input_cidr_allow_ingress_tfe_admin_console"></a> [cidr\_allow\_ingress\_tfe\_admin\_console](#input\_cidr\_allow\_ingress\_tfe\_admin\_console) | List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_enabled` is `true`. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_http"></a> [cidr\_allow\_ingress\_tfe\_metrics\_http](#input\_cidr\_allow\_ingress\_tfe\_metrics\_http) | List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_https"></a> [cidr\_allow\_ingress\_tfe\_metrics\_https](#input\_cidr\_allow\_ingress\_tfe\_metrics\_https) | List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | Name of CloudWatch Log Group to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
@@ -337,13 +349,10 @@ No modules.
 | <a name="input_ec2_instance_size"></a> [ec2\_instance\_size](#input\_ec2\_instance\_size) | EC2 instance type for TFE EC2 launch template. | `string` | `"m7i.xlarge"` | no |
 | <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
 | <a name="input_ec2_ssh_key_pair"></a> [ec2\_ssh\_key\_pair](#input\_ec2\_ssh\_key\_pair) | Name of existing SSH key pair to attach to TFE EC2 instance. | `string` | `null` | no |
-| <a name="input_ec2_subnet_ids"></a> [ec2\_subnet\_ids](#input\_ec2\_subnet\_ids) | List of subnet IDs to use for the EC2 instance. Private subnets is the best practice here. | `list(string)` | n/a | yes |
-| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
 | <a name="input_http_proxy"></a> [http\_proxy](#input\_http\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
 | <a name="input_https_proxy"></a> [https\_proxy](#input\_https\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
 | <a name="input_is_secondary_region"></a> [is\_secondary\_region](#input\_is\_secondary\_region) | Boolean indicating whether this TFE deployment is in the primary or secondary (replica) region. | `bool` | `false` | no |
 | <a name="input_lb_is_internal"></a> [lb\_is\_internal](#input\_lb\_is\_internal) | Boolean to create an internal (private) load balancer. The `lb_subnet_ids` must be private subnets when this is `true`. | `bool` | `true` | no |
-| <a name="input_lb_subnet_ids"></a> [lb\_subnet\_ids](#input\_lb\_subnet\_ids) | List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherwise, these should be private subnets. | `list(string)` | n/a | yes |
 | <a name="input_lb_stickiness_enabled"></a> [lb\_stickiness\_enabled](#input\_lb\_stickiness\_enabled) | Boolean to enable sticky sessions for the load balancer. When `lb_type` is `nlb`, sticky sessions enabled by client IP Address. | `bool` | `true` | no |
 | <a name="input_lb_type"></a> [lb\_type](#input\_lb\_type) | Indicates which type of AWS load balancer is created: Application Load Balancer (`alb`) or Network Load Balancer (`nlb`). | `string` | `"nlb"` | no |
 | <a name="input_log_fwd_destination_type"></a> [log\_fwd\_destination\_type](#input\_log\_fwd\_destination\_type) | Type of log forwarding destination for Fluent Bit. Supported values are `s3`, `cloudwatch`, or `custom`. | `string` | `"cloudwatch"` | no |
@@ -367,7 +376,6 @@ No modules.
 | <a name="input_rds_skip_final_snapshot"></a> [rds\_skip\_final\_snapshot](#input\_rds\_skip\_final\_snapshot) | Boolean to enable RDS to take a final database snapshot before destroying. | `bool` | `false` | no |
 | <a name="input_rds_source_region"></a> [rds\_source\_region](#input\_rds\_source\_region) | Source region for RDS cross-region replication. Only required when `is_secondary_region` is `true`, otherwise leave as `null`. | `string` | `null` | no |
 | <a name="input_rds_storage_encrypted"></a> [rds\_storage\_encrypted](#input\_rds\_storage\_encrypted) | Boolean to encrypt RDS storage. An AWS managed key will be used when `true` unless a value is also specified for `rds_kms_key_arn`. | `bool` | `true` | no |
-| <a name="input_rds_subnet_ids"></a> [rds\_subnet\_ids](#input\_rds\_subnet\_ids) | List of subnet IDs to use for RDS database subnet group. Private subnets is the best practice here. | `list(string)` | n/a | yes |
 | <a name="input_redis_apply_immediately"></a> [redis\_apply\_immediately](#input\_redis\_apply\_immediately) | Boolean to apply changes immediately to Redis cluster. | `bool` | `true` | no |
 | <a name="input_redis_at_rest_encryption_enabled"></a> [redis\_at\_rest\_encryption\_enabled](#input\_redis\_at\_rest\_encryption\_enabled) | Boolean to enable encryption at rest on Redis cluster. An AWS managed key will be used when `true` unless a value is also specified for `redis_kms_key_arn`. | `bool` | `true` | no |
 | <a name="input_redis_auto_minor_version_upgrade"></a> [redis\_auto\_minor\_version\_upgrade](#input\_redis\_auto\_minor\_version\_upgrade) | Boolean to enable automatic minor version upgrades for Redis cluster. | `bool` | `true` | no |
@@ -390,6 +398,7 @@ No modules.
 | <a name="input_s3_force_destroy"></a> [s3\_force\_destroy](#input\_s3\_force\_destroy) | Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects. | `bool` | `false` | no |
 | <a name="input_s3_kms_key_arn"></a> [s3\_kms\_key\_arn](#input\_s3\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE S3 bucket with. | `string` | `null` | no |
 | <a name="input_s3_log_fwd_bucket_name"></a> [s3\_log\_fwd\_bucket\_name](#input\_s3\_log\_fwd\_bucket\_name) | Name of S3 bucket to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
+| <a name="input_tfe_admin_console_enabled"></a> [tfe\_admin\_console\_enabled](#input\_tfe\_admin\_console\_enabled) | Boolean to enable the TFE Admin Console for advanced troubleshooting and diagnostics. When enabled, the admin console will be accessible on the configured port. | `bool` | `false` | no |
 | <a name="input_tfe_admin_https_port"></a> [tfe\_admin\_https\_port](#input\_tfe\_admin\_https\_port) | Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port. | `number` | `9443` | no |
 | <a name="input_tfe_alb_tls_certificate_arn"></a> [tfe\_alb\_tls\_certificate\_arn](#input\_tfe\_alb\_tls\_certificate\_arn) | ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`. | `string` | `null` | no |
 | <a name="input_tfe_capacity_concurrency"></a> [tfe\_capacity\_concurrency](#input\_tfe\_capacity\_concurrency) | Maximum number of concurrent Terraform runs to allow on a TFE node. | `number` | `10` | no |
@@ -398,10 +407,7 @@ No modules.
 | <a name="input_tfe_cost_estimation_iam_enabled"></a> [tfe\_cost\_estimation\_iam\_enabled](#input\_tfe\_cost\_estimation\_iam\_enabled) | Boolean to add AWS pricing actions to TFE IAM instance profile for cost estimation feature. | `string` | `true` | no |
 | <a name="input_tfe_database_name"></a> [tfe\_database\_name](#input\_tfe\_database\_name) | Name of TFE database to create within RDS global cluster. | `string` | `"tfe"` | no |
 | <a name="input_tfe_database_parameters"></a> [tfe\_database\_parameters](#input\_tfe\_database\_parameters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
-| <a name="input_tfe_database_password_secret_arn"></a> [tfe\_database\_password\_secret\_arn](#input\_tfe\_database\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE database password used to create RDS Aurora (PostgreSQL) database cluster. Secret type should be plaintext. Value of secret must be from 8 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | n/a | yes |
 | <a name="input_tfe_database_user"></a> [tfe\_database\_user](#input\_tfe\_database\_user) | Username for TFE RDS database cluster. | `string` | `"tfe"` | no |
-| <a name="input_tfe_encryption_password_secret_arn"></a> [tfe\_encryption\_password\_secret\_arn](#input\_tfe\_encryption\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE encryption password. Secret type should be plaintext. | `string` | n/a | yes |
-| <a name="input_tfe_fqdn"></a> [tfe\_fqdn](#input\_tfe\_fqdn) | Fully qualified domain name (FQDN) of TFE instance. This name should resolve to the DNS name or IP address of the TFE load balancer and will be what clients use to access TFE. | `string` | n/a | yes |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_type` is `nlb` and `lb_is_internal` is `true`. | `bool` | `true` | no |
 | <a name="input_tfe_http_port"></a> [tfe\_http\_port](#input\_tfe\_http\_port) | Port the TFE application container listens on for HTTP traffic. This is not the host port. | `number` | `8080` | no |
 | <a name="input_tfe_https_port"></a> [tfe\_https\_port](#input\_tfe\_https\_port) | Port the TFE application container listens on for HTTPS traffic. This is not the host port. | `number` | `8443` | no |
@@ -426,14 +432,10 @@ No modules.
 | <a name="input_tfe_operational_mode"></a> [tfe\_operational\_mode](#input\_tfe\_operational\_mode) | [Operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes) for TFE. Valid values are `active-active` or `external`. | `string` | `"active-active"` | no |
 | <a name="input_tfe_redis_password_secret_arn"></a> [tfe\_redis\_password\_secret\_arn](#input\_tfe\_redis\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE Redis password used to create Redis (Elasticache Replication Group) cluster. Secret type should be plaintext. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_docker_network"></a> [tfe\_run\_pipeline\_docker\_network](#input\_tfe\_run\_pipeline\_docker\_network) | Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network created by TFE. | `string` | `null` | no |
-| <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Name of the Docker image to use for the run pipeline driver. | `string` | `null` | no |
-| <a name="input_tfe_run_pipeline_image_ecr_repo_name"></a> [tfe\_run\_pipeline\_image\_ecr\_repo\_name](#input\_tfe\_run\_pipeline\_image\_ecr\_repo\_name) | Name of the AWS ECR repository containing your custom TFE run pipeline image. | `string` | `null` | no |
-| <a name="input_tfe_tls_ca_bundle_secret_arn"></a> [tfe\_tls\_ca\_bundle\_secret\_arn](#input\_tfe\_tls\_ca\_bundle\_secret\_arn) | ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
-| <a name="input_tfe_tls_cert_secret_arn"></a> [tfe\_tls\_cert\_secret\_arn](#input\_tfe\_tls\_cert\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE\_RUN\_PIPELINE\_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls. | `string` | `null` | no |
 | <a name="input_tfe_tls_enforce"></a> [tfe\_tls\_enforce](#input\_tfe\_tls\_enforce) | Boolean to enforce TLS. | `bool` | `false` | no |
-| <a name="input_tfe_tls_privkey_secret_arn"></a> [tfe\_tls\_privkey\_secret\_arn](#input\_tfe\_tls\_privkey\_secret\_arn) | ARN of AWS Secrets Manager secret for TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | n/a | yes |
+| <a name="input_tfe_usage_reporting_opt_out"></a> [tfe\_usage\_reporting\_opt\_out](#input\_tfe\_usage\_reporting\_opt\_out) | Boolean to opt out of reporting TFE usage information to HashiCorp. | `bool` | `false` | no |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of VPC where TFE will be deployed. | `string` | n/a | yes |
 
 ## Outputs
 
@@ -450,6 +452,7 @@ No modules.
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | ARN of TFE S3 bucket. |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | Name of TFE S3 bucket. |
 | <a name="output_s3_crr_iam_role_arn"></a> [s3\_crr\_iam\_role\_arn](#output\_s3\_crr\_iam\_role\_arn) | ARN of S3 cross-region replication IAM role. |
+| <a name="output_tfe_admin_console_url_pattern"></a> [tfe\_admin\_console\_url\_pattern](#output\_tfe\_admin\_console\_url\_pattern) | URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_enabled` is set to true. |
 | <a name="output_tfe_create_initial_admin_user_url"></a> [tfe\_create\_initial\_admin\_user\_url](#output\_tfe\_create\_initial\_admin\_user\_url) | URL to create TFE initial admin user. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | PostgreSQL server endpoint in the format that TFE will connect to. |
 | <a name="output_tfe_url"></a> [tfe\_url](#output\_tfe\_url) | URL to access TFE application based on value of `tfe_fqdn` input. |
