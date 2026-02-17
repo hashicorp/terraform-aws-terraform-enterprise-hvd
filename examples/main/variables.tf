@@ -2,14 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 #------------------------------------------------------------------------------
-# Provider
-#------------------------------------------------------------------------------
-variable "region" {
-  type        = string
-  description = "AWS region where TFE will be deployed."
-}
-
-#------------------------------------------------------------------------------
 # Common
 #------------------------------------------------------------------------------
 variable "friendly_name_prefix" {
@@ -168,7 +160,7 @@ variable "tfe_operational_mode" {
 
 variable "tfe_run_pipeline_image" {
   type        = string
-  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
+  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is referred to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
   default     = null
 }
 
@@ -272,9 +264,9 @@ variable "tfe_ipv6_enabled" {
 }
 
 variable "tfe_admin_https_port" {
-  type         = number
-  description  = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
-  default      = 9443
+  type        = number
+  description = "Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port."
+  default     = 9443
 
   validation {
     condition     = var.tfe_admin_https_port != var.tfe_https_port && var.tfe_admin_https_port != var.tfe_http_port
@@ -680,9 +672,9 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_aurora_engine_version" {
-  type        = number
+  type        = string
   description = "Engine version of RDS Aurora PostgreSQL."
-  default     = 16.2
+  default     = "16.10"
 }
 
 variable "rds_force_destroy" {
@@ -856,6 +848,12 @@ variable "tfe_object_storage_s3_use_instance_profile" {
   type        = bool
   description = "Boolean to use TFE instance profile for S3 bucket access. If `false`, `tfe_object_storage_s3_access_key_id` and `tfe_object_storage_s3_secret_access_key` are required."
   default     = true
+}
+
+variable "s3_force_destroy" {
+  type        = bool
+  description = "Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects."
+  default     = false
 }
 
 variable "tfe_object_storage_s3_access_key_id" {
