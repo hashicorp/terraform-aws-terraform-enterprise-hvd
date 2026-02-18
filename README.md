@@ -8,7 +8,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 ### General
 
-- TFE license file (*e.g.* `terraform.hclic`)
+- TFE license file for example `terraform.hclic`
 - Terraform CLI `>= 1.9` installed on clients/workstations that will be used to deploy TFE
 - General understanding of how to use Terraform (Community Edition)
 - General understanding of how to use AWS
