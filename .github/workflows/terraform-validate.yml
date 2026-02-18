@@ -10,7 +10,7 @@ on:
 
 permissions:
   contents: read
-
+  pull-requests: read
 jobs:
   tf-validate:
     uses: hashicorp/hvd-module-gha/.github/workflows/terraform-validate.yml@main

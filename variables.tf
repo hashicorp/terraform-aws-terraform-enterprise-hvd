@@ -161,7 +161,7 @@ variable "tfe_operational_mode" {
 
 variable "tfe_run_pipeline_image" {
   type        = string
-  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is refered to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
+  description = "Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is referred to as the [TFE_RUN_PIPELINE_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls."
   default     = null
 }
 
@@ -673,9 +673,9 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_aurora_engine_version" {
-  type        = number
+  type        = string
   description = "Engine version of RDS Aurora PostgreSQL."
-  default     = 16.2
+  default     = "16.10"
 }
 
 variable "rds_force_destroy" {
