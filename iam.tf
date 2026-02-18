@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "tfe_ec2_allow_s3" {
       "s3:GetBucketLocation"
     ]
     resources = [
-      "${aws_s3_bucket.tfe.arn}",
+      aws_s3_bucket.tfe.arn,
       "${aws_s3_bucket.tfe.arn}/*"
     ]
   }
@@ -283,7 +283,7 @@ data "aws_iam_policy_document" "tfe_ec2_allow_s3_log_fwd" {
       "s3:GetBucketLocation"
     ]
     resources = [
-      "${data.aws_s3_bucket.log_fwd[0].arn}",
+      data.aws_s3_bucket.log_fwd[0].arn,
       "${data.aws_s3_bucket.log_fwd[0].arn}/*"
     ]
   }
@@ -305,7 +305,7 @@ data "aws_iam_policy_document" "tfe_ec2_allow_cloudwatch" {
     ]
 
     resources = [
-      "${data.aws_cloudwatch_log_group.log_fwd[0].arn}",
+      data.aws_cloudwatch_log_group.log_fwd[0].arn,
       "${data.aws_cloudwatch_log_group.log_fwd[0].arn}:*"
     ]
   }

@@ -74,6 +74,58 @@ resource "aws_lb_target_group" "nlb_443" {
   )
 }
 
+# Admin Console listener and target group for NLB
+resource "aws_lb_listener" "lb_nlb_admin_console" {
+  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  load_balancer_arn = aws_lb.nlb[0].arn
+  port              = var.tfe_admin_https_port
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.nlb_admin_console[0].arn
+  }
+}
+
+resource "aws_lb_target_group" "nlb_admin_console" {
+  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  name     = "${var.friendly_name_prefix}-tfe-nlb-tg-${var.tfe_admin_https_port}"
+  protocol = "TCP"
+  port     = var.tfe_admin_https_port
+  vpc_id   = var.vpc_id
+
+  health_check {
+    protocol            = "HTTPS"
+    path                = "/_health_check"
+    port                = "443"
+    matcher             = "200"
+    healthy_threshold   = 5
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
+  }
+
+  stickiness {
+    enabled = var.lb_stickiness_enabled
+    type    = "source_ip"
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-nlb-tg-${var.tfe_admin_https_port}" },
+    { "Description" = "Load balancer target group for TFE admin console traffic." },
+    var.common_tags
+  )
+}
+
+resource "aws_autoscaling_attachment" "tfe_asg_attachment_nlb_admin_console" {
+  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  autoscaling_group_name = aws_autoscaling_group.tfe.name
+  lb_target_group_arn    = aws_lb_target_group.nlb_admin_console[0].arn
+}
+
 #------------------------------------------------------------------------------
 # Application load balancer (ALB)
 #------------------------------------------------------------------------------
@@ -136,6 +188,55 @@ resource "aws_lb_target_group" "alb_443" {
   )
 }
 
+# Admin Console listener and target group for ALB
+resource "aws_lb_listener" "alb_admin_console" {
+  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  load_balancer_arn = aws_lb.alb[0].arn
+  port              = var.tfe_admin_https_port
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.tfe_alb_tls_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alb_admin_console[0].arn
+  }
+}
+
+resource "aws_lb_target_group" "alb_admin_console" {
+  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  name     = "${var.friendly_name_prefix}-tfe-alb-tg-${var.tfe_admin_https_port}"
+  port     = var.tfe_admin_https_port
+  protocol = "HTTPS"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    protocol            = "HTTPS"
+    path                = "/_health_check"
+    port                = "443"
+    healthy_threshold   = 2
+    unhealthy_threshold = 7
+    timeout             = 5
+    interval            = 30
+    matcher             = 200
+  }
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-alb-tg-${var.tfe_admin_https_port}" },
+    { "Description" = "Load balancer target group for TFE admin console traffic." },
+    var.common_tags
+  )
+}
+
+resource "aws_autoscaling_attachment" "tfe_asg_attachment_alb_admin_console" {
+  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+
+  autoscaling_group_name = aws_autoscaling_group.tfe.name
+  lb_target_group_arn    = aws_lb_target_group.alb_admin_console[0].arn
+}
+
 #------------------------------------------------------------------------------
 # Security groups
 #------------------------------------------------------------------------------
@@ -164,6 +265,33 @@ resource "aws_security_group_rule" "lb_allow_ingress_tfe_https_from_ec2" {
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.ec2_allow_ingress.id
   description              = "Allow TCP/443 (HTTPS) inbound to TFE load balancer from TFE EC2 security group."
+
+  security_group_id = aws_security_group.lb_allow_ingress.id
+}
+
+# Admin Console ingress rules for load balancer
+resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
+  count = var.tfe_admin_console_enabled ? 1 : 0
+
+  type        = "ingress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
+  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE load balancer from specified CIDR ranges."
+
+  security_group_id = aws_security_group.lb_allow_ingress.id
+}
+
+resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_ec2" {
+  count = var.tfe_admin_console_enabled ? 1 : 0
+
+  type                     = "ingress"
+  from_port                = var.tfe_admin_https_port
+  to_port                  = var.tfe_admin_https_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.ec2_allow_ingress.id
+  description              = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE load balancer from TFE EC2 security group."
 
   security_group_id = aws_security_group.lb_allow_ingress.id
 }

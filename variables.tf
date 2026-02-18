@@ -26,6 +26,7 @@ variable "is_secondary_region" {
   default     = false
 }
 
+#test
 #------------------------------------------------------------------------------
 # Bootstrap
 #------------------------------------------------------------------------------
@@ -1099,4 +1100,30 @@ variable "tfe_cost_estimation_iam_enabled" {
   type        = string
   description = "Boolean to add AWS pricing actions to TFE IAM instance profile for cost estimation feature."
   default     = true
+}
+
+#------------------------------------------------------------------------------
+# Admin Console
+#------------------------------------------------------------------------------
+variable "tfe_admin_console_enabled" {
+  type        = bool
+  description = "Boolean to enable the TFE Admin Console for advanced troubleshooting and diagnostics. When enabled, the admin console will be accessible on the configured port."
+  default     = false
+}
+
+variable "cidr_allow_ingress_tfe_admin_console" {
+  type        = list(string)
+  description = "List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_enabled` is `true`."
+  default     = null
+
+  validation {
+    condition     = var.tfe_admin_console_enabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
+    error_message = "Value must be set when `tfe_admin_console_enabled` is `true`. Admin console requires explicit CIDR ranges for security."
+  }
+  validation {
+    condition = var.cidr_allow_ingress_tfe_admin_console != null ? alltrue([
+      for cidr in var.cidr_allow_ingress_tfe_admin_console : can(cidrhost(cidr, 0))
+    ]) : true
+    error_message = "All values must be valid CIDR notation (e.g., '10.0.0.0/8')."
+  }
 }

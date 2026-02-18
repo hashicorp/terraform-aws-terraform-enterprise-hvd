@@ -21,7 +21,7 @@ function detect_os_distro {
   local OS_DISTRO_NAME=$(grep "^NAME=" /etc/os-release | cut -d"\"" -f2)
   local OS_DISTRO_DETECTED
 
-  case "$OS_DISTRO_NAME" in 
+  case "$OS_DISTRO_NAME" in
     "Ubuntu"*)
       OS_DISTRO_DETECTED="ubuntu"
       ;;
@@ -45,8 +45,8 @@ function detect_os_distro {
 function install_awscli {
   local OS_DISTRO="$1"
   local OS_VERSION=$(grep "^VERSION=" /etc/os-release | cut -d"\"" -f2)
-  
-  if command -v aws > /dev/null; then 
+
+  if command -v aws > /dev/null; then
     log "INFO" "Detected 'aws-cli' is already installed. Skipping."
   else
     log "INFO" "Installing 'aws-cli'."
@@ -76,7 +76,7 @@ function install_awscli {
 function install_docker {
   local OS_DISTRO="$1"
   local OS_MAJOR_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d"\"" -f2 | cut -d"." -f1)
-  
+
   if command -v docker > /dev/null; then
     log "INFO" "Detected 'docker' is already installed. Skipping."
   else
@@ -106,7 +106,7 @@ function install_docker {
     fi
     systemctl enable --now docker.service
   fi
-  
+
   if [[ "${http_proxy}" != "" || "${https_proxy}" != "" ]]; then
     log "INFO" "Configuring proxy settings for Docker daemon."
     mkdir -p /etc/systemd/system/docker.service.d
@@ -151,7 +151,7 @@ function install_podman {
 function retrieve_license_from_awssm {
   local SECRET_ARN="$1"
   local SECRET_REGION=$AWS_REGION
-  
+
   if [[ -z "$SECRET_ARN" ]]; then
     log "ERROR" "Secret ARN cannot be empty. Exiting."
     exit_script 4
@@ -194,7 +194,7 @@ EOF
 
 function generate_tfe_docker_compose_file {
   local TFE_SETTINGS_PATH="$1"
-  
+
   cat > "$TFE_SETTINGS_PATH" << EOF
 ---
 name: tfe
@@ -239,11 +239,11 @@ services:
 %{ endif ~}
       TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION: ${tfe_object_storage_s3_server_side_encryption}
       TFE_OBJECT_STORAGE_S3_SERVER_SIDE_ENCRYPTION_KMS_KEY_ID: ${tfe_object_storage_s3_server_side_encryption_kms_key_id}
-      
+
 %{ if tfe_operational_mode == "active-active" ~}
       # Vault settings
       TFE_VAULT_CLUSTER_ADDRESS: https://$VM_PRIVATE_IP:8201
-      
+
       # Redis settings.
       TFE_REDIS_HOST: ${tfe_redis_host}
       TFE_REDIS_USE_TLS: ${tfe_redis_use_tls}
@@ -280,7 +280,7 @@ services:
       TFE_IACT_SUBNETS: ${tfe_iact_subnets}
       TFE_IACT_TRUSTED_PROXIES: ${tfe_iact_trusted_proxies}
       TFE_IACT_TIME_LIMIT: ${tfe_iact_time_limit}
-      
+
       # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
       http_proxy: ${http_proxy}
@@ -289,6 +289,11 @@ services:
 %{ endif ~}
       TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
       TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
+
+%{ if tfe_admin_console_enabled ~}
+      # Admin Console settings
+      TFE_ADMIN_CONSOLE_ENABLED: "true"
+%{ endif ~}
 
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
@@ -336,7 +341,7 @@ EOF
 
 function generate_tfe_podman_manifest {
   local TFE_SETTINGS_PATH="$1"
-  
+
   cat > $TFE_SETTINGS_PATH << EOF
 ---
 apiVersion: "v1"
@@ -474,7 +479,7 @@ spec:
       value: /var/cache/tfe-task-worker
     - name: "TFE_DISK_CACHE_VOLUME_NAME"
       value: terraform-enterprise-cache
-    
+
     # Initial admin creation token settings
     - name: "TFE_IACT_TOKEN"
       value: ${tfe_iact_token}
@@ -484,7 +489,7 @@ spec:
       value: ${tfe_iact_trusted_proxies}
     - name: "TFE_IACT_TIME_LIMIT"
       value: ${tfe_iact_time_limit}
-    
+
     # Network settings
 %{ if http_proxy != "" || https_proxy != ""  ~}
     - name:  "http_proxy"
@@ -498,6 +503,12 @@ spec:
       value: ${tfe_ipv6_enabled}
     - name: "TFE_ADMIN_HTTPS_PORT"
       value: ${tfe_admin_https_port}
+
+%{ if tfe_admin_console_enabled ~}
+    # Admin Console settings
+    - name: "TFE_ADMIN_CONSOLE_ENABLED"
+      value: "true"
+%{ endif ~}
 
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
@@ -597,7 +608,7 @@ function pull_tfe_app_image {
   log "INFO" "Detected TFE container image registry URL is '${tfe_image_repository_url}'."
   log "INFO" "Detected TFE container image name is '${tfe_image_name}'."
   log "INFO" "Detected TFE container image repository username is '${tfe_image_repository_username}'."
-  
+
   # Authenticate to container registry
   if [[ "${tfe_image_repository_url}" == "images.releases.hashicorp.com" ]]; then
     log "INFO" "Detected default TFE container registry was specified. Using TFE license to authenticate to TFE container registry."
@@ -618,19 +629,19 @@ function pull_tfe_app_image {
     echo "Attempting to authenticate to '${tfe_image_repository_url}' container registry."
     $TFE_CONTAINER_RUNTIME login ${tfe_image_repository_url} --username ${tfe_image_repository_username} --password ${tfe_image_repository_password}
   fi
-  
+
   # Download TFE application container image
   log "INFO" "Pulling TFE application container image '${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}' down locally."
   $TFE_CONTAINER_RUNTIME pull ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
 }
 
-function exit_script { 
+function exit_script {
   if [[ "$1" == 0 ]]; then
     log "INFO" "tfe_user_data script finished successfully!"
   else
     log "ERROR" "tfe_user_data script finished with error code $1."
   fi
-  
+
   exit "$1"
 }
 
@@ -641,7 +652,7 @@ function main {
   log "INFO" "Detected Linux OS distro is '$OS_DISTRO'."
   OS_MAJOR_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d"\"" -f2 | cut -d"." -f1)
   log "INFO" "Detected OS major version is '$OS_MAJOR_VERSION'."
-  
+
   log "INFO" "Scraping EC2 instance metadata for private IP address..."
   EC2_TOKEN=$(curl --noproxy -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
   VM_PRIVATE_IP=$(curl --noproxy -sS -H "X-aws-ec2-metadata-token: $EC2_TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
@@ -656,8 +667,8 @@ function main {
     export https_proxy="${https_proxy}"
     NO_PROXY="${no_proxy},$VM_PRIVATE_IP"
     export no_proxy=$NO_PROXY
-    echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null 
-    echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null 
+    echo 'http_proxy="${http_proxy}"' | tee -a /etc/environment > /dev/null
+    echo 'https_proxy="${https_proxy}"' | tee -a /etc/environment > /dev/null
     echo "no_proxy=\"$NO_PROXY\"" | tee -a /etc/environment > /dev/null
   fi
 
@@ -686,7 +697,7 @@ function main {
     log "INFO" "Generating '$TFE_LOG_FORWARDING_CONFIG_PATH' file for log forwarding."
     configure_log_forwarding
   fi
-  
+
   log "INFO" "Preparing to download TFE application container image..."
   pull_tfe_app_image "${container_runtime}" "${tfe_image_repository_password}"
 

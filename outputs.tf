@@ -84,3 +84,12 @@ output "elasticache_replication_group_primary_endpoint_address" {
   value       = try(aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address, null)
   description = "Primary endpoint address of ElastiCache Replication Group (Redis) cluster."
 }
+
+#------------------------------------------------------------------------------
+# Admin Console
+#------------------------------------------------------------------------------
+
+output "tfe_admin_console_url_pattern" {
+  value       = var.tfe_admin_console_enabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_https_port}" : null
+  description = "URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_enabled` is set to true."
+}
