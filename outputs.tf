@@ -84,3 +84,16 @@ output "elasticache_replication_group_primary_endpoint_address" {
   value       = try(aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address, null)
   description = "Primary endpoint address of ElastiCache Replication Group (Redis) cluster."
 }
+
+#------------------------------------------------------------------------------
+# Compute
+#------------------------------------------------------------------------------
+output "ec2_egress_sg_id" {
+  value       = aws_security_group.ec2_allow_egress.id
+  description = "ID of the TFE EC2 egress security group."
+}
+
+output "ec2_instance_role_id" {
+  value       = aws_iam_role.tfe_ec2.id
+  description = "ID of the TFE EC2 IAM instance role."
+}
