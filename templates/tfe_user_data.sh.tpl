@@ -724,7 +724,7 @@ function main {
 	  log "INFO" "Detected TFE image tag '$tfe_image_tag' appears to follow semantic versioning but less than 2.0. Using '/_health_check' endpoint for health checks."
     HEALTH_CHECK_PATH="/_health_check"
 	else
-	  log "INFO" "Using '/api/v1/health/readiness' endpoint for health checks. '$tfe_image_tag' does not appears to follow semantic versioning."
+	  log "INFO" "Using '/api/v1/health/readiness' endpoint for health checks. '$tfe_image_tag' does not appear to follow semantic versioning."
 	  HEALTH_CHECK_PATH="/api/v1/health/readiness"
 	fi
 
