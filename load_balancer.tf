@@ -7,9 +7,9 @@
 locals {
   lb_name_suffix = var.lb_is_internal ? "internal" : "external"
   # Exclude date-style tags like v202507-1
-  #local.tfe_image_tag_gte_1_3 will be:
-  # true:  2.0 ,2.1
-  # false: 1.2.9, v202507-1, latest, foo
+  # local.tfe_image_tag_gte_1 will be true for non-calver semver-ish tags with major >= 1 and minor >= 2
+  # true:  1.2, 1.3.0, 2.2
+  # false: 1.1.9, v202507-1, latest, foo
 
   is_calver_tag = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
 
