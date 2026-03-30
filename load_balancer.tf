@@ -8,7 +8,7 @@ locals {
   lb_name_suffix = var.lb_is_internal ? "internal" : "external"
   # Exclude date-style tags like v202507-1
   #local.tfe_image_tag_gte_1_3 will be:
-  # true: 1.3, 1.3.7, v1.4.0, 2.0
+  # true:  2.0 ,2.1
   # false: 1.2.9, v202507-1, latest, foo
 
   is_calver_tag = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
@@ -18,15 +18,11 @@ locals {
   is_semver_tag  = can(regex("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$", local.normalized_tag))
 
   major = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[0]) : 0
-  minor = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[1]) : 0
 
-  tfe_image_tag_gte_1_3 = (
+  tfe_image_tag_gte_1 = (
     !local.is_calver_tag &&
     local.is_semver_tag &&
-    (
-      local.major > 1 ||
-      (local.major == 1 && local.minor >= 2)
-    )
+    local.major > 1
   )
 }
 
@@ -75,7 +71,7 @@ resource "aws_lb_target_group" "nlb_443" {
 
   health_check {
     protocol            = "HTTPS"
-    path                = local.tfe_image_tag_gte_1_3 ? "/api/v1/health/readiness" : "/_health_check"
+    path                = local.tfe_image_tag_gte_1 ? "/api/v1/health/readiness" : "/_health_check"
     port                = "traffic-port"
     matcher             = "200"
     healthy_threshold   = 5
@@ -143,7 +139,7 @@ resource "aws_lb_target_group" "alb_443" {
 
   health_check {
     protocol            = "HTTPS"
-    path                = local.tfe_image_tag_gte_1_3 ? "/api/v1/health/readiness" : "/_health_check"
+    path                = local.tfe_image_tag_gte_1 ? "/api/v1/health/readiness" : "/_health_check"
     healthy_threshold   = 2
     unhealthy_threshold = 7
     timeout             = 5
