@@ -717,18 +717,18 @@ function main {
   sleep 60
 
   log "INFO" "Polling TFE health check endpoint until the app becomes ready..."
-  if [[ "${tfe_image_tag}" == v* ]]	; then
-	  log "INFO" "Detected TFE image tag '$tfe_image_tag' follows calver versioning. Using '/_health_check' endpoint for health checks."
+  if [[ "${tfe_image_tag}" == v[0-9][0-9][0-9][0-9][0-9][0-9]-* ]]; then
+	  log "INFO" "Detected TFE image tag '$tfe_image_tag' follows calver versioning (vYYYYMM-N). Using '/_health_check' endpoint for health checks."
     while ! curl -ksfS --connect-timeout 5 https://$VM_PRIVATE_IP/_health_check; do
       sleep 5
     done
-	elif [[ "${tfe_image_tag}" == 1.* ]]; then
+	elif [[ "${tfe_image_tag}" == 1.* || "${tfe_image_tag}" == v1.* ]]; then
 	  log "INFO" "Detected TFE image tag '$tfe_image_tag' appears to follow semantic versioning but less than 2.0. Using '/_health_check' endpoint for health checks."
     while ! curl -ksfS --connect-timeout 5 https://$VM_PRIVATE_IP/_health_check; do
       sleep 5
     done
 	else
-	  log "INFO" "Using '/api/v1/health/readiness' endpoint for health checks. '$tfe_image_tag' does not appears to follow semantic versioning."
+	  log "INFO" "Using '/api/v1/health/readiness' endpoint for health checks. '$tfe_image_tag' does not appears to follow semantic versioning less than 2.0 or calver."
 	while ! curl -ksfS --connect-timeout 5 https://$VM_PRIVATE_IP/api/v1/health/readiness; do
 		sleep 5
 	done
