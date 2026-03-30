@@ -76,7 +76,7 @@ resource "aws_lb_target_group" "nlb_443" {
 
 # Admin Console listener and target group for NLB
 resource "aws_lb_listener" "lb_nlb_admin_console" {
-  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "nlb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   load_balancer_arn = aws_lb.nlb[0].arn
   port              = var.tfe_admin_https_port
@@ -89,7 +89,7 @@ resource "aws_lb_listener" "lb_nlb_admin_console" {
 }
 
 resource "aws_lb_target_group" "nlb_admin_console" {
-  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "nlb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   name     = "${var.friendly_name_prefix}-tfe-nlb-tg-${var.tfe_admin_https_port}"
   protocol = "TCP"
@@ -120,7 +120,7 @@ resource "aws_lb_target_group" "nlb_admin_console" {
 }
 
 resource "aws_autoscaling_attachment" "tfe_asg_attachment_nlb_admin_console" {
-  count = var.lb_type == "nlb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "nlb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   autoscaling_group_name = aws_autoscaling_group.tfe.name
   lb_target_group_arn    = aws_lb_target_group.nlb_admin_console[0].arn
@@ -190,7 +190,7 @@ resource "aws_lb_target_group" "alb_443" {
 
 # Admin Console listener and target group for ALB
 resource "aws_lb_listener" "alb_admin_console" {
-  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "alb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   load_balancer_arn = aws_lb.alb[0].arn
   port              = var.tfe_admin_https_port
@@ -205,7 +205,7 @@ resource "aws_lb_listener" "alb_admin_console" {
 }
 
 resource "aws_lb_target_group" "alb_admin_console" {
-  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "alb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   name     = "${var.friendly_name_prefix}-tfe-alb-tg-${var.tfe_admin_https_port}"
   port     = var.tfe_admin_https_port
@@ -231,7 +231,7 @@ resource "aws_lb_target_group" "alb_admin_console" {
 }
 
 resource "aws_autoscaling_attachment" "tfe_asg_attachment_alb_admin_console" {
-  count = var.lb_type == "alb" && var.tfe_admin_console_enabled ? 1 : 0
+  count = var.lb_type == "alb" && !var.tfe_admin_console_disabled ? 1 : 0
 
   autoscaling_group_name = aws_autoscaling_group.tfe.name
   lb_target_group_arn    = aws_lb_target_group.alb_admin_console[0].arn
@@ -271,7 +271,7 @@ resource "aws_security_group_rule" "lb_allow_ingress_tfe_https_from_ec2" {
 
 # Admin Console ingress rules for load balancer
 resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
-  count = var.tfe_admin_console_enabled ? 1 : 0
+  count = !var.tfe_admin_console_disabled ? 1 : 0
 
   type        = "ingress"
   from_port   = var.tfe_admin_https_port
@@ -284,7 +284,7 @@ resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
 }
 
 resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_ec2" {
-  count = var.tfe_admin_console_enabled ? 1 : 0
+  count = !var.tfe_admin_console_disabled ? 1 : 0
 
   type                     = "ingress"
   from_port                = var.tfe_admin_https_port

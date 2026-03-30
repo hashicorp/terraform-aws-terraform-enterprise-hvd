@@ -290,9 +290,9 @@ services:
       TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
       TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
 
-%{ if tfe_admin_console_enabled ~}
+%{ if tfe_admin_console_disabled ~}
       # Admin Console settings
-      TFE_ADMIN_CONSOLE_ENABLED: "true"
+      TFE_ADMIN_CONSOLE_DISABLED: "true"
 %{ endif ~}
 
 %{ if tfe_hairpin_addressing ~}
@@ -504,9 +504,9 @@ spec:
     - name: "TFE_ADMIN_HTTPS_PORT"
       value: ${tfe_admin_https_port}
 
-%{ if tfe_admin_console_enabled ~}
+%{ if !tfe_admin_console_disabled ~}
     # Admin Console settings
-    - name: "TFE_ADMIN_CONSOLE_ENABLED"
+    - name: "TFE_ADMIN_CONSOLE_DISABLED"
       value: "true"
 %{ endif ~}
 

@@ -90,6 +90,6 @@ output "elasticache_replication_group_primary_endpoint_address" {
 #------------------------------------------------------------------------------
 
 output "tfe_admin_console_url_pattern" {
-  value       = var.tfe_admin_console_enabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_https_port}" : null
-  description = "URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_enabled` is set to true."
+  value       = !var.tfe_admin_console_disabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_https_port}" : null
+  description = "URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_disabled` is set to false."
 }

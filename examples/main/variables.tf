@@ -1104,20 +1104,20 @@ variable "tfe_cost_estimation_iam_enabled" {
 #------------------------------------------------------------------------------
 # Admin Console
 #------------------------------------------------------------------------------
-variable "tfe_admin_console_enabled" {
+variable "tfe_admin_console_disabled" {
   type        = bool
-  description = "Boolean to enable the TFE Admin Console for advanced troubleshooting and diagnostics. When enabled, the admin console will be accessible on the configured port."
-  default     = false
+  description = "Boolean to disable the TFE Admin Console for advanced troubleshooting and diagnostics. When disabled, the admin console will not be accessible."
+  default     = true
 }
 
 variable "cidr_allow_ingress_tfe_admin_console" {
   type        = list(string)
-  description = "List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_enabled` is `true`."
+  description = "List of CIDR ranges to allow ingress traffic on the admin console port. Required when `tfe_admin_console_disabled` is `false`."
   default     = null
 
   validation {
-    condition     = var.tfe_admin_console_enabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
-    error_message = "Value must be set when `tfe_admin_console_enabled` is `true`. Admin console requires explicit CIDR ranges for security."
+    condition     = !var.tfe_admin_console_disabled ? var.cidr_allow_ingress_tfe_admin_console != null : true
+    error_message = "Value must be set when `tfe_admin_console_disabled` is `false`. Admin console requires explicit CIDR ranges for security."
   }
   validation {
     condition = var.cidr_allow_ingress_tfe_admin_console != null ? alltrue([
