@@ -1107,7 +1107,7 @@ variable "tfe_cost_estimation_iam_enabled" {
 variable "tfe_admin_console_disabled" {
   type        = bool
   description = "Boolean to disable the TFE Admin Console for advanced troubleshooting and diagnostics. When disabled, the admin console will not be accessible."
-  default     = false
+  default     = true
 }
 
 variable "cidr_allow_ingress_tfe_admin_console" {
