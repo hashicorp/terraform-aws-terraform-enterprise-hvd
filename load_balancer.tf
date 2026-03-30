@@ -7,8 +7,8 @@
 locals {
   lb_name_suffix = var.lb_is_internal ? "internal" : "external"
   # Exclude date-style tags like v202507-1
-  # local.tfe_image_tag_gte_1 will be true for non-calver semver-ish tags with major >= 1 and minor >= 2
-  # true:  1.2, 1.3.0, 2.2
+  # local.tfe_image_tag_gte_1 will be true for non-calver semver-ish tags with major >= 1 and minor >= 2, or major > 1. This is used to determine the health check path for the load balancer target groups, as TFE 1.2+ uses a different path than earlier versions.
+  # true:  1.2, 1.3.0, 2.0
   # false: 1.1.9, v202507-1, latest, foo
 
   is_calver_tag = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
@@ -23,7 +23,7 @@ locals {
   tfe_image_tag_gte_1 = (
     !local.is_calver_tag &&
     local.is_semver_tag &&
-    ( local.major >= 1 && local.minor >= 2 )
+    (local.major > 1 || (local.major == 1 && local.minor >= 2))
   )
 }
 
