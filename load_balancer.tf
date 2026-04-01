@@ -19,11 +19,12 @@ locals {
 
   major = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[0]) : 0
   minor = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[1]) : 0
+  patch = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[2]) : 0
 
   tfe_image_tag_gte_1 = (
     !local.is_calver_tag &&
     local.is_semver_tag &&
-    (local.major > 1 || (local.major == 1 && local.minor >= 2))
+    (local.major > 1 || (local.major == 1 && local.minor >= 2 && local.patch >= 1))
   )
 }
 
