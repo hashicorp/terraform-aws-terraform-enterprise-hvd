@@ -6,6 +6,26 @@
 #------------------------------------------------------------------------------
 locals {
   lb_name_suffix = var.lb_is_internal ? "internal" : "external"
+  # Exclude date-style tags like v202507-1
+  # local.tfe_image_tag_gte_1 will be true for non-calver semver-ish tags with major >= 1 and minor >= 2, or major > 1. This is used to determine the health check path for the load balancer target groups, as TFE 1.2+ uses a different path than earlier versions.
+  # true:  1.2, 1.3.0, 2.0
+  # false: 1.1.9, v202507-1, latest, foo
+
+  is_calver_tag = can(regex("^v[0-9]{6}-[0-9]+$", var.tfe_image_tag))
+
+  # Accept semver-ish tags like 1.3, 1.3.2, v1.3, v1.3.2
+  normalized_tag = trimprefix(var.tfe_image_tag, "v")
+  is_semver_tag  = can(regex("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$", local.normalized_tag))
+
+  major = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[0]) : 0
+  minor = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[1]) : 0
+  patch = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[2]) : 0
+
+  tfe_image_tag_gte_1 = (
+    !local.is_calver_tag &&
+    local.is_semver_tag &&
+    (local.major > 1 || (local.major == 1 && local.minor >= 2 && local.patch >= 1))
+  )
 }
 
 #------------------------------------------------------------------------------
@@ -53,7 +73,7 @@ resource "aws_lb_target_group" "nlb_443" {
 
   health_check {
     protocol            = "HTTPS"
-    path                = "/_health_check"
+    path                = local.tfe_image_tag_gte_1 ? "/api/v1/health/readiness" : "/_health_check"
     port                = "traffic-port"
     matcher             = "200"
     healthy_threshold   = 5
@@ -121,7 +141,7 @@ resource "aws_lb_target_group" "alb_443" {
 
   health_check {
     protocol            = "HTTPS"
-    path                = "/_health_check"
+    path                = local.tfe_image_tag_gte_1 ? "/api/v1/health/readiness" : "/_health_check"
     healthy_threshold   = 2
     unhealthy_threshold = 7
     timeout             = 5
