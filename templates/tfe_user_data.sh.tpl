@@ -728,7 +728,7 @@ function main {
 	  HEALTH_CHECK_PATH="/api/v1/health/readiness"
 	fi
 
-  while ! curl -ksfS --connect-timeout 5 "https://$VM_PRIVATE_IP${HEALTH_CHECK_PATH}"; do
+  while ! curl -ksfS --connect-timeout 5 "https://$VM_PRIVATE_IP$HEALTH_CHECK_PATH"; do
     sleep 5
   done
   exit_script 0
