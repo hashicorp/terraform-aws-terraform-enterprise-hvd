@@ -51,7 +51,7 @@ locals {
     local.secrets_manager_no_proxy
   ])
 
-  tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null && var.tfe_explorer_database_password_secret_arn == null && var.tfe_explorer_database_parameters == null
+  tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
   tfe_explorer_database_host                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_host, "${aws_rds_cluster.tfe.endpoint}:5432")
   tfe_explorer_database_name                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_name, aws_rds_cluster.tfe.database_name)
   tfe_explorer_database_user                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_user, var.tfe_database_user)
