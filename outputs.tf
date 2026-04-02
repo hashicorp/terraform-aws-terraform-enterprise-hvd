@@ -27,6 +27,11 @@ output "tfe_database_host" {
   description = "PostgreSQL server endpoint in the format that TFE will connect to."
 }
 
+output "tfe_explorer_database_warning" {
+  value       = local.tfe_explorer_database_uses_tfe_database ? "WARNING: Terraform Enterprise Explorer is enabled and reuses the primary TFE database. Use a dedicated Explorer database in production." : null
+  description = "Warning emitted when Explorer is enabled and reuses the primary TFE database instead of a dedicated Explorer database."
+}
+
 output "rds_aurora_global_cluster_id" {
   value       = try(aws_rds_global_cluster.tfe[0].id, null)
   description = "RDS Aurora global database cluster identifier."

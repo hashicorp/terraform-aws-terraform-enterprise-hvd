@@ -5,6 +5,8 @@
 # TFE IAM role
 #------------------------------------------------------------------------------
 resource "aws_iam_role" "tfe_ec2" {
+  count = var.ec2_iam_instance_profile_name == null ? 1 : 0
+
   name        = "${var.friendly_name_prefix}-tfe-instance-role-${data.aws_region.current.name}"
   path        = "/"
   description = "TFE instance role for EC2 instances"
@@ -35,7 +37,7 @@ data "aws_iam_policy_document" "tfe_ec2_assume_role" {
 #------------------------------------------------------------------------------
 resource "aws_iam_role_policy" "tfe_ec2" {
   name   = "${var.friendly_name_prefix}-tfe-instance-role-policy-${data.aws_region.current.name}"
-  role   = aws_iam_role.tfe_ec2.id
+  role   = local.tfe_ec2_iam_role_name
   policy = data.aws_iam_policy_document.tfe_ec2_combined.json
 }
 
@@ -343,6 +345,23 @@ data "aws_iam_policy_document" "tfe_ec2_allow_tfe_app_image_pull_from_ecr" {
   }
 }
 
+data "aws_iam_policy_document" "tfe_ec2_allow_explorer_rds_iam_auth" {
+  count = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2AllowExplorerRdsIamAuth"
+    effect = "Allow"
+
+    actions = [
+      "rds-db:connect"
+    ]
+
+    resources = [
+      provider::aws::arn_build(data.aws_partition.current.partition, "rds-db", local.tfe_explorer_database_passwordless_aws_region, data.aws_caller_identity.current.account_id, "dbuser:${local.tfe_explorer_database_passwordless_aws_db_resource_id}/${local.tfe_explorer_database_user}")
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "tfe_ec2_combined" {
   source_policy_documents = [
     var.tfe_object_storage_s3_use_instance_profile ? data.aws_iam_policy_document.tfe_ec2_allow_s3[0].json : "",
@@ -360,14 +379,15 @@ data "aws_iam_policy_document" "tfe_ec2_combined" {
     var.redis_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_redis_kms_cmk[0].json : "",
     var.tfe_log_forwarding_enabled && var.s3_log_fwd_bucket_name != null ? data.aws_iam_policy_document.tfe_ec2_allow_s3_log_fwd[0].json : "",
     var.tfe_log_forwarding_enabled && var.cloudwatch_log_group_name != null ? data.aws_iam_policy_document.tfe_ec2_allow_cloudwatch[0].json : "",
-    local.tfe_app_image_repo_is_ecr && var.tfe_image_repository_password == null ? data.aws_iam_policy_document.tfe_ec2_allow_tfe_app_image_pull_from_ecr[0].json : ""
+    local.tfe_app_image_repo_is_ecr && var.tfe_image_repository_password == null ? data.aws_iam_policy_document.tfe_ec2_allow_tfe_app_image_pull_from_ecr[0].json : "",
+    var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? data.aws_iam_policy_document.tfe_ec2_allow_explorer_rds_iam_auth[0].json : ""
   ]
 }
 
 resource "aws_iam_role_policy_attachment" "aws_ssm" {
   count = var.ec2_allow_ssm ? 1 : 0
 
-  role       = aws_iam_role.tfe_ec2.name
+  role       = local.tfe_ec2_iam_role_name
   policy_arn = provider::aws::arn_build(data.aws_partition.current.partition, "iam", "", "aws", "policy/AmazonSSMManagedInstanceCore")
 }
 
@@ -375,7 +395,9 @@ resource "aws_iam_role_policy_attachment" "aws_ssm" {
 # TFE instance profile
 #------------------------------------------------------------------------------
 resource "aws_iam_instance_profile" "tfe_ec2" {
+  count = var.ec2_iam_instance_profile_name == null ? 1 : 0
+
   name = "${var.friendly_name_prefix}-tfe-instance-profile-${data.aws_region.current.name}"
   path = "/"
-  role = aws_iam_role.tfe_ec2.name
+  role = aws_iam_role.tfe_ec2[0].name
 }

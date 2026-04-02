@@ -270,11 +270,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_cloudwatch_log_group.log_fwd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudwatch_log_group) | data source |
 | [aws_ecr_repository.tfe_app_container_image](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_repository) | data source |
+| [aws_iam_instance_profile.tfe_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_instance_profile) | data source |
 | [aws_iam_policy_document.s3_crr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.s3_crr_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_cloudwatch](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_cost_estimation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_ebs_kms_cmk](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.tfe_ec2_allow_explorer_rds_iam_auth](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_get_redis_password_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_rds_kms_cmk](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_allow_redis_kms_cmk](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -295,6 +297,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_route53_zone.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_s3_bucket.log_fwd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_secretsmanager_secret_version.tfe_database_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
+| [aws_secretsmanager_secret_version.tfe_explorer_database_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 | [aws_secretsmanager_secret_version.tfe_redis_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 
 ## Inputs
@@ -341,6 +344,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_ec2_allow_all_egress"></a> [ec2\_allow\_all\_egress](#input\_ec2\_allow\_all\_egress) | Boolean to allow all egress traffic from TFE EC2 instances. | `bool` | `false` | no |
 | <a name="input_ec2_allow_ssm"></a> [ec2\_allow\_ssm](#input\_ec2\_allow\_ssm) | Boolean to attach the `AmazonSSMManagedInstanceCore` policy to the TFE instance role, allowing the SSM agent (if present) to function. | `bool` | `false` | no |
 | <a name="input_ec2_ami_id"></a> [ec2\_ami\_id](#input\_ec2\_ami\_id) | Custom AMI ID for TFE EC2 launch template. If specified, value of `ec2_os_distro` must coincide with this custom AMI OS distro. | `string` | `null` | no |
+| <a name="input_ec2_iam_instance_profile_name"></a> [ec2\_iam\_instance\_profile\_name](#input\_ec2\_iam\_instance\_profile\_name) | Name of an existing IAM instance profile to attach to TFE EC2 instances instead of creating one. When set, the module attaches its inline policy and optional SSM policy attachment to the role associated with this instance profile. | `string` | `null` | no |
 | <a name="input_ec2_instance_size"></a> [ec2\_instance\_size](#input\_ec2\_instance\_size) | EC2 instance type for TFE EC2 launch template. | `string` | `"m7i.xlarge"` | no |
 | <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
 | <a name="input_ec2_ssh_key_pair"></a> [ec2\_ssh\_key\_pair](#input\_ec2\_ssh\_key\_pair) | Name of existing SSH key pair to attach to TFE EC2 instance. | `string` | `null` | no |
@@ -402,6 +406,15 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_database_name"></a> [tfe\_database\_name](#input\_tfe\_database\_name) | Name of TFE database to create within RDS global cluster. | `string` | `"tfe"` | no |
 | <a name="input_tfe_database_parameters"></a> [tfe\_database\_parameters](#input\_tfe\_database\_parameters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
 | <a name="input_tfe_database_user"></a> [tfe\_database\_user](#input\_tfe\_database\_user) | Username for TFE RDS database cluster. | `string` | `"tfe"` | no |
+| <a name="input_tfe_explorer_database_host"></a> [tfe\_explorer\_database\_host](#input\_tfe\_explorer\_database\_host) | PostgreSQL server for Explorer in `HOST[:PORT]` format. Leave as `null` to have Explorer reuse the module-managed TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_name"></a> [tfe\_explorer\_database\_name](#input\_tfe\_explorer\_database\_name) | Name of the PostgreSQL database used by Explorer. Leave as `null` to have Explorer reuse the module-managed TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_parameters"></a> [tfe\_explorer\_database\_parameters](#input\_tfe\_explorer\_database\_parameters) | PostgreSQL server parameters for the Explorer connection URI. Leave as `null` to reuse `tfe_database_parameters`. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_password_secret_arn"></a> [tfe\_explorer\_database\_password\_secret\_arn](#input\_tfe\_explorer\_database\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the Explorer database password. Leave as `null` when `tfe_explorer_database_passwordless_aws_use_instance_profile` is `true` or to have Explorer reuse the module-managed TFE database password for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_passwordless_aws_db_resource_id"></a> [tfe\_explorer\_database\_passwordless\_aws\_db\_resource\_id](#input\_tfe\_explorer\_database\_passwordless\_aws\_db\_resource\_id) | RDS or Aurora database resource ID used to grant `rds-db:connect` permissions for Explorer database IAM authentication. Leave as `null` to use the module-managed TFE Aurora cluster resource ID. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_passwordless_aws_region"></a> [tfe\_explorer\_database\_passwordless\_aws\_region](#input\_tfe\_explorer\_database\_passwordless\_aws\_region) | AWS Region of the Explorer RDS PostgreSQL resource when using Explorer database IAM authentication. Leave as `null` to use the current provider region. | `string` | `null` | no |
+| <a name="input_tfe_explorer_database_passwordless_aws_use_instance_profile"></a> [tfe\_explorer\_database\_passwordless\_aws\_use\_instance\_profile](#input\_tfe\_explorer\_database\_passwordless\_aws\_use\_instance\_profile) | Boolean to use the EC2 instance profile for Explorer database IAM authentication. | `bool` | `false` | no |
+| <a name="input_tfe_explorer_database_user"></a> [tfe\_explorer\_database\_user](#input\_tfe\_explorer\_database\_user) | PostgreSQL username used by Explorer. Leave as `null` to have Explorer reuse the module-managed TFE database for non-production use. | `string` | `null` | no |
+| <a name="input_tfe_explorer_enabled"></a> [tfe\_explorer\_enabled](#input\_tfe\_explorer\_enabled) | Boolean to enable Terraform Enterprise Explorer. Explorer is only supported when `tfe_operational_mode` is `active-active` or `external`. | `bool` | `false` | no |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_type` is `nlb` and `lb_is_internal` is `true`. | `bool` | `true` | no |
 | <a name="input_tfe_http_port"></a> [tfe\_http\_port](#input\_tfe\_http\_port) | Port the TFE application container listens on for HTTP traffic. This is not the host port. | `number` | `8080` | no |
 | <a name="input_tfe_https_port"></a> [tfe\_https\_port](#input\_tfe\_https\_port) | Port the TFE application container listens on for HTTPS traffic. This is not the host port. | `number` | `8443` | no |
@@ -448,5 +461,6 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="output_s3_crr_iam_role_arn"></a> [s3\_crr\_iam\_role\_arn](#output\_s3\_crr\_iam\_role\_arn) | ARN of S3 cross-region replication IAM role. |
 | <a name="output_tfe_create_initial_admin_user_url"></a> [tfe\_create\_initial\_admin\_user\_url](#output\_tfe\_create\_initial\_admin\_user\_url) | URL to create TFE initial admin user. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | PostgreSQL server endpoint in the format that TFE will connect to. |
+| <a name="output_tfe_explorer_database_warning"></a> [tfe\_explorer\_database\_warning](#output\_tfe\_explorer\_database\_warning) | Warning emitted when Explorer is enabled and reuses the primary TFE database instead of a dedicated Explorer database. |
 | <a name="output_tfe_url"></a> [tfe\_url](#output\_tfe\_url) | URL to access TFE application based on value of `tfe_fqdn` input. |
 <!-- END_TF_DOCS -->

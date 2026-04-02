@@ -51,6 +51,15 @@ locals {
     local.secrets_manager_no_proxy
   ])
 
+  tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null && var.tfe_explorer_database_password_secret_arn == null && var.tfe_explorer_database_parameters == null
+  tfe_explorer_database_host                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_host, "${aws_rds_cluster.tfe.endpoint}:5432")
+  tfe_explorer_database_name                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_name, aws_rds_cluster.tfe.database_name)
+  tfe_explorer_database_user                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_user, var.tfe_database_user)
+  tfe_explorer_database_password                        = !var.tfe_explorer_enabled || var.tfe_explorer_database_passwordless_aws_use_instance_profile ? "" : (var.tfe_explorer_database_password_secret_arn != null ? data.aws_secretsmanager_secret_version.tfe_explorer_database_password[0].secret_string : data.aws_secretsmanager_secret_version.tfe_database_password.secret_string)
+  tfe_explorer_database_parameters                      = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_parameters, var.tfe_database_parameters)
+  tfe_explorer_database_passwordless_aws_region         = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? coalesce(var.tfe_explorer_database_passwordless_aws_region, data.aws_region.current.name) : ""
+  tfe_explorer_database_passwordless_aws_db_resource_id = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? coalesce(var.tfe_explorer_database_passwordless_aws_db_resource_id, aws_rds_cluster.tfe.cluster_resource_id) : ""
+
   user_data_args = {
     # Bootstrap
     aws_region                         = data.aws_region.current.name
@@ -83,11 +92,19 @@ locals {
     tfe_https_port                = var.tfe_https_port
 
     # Database settings
-    tfe_database_host       = "${aws_rds_cluster.tfe.endpoint}:5432"
-    tfe_database_name       = aws_rds_cluster.tfe.database_name
-    tfe_database_user       = var.tfe_database_user
-    tfe_database_password   = data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
-    tfe_database_parameters = var.tfe_database_parameters
+    tfe_database_host                                           = "${aws_rds_cluster.tfe.endpoint}:5432"
+    tfe_database_name                                           = aws_rds_cluster.tfe.database_name
+    tfe_database_user                                           = var.tfe_database_user
+    tfe_database_password                                       = data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
+    tfe_database_parameters                                     = var.tfe_database_parameters
+    tfe_explorer_enabled                                        = var.tfe_explorer_enabled
+    tfe_explorer_database_host                                  = local.tfe_explorer_database_host
+    tfe_explorer_database_name                                  = local.tfe_explorer_database_name
+    tfe_explorer_database_user                                  = local.tfe_explorer_database_user
+    tfe_explorer_database_password                              = local.tfe_explorer_database_password
+    tfe_explorer_database_parameters                            = local.tfe_explorer_database_parameters
+    tfe_explorer_database_passwordless_aws_use_instance_profile = var.tfe_explorer_enabled ? var.tfe_explorer_database_passwordless_aws_use_instance_profile : false
+    tfe_explorer_database_passwordless_aws_region               = local.tfe_explorer_database_passwordless_aws_region
 
     # Object storage settings
     tfe_object_storage_type                                 = "s3"
@@ -179,7 +196,7 @@ resource "aws_launch_template" "tfe" {
   update_default_version = true
 
   iam_instance_profile {
-    name = aws_iam_instance_profile.tfe_ec2.name
+    name = local.tfe_ec2_iam_instance_profile_name
   }
 
   vpc_security_group_ids = [

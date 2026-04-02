@@ -14,6 +14,12 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_iam_instance_profile" "tfe_ec2" {
+  count = var.ec2_iam_instance_profile_name != null ? 1 : 0
+
+  name = var.ec2_iam_instance_profile_name
+}
+
 #------------------------------------------------------------------------------
 # EC2 AMI data sources
 #------------------------------------------------------------------------------
@@ -117,8 +123,10 @@ data "aws_cloudwatch_log_group" "log_fwd" {
 # Elastic container registry (ECR)
 #------------------------------------------------------------------------------
 locals {
-  tfe_app_image_repo_is_ecr     = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url))
-  tfe_app_image_ecr_registry_id = local.tfe_app_image_repo_is_ecr ? regex("^([0-9]{12})\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)[0] : null
+  tfe_app_image_repo_is_ecr         = can(regex("^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url))
+  tfe_app_image_ecr_registry_id     = local.tfe_app_image_repo_is_ecr ? regex("^([0-9]{12})\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com$", var.tfe_image_repository_url)[0] : null
+  tfe_ec2_iam_role_name             = var.ec2_iam_instance_profile_name != null ? data.aws_iam_instance_profile.tfe_ec2[0].role_name : aws_iam_role.tfe_ec2[0].name
+  tfe_ec2_iam_instance_profile_name = var.ec2_iam_instance_profile_name != null ? data.aws_iam_instance_profile.tfe_ec2[0].name : aws_iam_instance_profile.tfe_ec2[0].name
 }
 
 data "aws_ecr_repository" "tfe_app_container_image" {

@@ -9,6 +9,13 @@ data "aws_secretsmanager_secret_version" "tfe_database_password" {
   version_stage = "AWSCURRENT"
 }
 
+data "aws_secretsmanager_secret_version" "tfe_explorer_database_password" {
+  count = var.tfe_explorer_database_password_secret_arn != null ? 1 : 0
+
+  secret_id     = var.tfe_explorer_database_password_secret_arn
+  version_stage = "AWSCURRENT"
+}
+
 #------------------------------------------------------------------------------
 # DB subnet group
 #------------------------------------------------------------------------------
@@ -38,28 +45,29 @@ resource "aws_rds_global_cluster" "tfe" {
 }
 
 resource "aws_rds_cluster" "tfe" {
-  global_cluster_identifier       = var.is_secondary_region ? var.rds_global_cluster_id : aws_rds_global_cluster.tfe[0].id
-  cluster_identifier              = "${var.friendly_name_prefix}-tfe-rds-cluster-${data.aws_region.current.name}"
-  engine                          = "aurora-postgresql"
-  engine_mode                     = var.rds_aurora_engine_mode
-  engine_version                  = var.rds_aurora_engine_version
-  database_name                   = var.is_secondary_region ? null : var.tfe_database_name
-  availability_zones              = var.rds_availability_zones
-  db_subnet_group_name            = aws_db_subnet_group.tfe.id
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.tfe.id
-  port                            = 5432
-  master_username                 = var.is_secondary_region ? null : var.tfe_database_user
-  master_password                 = var.is_secondary_region ? null : data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
-  storage_encrypted               = var.rds_storage_encrypted
-  kms_key_id                      = var.rds_kms_key_arn
-  vpc_security_group_ids          = [aws_security_group.rds_allow_ingress.id]
-  replication_source_identifier   = var.is_secondary_region ? var.rds_replication_source_identifier : null
-  source_region                   = var.is_secondary_region ? var.rds_source_region : null
-  backup_retention_period         = var.rds_backup_retention_period
-  preferred_backup_window         = var.rds_preferred_backup_window
-  preferred_maintenance_window    = var.rds_preferred_maintenance_window
-  skip_final_snapshot             = var.rds_skip_final_snapshot
-  final_snapshot_identifier       = "${var.friendly_name_prefix}-tfe-rds-final-snapshot-${data.aws_region.current.name}"
+  global_cluster_identifier           = var.is_secondary_region ? var.rds_global_cluster_id : aws_rds_global_cluster.tfe[0].id
+  cluster_identifier                  = "${var.friendly_name_prefix}-tfe-rds-cluster-${data.aws_region.current.name}"
+  engine                              = "aurora-postgresql"
+  engine_mode                         = var.rds_aurora_engine_mode
+  engine_version                      = var.rds_aurora_engine_version
+  database_name                       = var.is_secondary_region ? null : var.tfe_database_name
+  availability_zones                  = var.rds_availability_zones
+  db_subnet_group_name                = aws_db_subnet_group.tfe.id
+  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.tfe.id
+  port                                = 5432
+  master_username                     = var.is_secondary_region ? null : var.tfe_database_user
+  master_password                     = var.is_secondary_region ? null : data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
+  iam_database_authentication_enabled = local.tfe_explorer_database_uses_tfe_database && var.tfe_explorer_database_passwordless_aws_use_instance_profile
+  storage_encrypted                   = var.rds_storage_encrypted
+  kms_key_id                          = var.rds_kms_key_arn
+  vpc_security_group_ids              = [aws_security_group.rds_allow_ingress.id]
+  replication_source_identifier       = var.is_secondary_region ? var.rds_replication_source_identifier : null
+  source_region                       = var.is_secondary_region ? var.rds_source_region : null
+  backup_retention_period             = var.rds_backup_retention_period
+  preferred_backup_window             = var.rds_preferred_backup_window
+  preferred_maintenance_window        = var.rds_preferred_maintenance_window
+  skip_final_snapshot                 = var.rds_skip_final_snapshot
+  final_snapshot_identifier           = "${var.friendly_name_prefix}-tfe-rds-final-snapshot-${data.aws_region.current.name}"
 
   tags = merge(
     { "Name" = "${var.friendly_name_prefix}-tfe-rds-cluster-${data.aws_region.current.name}" },
@@ -125,4 +133,3 @@ resource "aws_security_group_rule" "rds_allow_ingress_from_ec2" {
 
   security_group_id = aws_security_group.rds_allow_ingress.id
 }
-
