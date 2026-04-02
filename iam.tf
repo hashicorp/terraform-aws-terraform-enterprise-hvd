@@ -159,6 +159,57 @@ data "aws_iam_policy_document" "tfe_ec2_get_tls_ca_bundle_secret" {
   }
 }
 
+data "aws_iam_policy_document" "tfe_ec2_get_tls_cert_secondary_secret" {
+  count = var.tfe_tls_cert_secret_arn_secondary != null ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2GetTlsCertSecondarySecret"
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+
+    resources = [
+      var.tfe_tls_cert_secret_arn_secondary
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "tfe_ec2_get_tls_privkey_secondary_secret" {
+  count = var.tfe_tls_privkey_secret_arn_secondary != null ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2GetTlsPrivKeySecondarySecret"
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+
+    resources = [
+      var.tfe_tls_privkey_secret_arn_secondary
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "tfe_ec2_get_tls_ca_bundle_secondary_secret" {
+  count = var.tfe_tls_ca_bundle_secret_arn_secondary != null ? 1 : 0
+
+  statement {
+    sid    = "TfeEc2GetTlsCaBundleSecondarySecret"
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+
+    resources = [
+      var.tfe_tls_ca_bundle_secret_arn_secondary
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "tfe_ec2_get_rds_password_secret" {
   count = var.tfe_database_password_secret_arn != null ? 1 : 0
 
@@ -352,6 +403,9 @@ data "aws_iam_policy_document" "tfe_ec2_combined" {
     var.tfe_tls_cert_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_cert_secret[0].json : "",
     var.tfe_tls_privkey_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_privkey_secret[0].json : "",
     var.tfe_tls_ca_bundle_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secret[0].json : "",
+    var.tfe_tls_cert_secret_arn_secondary != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_cert_secondary_secret[0].json : "",
+    var.tfe_tls_privkey_secret_arn_secondary != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_privkey_secondary_secret[0].json : "",
+    var.tfe_tls_ca_bundle_secret_arn_secondary != null ? data.aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secondary_secret[0].json : "",
     var.tfe_database_password_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_get_rds_password_secret[0].json : "",
     var.tfe_redis_password_secret_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_get_redis_password_secret[0].json : "",
     var.ebs_kms_key_arn != null ? data.aws_iam_policy_document.tfe_ec2_allow_ebs_kms_cmk[0].json : "",

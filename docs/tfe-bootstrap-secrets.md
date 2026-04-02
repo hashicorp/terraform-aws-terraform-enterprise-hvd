@@ -11,6 +11,9 @@ This document contains a table of the TFE _bootstrap_ secrets to be stored in AW
 | TFE TLS certificate (base64-encoded)             | Plaintext secret | `tfe_tls_cert_secret_arn`            |
 | TFE TLS certificate private key (base64-encoded) | Plaintext secret | `tfe_tls_privkey_secret_arn`         |
 | TFE TLS CA bundle (base64-encoded)               | Plaintext secret | `tfe_tls_ca_bundle_secret_arn`       |
+| Secondary TFE TLS certificate (base64-encoded)   | Plaintext secret | `tfe_tls_cert_secret_arn_secondary`  |
+| Secondary TFE TLS private key (base64-encoded)   | Plaintext secret | `tfe_tls_privkey_secret_arn_secondary` |
+| Secondary TFE TLS CA bundle (base64-encoded)     | Plaintext secret | `tfe_tls_ca_bundle_secret_arn_secondary` |
 
 ## Formatting
 
@@ -44,6 +47,7 @@ cat terraform.hclic
 - Start off with your certificate files in PEM format
 - These values should be base64-encoded
 - Ensure your command line interface (CLI) does not automatically inject new line characters during the base64-encoding
+- The secondary TLS secrets are only required when `tfe_hostname_secondary` is set
 
 Example on macOS Terminal:
 
