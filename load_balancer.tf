@@ -315,7 +315,7 @@ resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
   to_port     = var.tfe_admin_https_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
-  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE load balancer from specified CIDR ranges."
+  description = "Allow TCP (Admin Console HTTPS) inbound to TFE load balancer from specified CIDR ranges."
 
   security_group_id = aws_security_group.lb_allow_ingress.id
 }
@@ -328,7 +328,7 @@ resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_ec2" {
   to_port                  = var.tfe_admin_https_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.ec2_allow_ingress.id
-  description              = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE load balancer from TFE EC2 security group."
+  description              = "Allow TCP (Admin Console HTTPS) inbound to TFE load balancer from TFE EC2 security group."
 
   security_group_id = aws_security_group.lb_allow_ingress.id
 }
