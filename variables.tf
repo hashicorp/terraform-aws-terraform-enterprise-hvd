@@ -275,7 +275,7 @@ variable "tfe_explorer_database_passwordless_aws_region" {
 
 variable "tfe_explorer_database_passwordless_aws_db_resource_id" {
   type        = string
-  description = "RDS or Aurora database resource ID used to grant `rds-db:connect` permissions for Explorer database IAM authentication. Leave as `null` to use the module-managed TFE Aurora cluster resource ID."
+  description = "RDS or Aurora database resource ID used to grant `rds-db:connect` permissions for Explorer database IAM authentication. Leave as `null` to use the module-managed TFE Aurora DB instance (DBI) resource ID."
   default     = null
 
   validation {
