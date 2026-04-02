@@ -142,6 +142,8 @@ locals {
     no_proxy             = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
     tfe_ipv6_enabled     = var.tfe_ipv6_enabled
     tfe_admin_https_port = var.tfe_admin_https_port
+    # Admin Console settings
+    tfe_admin_console_disabled = var.tfe_admin_console_disabled
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
@@ -462,6 +464,62 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_https" {
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_proxy
   description = "Allow TCP/${local.https_proxy_port} (HTTPS proxy port) outbound to specified CIDR ranges from TFE EC2 instances."
+
+  security_group_id = aws_security_group.ec2_allow_egress.id
+}
+
+#------------------------------------------------------------------------------
+# Admin console ingress rules
+#------------------------------------------------------------------------------
+
+resource "aws_security_group_rule" "ec2_allow_ingress_tfe_admin_console" {
+  count = !var.tfe_admin_console_disabled ? 1 : 0
+
+  type        = "ingress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
+  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified CIDR ranges."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+
+
+
+resource "aws_security_group_rule" "ec2_allow_ingress_tfe_admin_console_ipv6" {
+  count = !var.tfe_admin_console_disabled && var.cidr_allow_ingress_tfe_admin_console != null && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]) > 0 ? 1 : 0
+
+  type             = "ingress"
+  from_port        = var.tfe_admin_https_port
+  to_port          = var.tfe_admin_https_port
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]
+  description      = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified IPv6 CIDR ranges."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+
+resource "aws_security_group_rule" "ec2_allow_egress_proxy_admin_console" {
+  count = var.cidr_allow_egress_ec2_proxy != null && local.https_proxy_port != null ? 1 : 0
+
+  type        = "egress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_egress_ec2_proxy
+  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
+
+  security_group_id = aws_security_group.ec2_allow_egress.id
+}
+resource "aws_security_group_rule" "ec2_allow_egress_tfe_admin_console" {
+  count       = !var.tfe_admin_console_disabled ? 1 : 0
+  type        = "egress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_egress_ec2_http
+  description = "Allow TCP/443 (HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
