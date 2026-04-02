@@ -504,11 +504,11 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_admin_console" {
   count = var.cidr_allow_egress_ec2_proxy != null && local.https_proxy_port != null ? 1 : 0
 
   type        = "egress"
-  from_port   = var.tfe_admin_https_port
-  to_port     = var.tfe_admin_https_port
+  from_port   = local.https_proxy_port
+  to_port     = local.https_proxy_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_proxy
-  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
+  description = "Allow TCP/${local.https_proxy_port} (HTTPS proxy) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
