@@ -259,8 +259,19 @@ services:
       TFE_TLS_CERT_FILE: ${tfe_tls_cert_file}
       TFE_TLS_KEY_FILE: ${tfe_tls_key_file}
 %{ if tfe_hostname_secondary != "" ~}
+      TFE_HOSTNAME_SECONDARY: "${tfe_hostname_secondary}"
+      TFE_OIDC_HOSTNAME_CHOICE: "${tfe_oidc_hostname_choice}"
+      TFE_VCS_HOSTNAME_CHOICE: "${tfe_vcs_hostname_choice}"
+      TFE_RUN_TASK_HOSTNAME_CHOICE: "${tfe_run_task_hostname_choice}"
       TFE_TLS_CERT_FILE_SECONDARY: ${tfe_tls_cert_file_secondary}
       TFE_TLS_KEY_FILE_SECONDARY: ${tfe_tls_key_file_secondary}
+      TFE_TLS_CA_BUNDLE_FILE_SECONDARY: ${tfe_tls_ca_bundle_file_secondary}
+%{ else ~}
+      TFE_HOSTNAME_SECONDARY: ""
+	    TFE_OIDC_HOSTNAME_CHOICE: ""
+	    TFE_VCS_HOSTNAME_CHOICE: ""
+	    TFE_RUN_TASK_HOSTNAME_CHOICE: ""
+%{ endif ~}
 %{ endif ~}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
@@ -374,8 +385,10 @@ spec:
     # Application settings
     - name: "TFE_HOSTNAME"
       value: ${tfe_hostname}
+%{ if tfe_hostname_secondary != "" ~}
     - name: "TFE_HOSTNAME_SECONDARY"
       value: ${tfe_hostname_secondary}
+%{ endif ~}
     - name: "TFE_OIDC_HOSTNAME_CHOICE"
       value: ${tfe_oidc_hostname_choice}
     - name: "TFE_VCS_HOSTNAME_CHOICE"
@@ -467,10 +480,12 @@ spec:
     - name: "TFE_TLS_KEY_FILE"
       value: ${tfe_tls_key_file}
 %{ if tfe_hostname_secondary != "" ~}
-    - name: "TFE_TLS_CERT_FILE_SECONDARY"
-      value: ${tfe_tls_cert_file_secondary}
-    - name: "TFE_TLS_KEY_FILE_SECONDARY"
-      value: ${tfe_tls_key_file_secondary}
+	- name: "TFE_TLS_CERT_FILE_SECONDARY"
+		value: ${tfe_tls_cert_file_secondary}
+	- name: "TFE_TLS_KEY_FILE_SECONDARY"
+		value: ${tfe_tls_key_file_secondary}
+	- name: "TFE_TLS_CA_BUNDLE_FILE_SECONDARY"
+		value: ${tfe_tls_ca_bundle_file_secondary}
 %{ endif ~}
     - name: "TFE_TLS_CA_BUNDLE_FILE"
       value: ${tfe_tls_ca_bundle_file}
