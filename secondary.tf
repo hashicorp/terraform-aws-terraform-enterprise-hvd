@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 locals {
-  secondary_hostname_enabled = var.tfe_hostname_secondary != null
+  secondary_hostname_enabled = coalesce(var.tfe_hostname_secondary, "") != ""
   secondary_nlb_enabled      = local.secondary_hostname_enabled && var.create_secondary_tfe_nlb
   secondary_lb_target_group_arns = local.secondary_nlb_enabled ? [
     aws_lb_target_group.secondary_nlb_443[0].arn
