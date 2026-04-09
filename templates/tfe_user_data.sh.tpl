@@ -258,8 +258,10 @@ services:
       # TLS settings
       TFE_TLS_CERT_FILE: ${tfe_tls_cert_file}
       TFE_TLS_KEY_FILE: ${tfe_tls_key_file}
+%{ if tfe_hostname_secondary != "" ~}
       TFE_TLS_CERT_FILE_SECONDARY: ${tfe_tls_cert_file_secondary}
       TFE_TLS_KEY_FILE_SECONDARY: ${tfe_tls_key_file_secondary}
+%{ endif ~}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
       TFE_TLS_ENFORCE: ${tfe_tls_enforce}
