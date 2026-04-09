@@ -466,10 +466,12 @@ spec:
       value: ${tfe_tls_cert_file}
     - name: "TFE_TLS_KEY_FILE"
       value: ${tfe_tls_key_file}
+%{ if tfe_hostname_secondary != "" ~}
     - name: "TFE_TLS_CERT_FILE_SECONDARY"
       value: ${tfe_tls_cert_file_secondary}
     - name: "TFE_TLS_KEY_FILE_SECONDARY"
       value: ${tfe_tls_key_file_secondary}
+%{ endif ~}
     - name: "TFE_TLS_CA_BUNDLE_FILE"
       value: ${tfe_tls_ca_bundle_file}
     - name: "TFE_TLS_CIPHERS"
