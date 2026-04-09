@@ -28,8 +28,8 @@ output "tfe_database_host" {
 }
 
 output "tfe_explorer_database_warning" {
-  value       = local.tfe_explorer_database_uses_tfe_database ? "WARNING: Terraform Enterprise Explorer is enabled and reuses the primary TFE database. Use a dedicated Explorer database in production." : null
-  description = "Warning emitted when Explorer is enabled and reuses the primary TFE database instead of a dedicated Explorer database."
+  value       = local.tfe_explorer_database_uses_tfe_database ? "WARNING: Terraform Enterprise Explorer is enabled and reuses the primary TFE database because `create_tfe_explorer_db` is `false` and no dedicated Explorer database was provided. Use a dedicated Explorer database in production." : null
+  description = "Warning emitted when Explorer is enabled but still reuses the primary TFE database instead of a dedicated Explorer database."
 }
 
 output "rds_aurora_global_cluster_id" {

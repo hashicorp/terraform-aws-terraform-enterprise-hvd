@@ -36,6 +36,7 @@ module "tfe" {
   tfe_metrics_http_port  = var.tfe_metrics_http_port
   tfe_metrics_https_port = var.tfe_metrics_https_port
   tfe_explorer_enabled   = var.tfe_explorer_enabled
+  create_tfe_explorer_db = var.create_tfe_explorer_db
 
   # --- Networking --- #
   vpc_id                               = var.vpc_id

@@ -51,14 +51,18 @@ locals {
     local.secrets_manager_no_proxy
   ])
 
-  tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
-  tfe_explorer_database_host                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_host, "${aws_rds_cluster.tfe.endpoint}:5432")
-  tfe_explorer_database_name                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_name, aws_rds_cluster.tfe.database_name)
-  tfe_explorer_database_user                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_user, var.tfe_database_user)
+  tfe_explorer_database_is_module_managed               = var.tfe_explorer_enabled && var.create_tfe_explorer_db && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
+  tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && !local.tfe_explorer_database_is_module_managed && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
+  tfe_explorer_managed_database_name                    = coalesce(var.tfe_explorer_database_name, var.tfe_database_name)
+  tfe_explorer_managed_database_user                    = coalesce(var.tfe_explorer_database_user, var.tfe_database_user)
+  tfe_explorer_managed_database_password                = var.tfe_explorer_database_password_secret_arn != null ? data.aws_secretsmanager_secret_version.tfe_explorer_database_password[0].secret_string : data.aws_secretsmanager_secret_version.tfe_database_password.secret_string
+  tfe_explorer_database_host                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_host, local.tfe_explorer_database_is_module_managed ? "${aws_rds_cluster.tfe_explorer[0].endpoint}:5432" : null, "${aws_rds_cluster.tfe.endpoint}:5432")
+  tfe_explorer_database_name                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_name, local.tfe_explorer_database_is_module_managed ? local.tfe_explorer_managed_database_name : null, aws_rds_cluster.tfe.database_name)
+  tfe_explorer_database_user                            = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_user, local.tfe_explorer_database_is_module_managed ? local.tfe_explorer_managed_database_user : null, var.tfe_database_user)
   tfe_explorer_database_password                        = !var.tfe_explorer_enabled || var.tfe_explorer_database_passwordless_aws_use_instance_profile ? "" : (var.tfe_explorer_database_password_secret_arn != null ? data.aws_secretsmanager_secret_version.tfe_explorer_database_password[0].secret_string : data.aws_secretsmanager_secret_version.tfe_database_password.secret_string)
   tfe_explorer_database_parameters                      = !var.tfe_explorer_enabled ? "" : coalesce(var.tfe_explorer_database_parameters, var.tfe_database_parameters)
   tfe_explorer_database_passwordless_aws_region         = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? coalesce(var.tfe_explorer_database_passwordless_aws_region, data.aws_region.current.name) : ""
-  tfe_explorer_database_passwordless_aws_db_resource_id = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? coalesce(var.tfe_explorer_database_passwordless_aws_db_resource_id, aws_rds_cluster_instance.tfe[0].dbi_resource_id) : ""
+  tfe_explorer_database_passwordless_aws_db_resource_id = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile ? coalesce(var.tfe_explorer_database_passwordless_aws_db_resource_id, local.tfe_explorer_database_is_module_managed ? aws_rds_cluster_instance.tfe_explorer[0].dbi_resource_id : aws_rds_cluster_instance.tfe[0].dbi_resource_id) : ""
 
   user_data_args = {
     # Bootstrap

@@ -24,6 +24,7 @@ tfe_metrics_enable     = <false>
 tfe_metrics_http_port  = 9090
 tfe_metrics_https_port = 9091
 tfe_explorer_enabled   = false
+create_tfe_explorer_db = true
 
 # --- Networking --- #
 vpc_id                               = "<my-vpc-id>"
@@ -56,7 +57,7 @@ tfe_database_password_secret_arn = "<my-database-password-secret-arn>"
 tfe_database_name                = "tfe"
 tfe_database_user                = "tfe"
 tfe_database_parameters          = "sslmode=require"
-tfe_explorer_database_host       = null       # set all Explorer database fields below to dedicated values, or leave all as `null` to reuse the primary TFE database for non-production use
+tfe_explorer_database_host       = null       # leave all Explorer database fields below as `null` to have the module create and use a dedicated Explorer Aurora database when `create_tfe_explorer_db` is `true`; set `create_tfe_explorer_db = false` to reuse the primary TFE database for non-production use
 tfe_explorer_database_name       = null
 tfe_explorer_database_user       = null
 tfe_explorer_database_password_secret_arn = null

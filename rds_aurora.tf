@@ -81,6 +81,38 @@ resource "aws_rds_cluster" "tfe" {
   }
 }
 
+resource "aws_rds_cluster" "tfe_explorer" {
+  count = local.tfe_explorer_database_is_module_managed ? 1 : 0
+
+  cluster_identifier                  = "${var.friendly_name_prefix}-tfe-explorer-rds-cluster-${data.aws_region.current.name}"
+  engine                              = "aurora-postgresql"
+  engine_mode                         = var.rds_aurora_engine_mode
+  engine_version                      = var.rds_aurora_engine_version
+  database_name                       = local.tfe_explorer_managed_database_name
+  availability_zones                  = var.rds_availability_zones
+  db_subnet_group_name                = aws_db_subnet_group.tfe.id
+  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.tfe.id
+  port                                = 5432
+  master_username                     = local.tfe_explorer_managed_database_user
+  master_password                     = local.tfe_explorer_managed_database_password
+  iam_database_authentication_enabled = var.tfe_explorer_database_passwordless_aws_use_instance_profile
+  storage_encrypted                   = var.rds_storage_encrypted
+  kms_key_id                          = var.rds_kms_key_arn
+  vpc_security_group_ids              = [aws_security_group.rds_allow_ingress.id]
+  backup_retention_period             = var.rds_backup_retention_period
+  preferred_backup_window             = var.rds_preferred_backup_window
+  preferred_maintenance_window        = var.rds_preferred_maintenance_window
+  skip_final_snapshot                 = var.rds_skip_final_snapshot
+  final_snapshot_identifier           = "${var.friendly_name_prefix}-tfe-explorer-rds-final-snapshot-${data.aws_region.current.name}"
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-explorer-rds-cluster-${data.aws_region.current.name}" },
+    { "Description" = "Terraform Enterprise Explorer Aurora PostgreSQL database cluster." },
+    { "is_secondary_region" = var.is_secondary_region },
+    var.common_tags
+  )
+}
+
 resource "aws_rds_cluster_instance" "tfe" {
   count = var.rds_aurora_replica_count + 1
 
@@ -97,6 +129,27 @@ resource "aws_rds_cluster_instance" "tfe" {
 
   tags = merge(
     { "Name" = "${var.friendly_name_prefix}-tfe-rds-cluster-instance-${count.index}" },
+    { "is_secondary_region" = var.is_secondary_region },
+    var.common_tags
+  )
+}
+
+resource "aws_rds_cluster_instance" "tfe_explorer" {
+  count = local.tfe_explorer_database_is_module_managed ? 1 : 0
+
+  identifier                            = "${var.friendly_name_prefix}-tfe-explorer-rds-cluster-instance-0"
+  cluster_identifier                    = aws_rds_cluster.tfe_explorer[0].id
+  instance_class                        = var.rds_aurora_instance_class
+  engine                                = aws_rds_cluster.tfe_explorer[0].engine
+  engine_version                        = aws_rds_cluster.tfe_explorer[0].engine_version
+  db_parameter_group_name               = aws_db_parameter_group.tfe.id
+  apply_immediately                     = var.rds_apply_immediately
+  publicly_accessible                   = false
+  performance_insights_enabled          = var.rds_performance_insights_enabled
+  performance_insights_retention_period = var.rds_performance_insights_retention_period
+
+  tags = merge(
+    { "Name" = "${var.friendly_name_prefix}-tfe-explorer-rds-cluster-instance-0" },
     { "is_secondary_region" = var.is_secondary_region },
     var.common_tags
   )

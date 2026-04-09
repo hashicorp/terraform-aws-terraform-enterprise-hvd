@@ -133,11 +133,16 @@ Terraform Enterprise Explorer can be enabled with the following module inputs:
 
 ```hcl
 tfe_explorer_enabled = true
+create_tfe_explorer_db = true
 ```
 
-HashiCorp recommends a dedicated PostgreSQL database for Explorer. You can provide one with the following inputs:
+HashiCorp recommends a dedicated PostgreSQL database for Explorer. When `tfe_explorer_enabled` is `true`, this module now creates and uses a dedicated Aurora PostgreSQL Explorer database cluster with a single instance by default.
+
+To use your own dedicated Explorer database instead, set `create_tfe_explorer_db = false` and provide the following inputs:
 
 ```hcl
+tfe_explorer_enabled                      = true
+create_tfe_explorer_db                    = false
 tfe_explorer_database_host                = "explorer-db.example.com:5432"
 tfe_explorer_database_name                = "tfe_explorer"
 tfe_explorer_database_user                = "tfe_explorer"
@@ -145,7 +150,7 @@ tfe_explorer_database_password_secret_arn = "<my-explorer-database-password-secr
 tfe_explorer_database_parameters          = "sslmode=require"
 ```
 
-If Explorer is enabled and you leave all `tfe_explorer_database_*` inputs as `null`, the module will reuse the primary TFE database connection details and emit the `tfe_explorer_database_warning` output. This fallback is intended for non-production use only.
+If Explorer is enabled, `create_tfe_explorer_db = false`, and you leave all `tfe_explorer_database_*` inputs as `null`, the module reuses the primary TFE database connection details and emits the `tfe_explorer_database_warning` output. This fallback is intended for non-production use only.
 
 ### Explorer database IAM authentication
 
@@ -167,6 +172,8 @@ If your dedicated Explorer database is outside the Aurora cluster created by thi
 tfe_explorer_database_passwordless_aws_region         = "<aws-region>"
 tfe_explorer_database_passwordless_aws_db_resource_id = "<db-resource-id>"
 ```
+
+When the module is creating the dedicated Explorer database for you, `tfe_explorer_database_passwordless_aws_db_resource_id` defaults to the module-managed Explorer Aurora DB instance (DBI) resource ID.
 
 ## Custom user_data (startup) script
 
