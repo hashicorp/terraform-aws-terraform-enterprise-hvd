@@ -16,15 +16,24 @@ locals {
   # Accept semver-ish tags like 1.3, 1.3.2, v1.3, v1.3.2
   normalized_tag = trimprefix(var.tfe_image_tag, "v")
   is_semver_tag  = can(regex("^[0-9]+\\.[0-9]+(\\.[0-9]+)?$", local.normalized_tag))
+  is_commit_hash = can(regex("^[0-9a-f]{7,}$", var.tfe_image_tag))
 
   major = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[0]) : 0
   minor = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[1]) : 0
-  patch = local.is_semver_tag ? tonumber(split(".", local.normalized_tag)[2]) : 0
+  patch = local.is_semver_tag && length(split(".", local.normalized_tag)) > 2 ? tonumber(split(".", local.normalized_tag)[2]) : 0
 
   tfe_image_tag_gte_1 = (
     !local.is_calver_tag &&
-    local.is_semver_tag &&
-    (local.major > 1 || (local.major == 1 && local.minor >= 2 && local.patch >= 1))
+    (
+      local.is_commit_hash ||
+      (
+        local.is_semver_tag &&
+        (
+          local.major > 1 ||
+          (local.major == 1 && local.minor >= 2)
+        )
+      )
+    )
   )
 }
 
