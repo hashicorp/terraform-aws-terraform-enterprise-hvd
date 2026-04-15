@@ -112,10 +112,13 @@ def convert_markdown_urls(content: str, base_url: str, file_path: Path, root_dir
     return result
 
 def find_markdown_files(directory: Path) -> List[Path]:
-    """Find all markdown files in the directory tree."""
+    """Find all markdown files in the directory tree, ignoring hidden folders."""
     markdown_files = []
     for ext in ['.md', '.markdown']:
-        markdown_files.extend(directory.rglob(f'*{ext}'))
+        for file_path in directory.rglob(f'*{ext}'):
+            # Skip files in hidden directories (folders starting with '.')
+            if not any(part.startswith('.') for part in file_path.relative_to(directory).parts):
+                markdown_files.append(file_path)
     return sorted(markdown_files)
 
 def process_file(file_path: Path, base_url: str, root_dir: Path, dry_run: bool = False, overwrite: bool = False) -> Tuple[bool, str]:
