@@ -7,6 +7,7 @@ This document contains a table of the TFE _bootstrap_ secrets to be stored in AW
 | TFE license file                                 | Plaintext secret | `tfe_license_secret_arn`             |
 | TFE encryption password                          | Plaintext secret | `tfe_encryption_password_secret_arn` |
 | TFE database password                            | Plaintext secret | `tfe_database_password_secret_arn`   |
+| Explorer database password (optional)            | Plaintext secret | `tfe_explorer_database_password_secret_arn` |
 | TFE Redis password                               | Plaintext secret | `tfe_redis_password_secret_arn`      |
 | TFE TLS certificate (base64-encoded)             | Plaintext secret | `tfe_tls_cert_secret_arn`            |
 | TFE TLS certificate private key (base64-encoded) | Plaintext secret | `tfe_tls_privkey_secret_arn`         |
@@ -33,6 +34,12 @@ cat terraform.hclic
 
 - This value should be randomly generated characters between 8 and 128 characters in length
 - Special characters are OK to use here, except for the `@`, `"`, and `/` characters
+
+### Explorer database password (optional)
+
+- This value should be randomly generated characters between 8 and 128 characters in length
+- Special characters are OK to use here, except for the `@`, `"`, and `/` characters
+- Leave this unset to reuse the `tfe_database_password_secret_arn` value for the module-managed Explorer database or shared primary-database fallback
 
 ### TFE redis password
 

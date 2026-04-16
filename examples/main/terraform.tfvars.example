@@ -23,6 +23,8 @@ tfe_operational_mode   = "active-active"
 tfe_metrics_enable     = <false>
 tfe_metrics_http_port  = 9090
 tfe_metrics_https_port = 9091
+tfe_explorer_enabled   = false
+create_tfe_explorer_db = true
 
 # --- Networking --- #
 vpc_id                               = "<my-vpc-id>"
@@ -46,6 +48,7 @@ container_runtime  = "docker"                 # either `docker` or `podman`
 ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel`, `al2023`, or `centos`
 ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` or remove if you do not want to use SSH for shell access
 ec2_allow_ssm      = false                    # set to `true` if you want to use SSM Session Manager for shell access
+ec2_iam_instance_profile_name = null          # set to an existing EC2 instance profile name to reuse it instead of the module-managed profile
 ec2_instance_size  = "m7i.xlarge"
 asg_instance_count = 1                        # optionally bump up to a max of 3 after successful installation
 
@@ -54,6 +57,14 @@ tfe_database_password_secret_arn = "<my-database-password-secret-arn>"
 tfe_database_name                = "tfe"
 tfe_database_user                = "tfe"
 tfe_database_parameters          = "sslmode=require"
+tfe_explorer_database_host       = null       # leave all Explorer database fields below as `null` to have the module create and use a dedicated Explorer Aurora database when `create_tfe_explorer_db` is `true`; set `create_tfe_explorer_db = false` to reuse the primary TFE database for non-production use
+tfe_explorer_database_name       = null
+tfe_explorer_database_user       = null
+tfe_explorer_database_password_secret_arn = null
+tfe_explorer_database_parameters = null
+tfe_explorer_database_passwordless_aws_use_instance_profile = false
+tfe_explorer_database_passwordless_aws_region = null
+tfe_explorer_database_passwordless_aws_db_resource_id = null
 rds_aurora_engine_version        = "16.4"
 rds_parameter_group_family       = "aurora-postgresql16"
 rds_aurora_instance_class        = "db.r6i.xlarge"

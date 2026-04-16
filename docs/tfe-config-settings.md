@@ -14,6 +14,8 @@ Within the [compute.tf](../compute.tf) file, you will see a `locals` block with 
 
 Within the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) script there is a function named `generate_tfe_docker_compose_config()` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this file can be found in `/etc/tfe/docker-compose.yaml` on your TFE EC2 instance(s).
 
+Explorer configuration follows the same pattern. The module computes the final Explorer database settings in `compute.tf`, then renders `TFE_EXPLORER_DATABASE_*` environment variables into both the Docker Compose and Podman manifests. When `tfe_explorer_enabled` is `true`, the module creates and uses a dedicated Explorer Aurora database by default. If `create_tfe_explorer_db` is set to `false` and no dedicated Explorer database inputs are provided, the module falls back to the primary TFE database connection values and emits a warning output so that this non-production configuration is visible in Terraform.
+
 ## Procedure
 
 1. Determine which [configuration setting](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) you would like to add/modify/update.

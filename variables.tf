@@ -204,6 +204,93 @@ variable "tfe_metrics_https_port" {
   default     = 9091
 }
 
+variable "tfe_explorer_enabled" {
+  type        = bool
+  description = "Boolean to enable Terraform Enterprise Explorer. Explorer is only supported when `tfe_operational_mode` is `active-active` or `external`."
+  default     = false
+
+  validation {
+    condition     = !var.tfe_explorer_enabled || contains(["active-active", "external"], var.tfe_operational_mode)
+    error_message = "Explorer is only supported when `tfe_operational_mode` is `active-active` or `external`."
+  }
+}
+
+variable "create_tfe_explorer_db" {
+  type        = bool
+  description = "Boolean to create and use a module-managed dedicated Aurora PostgreSQL database cluster for Explorer when `tfe_explorer_enabled` is `true` and no explicit Explorer database host, name, and user values are provided."
+  default     = true
+}
+
+variable "tfe_explorer_database_host" {
+  type        = string
+  description = "PostgreSQL server for Explorer in `HOST[:PORT]` format. Leave as `null` to have the module create and use a dedicated Explorer Aurora database when `create_tfe_explorer_db` is `true`, or reuse the primary TFE database when `create_tfe_explorer_db` is `false`."
+  default     = null
+
+  validation {
+    condition = !var.tfe_explorer_enabled || (
+      (var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null) ||
+      (var.tfe_explorer_database_host != null && var.tfe_explorer_database_name != null && var.tfe_explorer_database_user != null)
+    )
+    error_message = "Values of `tfe_explorer_database_host`, `tfe_explorer_database_name`, and `tfe_explorer_database_user` must either all be set or all be `null` when `tfe_explorer_enabled` is `true`."
+  }
+}
+
+variable "tfe_explorer_database_name" {
+  type        = string
+  description = "Name of the PostgreSQL database used by Explorer. Leave as `null` to have the module use the Explorer database name it manages when `create_tfe_explorer_db` is `true`, or reuse the primary TFE database name when `create_tfe_explorer_db` is `false`."
+  default     = null
+}
+
+variable "tfe_explorer_database_user" {
+  type        = string
+  description = "PostgreSQL username used by Explorer. Leave as `null` to have the module use the Explorer database user it manages when `create_tfe_explorer_db` is `true`, or reuse the primary TFE database user when `create_tfe_explorer_db` is `false`."
+  default     = null
+}
+
+variable "tfe_explorer_database_password_secret_arn" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for the Explorer database password. Leave as `null` when `tfe_explorer_database_passwordless_aws_use_instance_profile` is `true` or to reuse the module-managed TFE database password for the module-managed Explorer database or shared primary-database fallback."
+  default     = null
+
+  validation {
+    condition = !var.tfe_explorer_enabled || var.tfe_explorer_database_passwordless_aws_use_instance_profile || (
+      var.tfe_explorer_database_host == null
+      ? (var.create_tfe_explorer_db || var.tfe_explorer_database_password_secret_arn == null)
+      : var.tfe_explorer_database_password_secret_arn != null
+    )
+    error_message = "Value must be set when `tfe_explorer_enabled` is `true`, `tfe_explorer_database_passwordless_aws_use_instance_profile` is `false`, and an external Explorer database host is specified. When `create_tfe_explorer_db` is `false` and no external Explorer database host is set, leave this value as `null` so Explorer reuses the primary TFE database password."
+  }
+}
+
+variable "tfe_explorer_database_parameters" {
+  type        = string
+  description = "PostgreSQL server parameters for the Explorer connection URI. Leave as `null` to reuse `tfe_database_parameters`."
+  default     = null
+}
+
+variable "tfe_explorer_database_passwordless_aws_use_instance_profile" {
+  type        = bool
+  description = "Boolean to use the EC2 instance profile for Explorer database IAM authentication."
+  default     = false
+}
+
+variable "tfe_explorer_database_passwordless_aws_region" {
+  type        = string
+  description = "AWS Region of the Explorer RDS PostgreSQL resource when using Explorer database IAM authentication. Leave as `null` to use the current provider region."
+  default     = null
+}
+
+variable "tfe_explorer_database_passwordless_aws_db_resource_id" {
+  type        = string
+  description = "RDS or Aurora database resource ID used to grant `rds-db:connect` permissions for Explorer database IAM authentication. Leave as `null` to use the module-managed Explorer Aurora DB instance (DBI) resource ID when `create_tfe_explorer_db` is `true`, otherwise the module-managed TFE Aurora DB instance (DBI) resource ID."
+  default     = null
+
+  validation {
+    condition     = var.tfe_explorer_enabled && var.tfe_explorer_database_passwordless_aws_use_instance_profile && var.tfe_explorer_database_host != null ? var.tfe_explorer_database_passwordless_aws_db_resource_id != null : true
+    error_message = "Value must be set when `tfe_explorer_database_passwordless_aws_use_instance_profile` is `true` and a dedicated Explorer database host is specified."
+  }
+}
+
 variable "tfe_tls_enforce" {
   type        = bool
   description = "Boolean to enforce TLS."
@@ -566,6 +653,12 @@ variable "ec2_allow_ssm" {
   type        = bool
   description = "Boolean to attach the `AmazonSSMManagedInstanceCore` policy to the TFE instance role, allowing the SSM agent (if present) to function."
   default     = false
+}
+
+variable "ec2_iam_instance_profile_name" {
+  type        = string
+  description = "Name of an existing IAM instance profile to attach to TFE EC2 instances instead of creating one. When set, the module attaches its inline policy and optional SSM policy attachment to the role associated with this instance profile."
+  default     = null
 }
 
 variable "ebs_is_encrypted" {
