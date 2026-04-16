@@ -289,7 +289,10 @@ services:
 %{ endif ~}
       TFE_IPV6_ENABLED: ${tfe_ipv6_enabled}
       TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
-
+%{ if tfe_admin_console_disabled ~}
+      # Admin Console settings
+      TFE_ADMIN_CONSOLE_DISABLED: "true"
+%{ endif ~}
 %{ if tfe_hairpin_addressing ~}
     extra_hosts:
       - ${tfe_hostname}:$VM_PRIVATE_IP
@@ -305,6 +308,7 @@ services:
       - 80:${tfe_http_port}
       - 443:${tfe_https_port}
       - ${tfe_admin_https_port}:${tfe_admin_https_port}
+
 %{ if tfe_operational_mode == "active-active" ~}
       - 8201:8201
 %{ endif ~}
@@ -498,7 +502,11 @@ spec:
       value: ${tfe_ipv6_enabled}
     - name: "TFE_ADMIN_HTTPS_PORT"
       value: ${tfe_admin_https_port}
-
+%{ if tfe_admin_console_disabled ~}
+    # Admin Console settings defaults to false, so only set environment variable to disable Admin Console if 'tfe_admin_console_disabled' is set to true
+    - name: "TFE_ADMIN_CONSOLE_DISABLED"
+      value: "true"
+%{ endif ~}
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     name: "terraform-enterprise"
     ports:
