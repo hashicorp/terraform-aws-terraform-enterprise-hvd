@@ -20,6 +20,33 @@ This module supports creating a load balancer with either and `internal` or `int
 lb_is_internal = false
 ```
 
+### Secondary hostname for external integrations
+
+This module can optionally configure Terraform Enterprise with a secondary hostname for external-facing integrations. Set the secondary hostname itself and choose whether OIDC, VCS, and run-task integrations should use the primary or secondary hostname:
+
+```hcl
+tfe_hostname_secondary       = "tfe-external.example.com"
+tfe_oidc_hostname_choice     = "secondary"
+tfe_vcs_hostname_choice      = "secondary"
+tfe_run_task_hostname_choice = "secondary"
+```
+
+When `tfe_hostname_secondary` is set, you must also provide secondary TLS certificate, private key, and CA bundle secrets through the corresponding `*_secondary` module inputs.
+
+### Secondary public NLB
+
+If you want this module to manage the secondary external endpoint, enable the optional secondary public NLB. This creates a dedicated public NLB, keeps CIDR filtering separate from the primary load balancer, and can optionally create a public Route53 alias record:
+
+```hcl
+create_secondary_tfe_nlb                = true
+secondary_lb_subnet_ids                 = ["subnet-public-a", "subnet-public-b"]
+cidr_allow_ingress_tfe_secondary_443    = ["203.0.113.0/24"]
+create_route53_tfe_secondary_dns_record = true
+route53_tfe_secondary_hosted_zone_name  = "example.com"
+```
+
+>📝 Note: The managed secondary hostname path is always public-facing. Use public subnets for `secondary_lb_subnet_ids` and a public Route53 hosted zone for `route53_tfe_secondary_hosted_zone_name`.
+
 ## DNS
 
 This module supports creating an _alias_ record in AWS Route53 for the TFE FQDN to resolve to the load balancer DNS name. To do so, the following module input variables may be set:
@@ -111,6 +138,7 @@ If either `http_proxy` or `https_proxy` (or both) are set, the module automatica
 - `127.0.0.1`
 - `169.254.169.254`
 - Value of `var.tfe_fqdn`
+- Value of `var.tfe_hostname_secondary` when configured
 - EC2 instance private IP address
 - TFE S3 bucket regional domain name (_e.g.,_ `<tfe-s3-bucket-name>.s3.<aws-region>.amazonaws.com`)
 - Regional AWS Secrets Manager endpoint (_e.g.,_ `secretsmanager.<aws-region>.amazonaws.com`)

@@ -14,6 +14,21 @@ Within the [compute.tf](../compute.tf) file, you will see a `locals` block with 
 
 Within the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) script there is a function named `generate_tfe_docker_compose_config()` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this file can be found in `/etc/tfe/docker-compose.yaml` on your TFE EC2 instance(s).
 
+## Secondary hostname settings
+
+This module supports the documented secondary-hostname settings for Terraform Enterprise:
+
+- `TFE_HOSTNAME_SECONDARY`
+- `TFE_OIDC_HOSTNAME_CHOICE`
+- `TFE_VCS_HOSTNAME_CHOICE`
+- `TFE_RUN_TASK_HOSTNAME_CHOICE`
+- `TFE_TLS_CERT_FILE_SECONDARY`
+- `TFE_TLS_KEY_FILE_SECONDARY`
+
+The corresponding Terraform inputs are surfaced in [variables.tf](../variables.tf). The runtime values are assembled in [compute.tf](../compute.tf) and rendered into both the Docker Compose and Podman manifests by [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl).
+
+When `tfe_hostname_secondary` is configured, the cloud-init script retrieves the secondary TLS materials from AWS Secrets Manager and writes them alongside the primary TLS files before starting Terraform Enterprise.
+
 ## Procedure
 
 1. Determine which [configuration setting](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) you would like to add/modify/update.

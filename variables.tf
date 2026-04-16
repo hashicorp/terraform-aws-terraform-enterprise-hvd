@@ -49,6 +49,39 @@ variable "tfe_tls_ca_bundle_secret_arn" {
   description = "ARN of AWS Secrets Manager secret for private/custom TLS Certificate Authority (CA) bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
 }
 
+variable "tfe_tls_cert_secret_arn_secondary" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for the secondary TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" ? var.tfe_tls_cert_secret_arn_secondary != null : var.tfe_tls_cert_secret_arn_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be `null` otherwise."
+  }
+}
+
+variable "tfe_tls_privkey_secret_arn_secondary" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for the secondary TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" ? var.tfe_tls_privkey_secret_arn_secondary != null : var.tfe_tls_privkey_secret_arn_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be `null` otherwise."
+  }
+}
+
+variable "tfe_tls_ca_bundle_secret_arn_secondary" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret for the secondary TFE TLS certificate authority bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" ? var.tfe_tls_ca_bundle_secret_arn_secondary != null : var.tfe_tls_ca_bundle_secret_arn_secondary == null
+    error_message = "Value must be set when `tfe_hostname_secondary` is configured and must be `null` otherwise."
+  }
+}
+
 variable "tfe_encryption_password_secret_arn" {
   type        = string
   description = "ARN of AWS Secrets Manager secret for TFE encryption password. Secret type should be plaintext."
@@ -115,6 +148,69 @@ variable "tfe_image_repository_password" {
 variable "tfe_fqdn" {
   type        = string
   description = "Fully qualified domain name (FQDN) of TFE instance. This name should resolve to the DNS name or IP address of the TFE load balancer and will be what clients use to access TFE."
+}
+
+variable "tfe_hostname_secondary" {
+  type        = string
+  description = "Secondary externally resolvable fully qualified domain name (FQDN) for TFE integration traffic such as OIDC, VCS, or run tasks."
+  default     = null
+
+  validation {
+    condition     = var.tfe_hostname_secondary == null || trim(var.tfe_hostname_secondary) != ""
+    error_message = "`tfe_hostname_secondary` must be either null or a non-empty string."
+  }
+}
+		condition = var.tfe_hostname_secondary is null || var.tfe_hostname_secondary != ""
+		error_message = "Secondary hostname must be a non-empty string if specified."
+	}
+}
+
+variable "tfe_oidc_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE OIDC workload federation integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+  validation {
+    condition     = var.tfe_oidc_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_oidc_hostname_choice` is `secondary`."
+  }
+  validation {
+    condition     = var.tfe_oidc_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_oidc_hostname_choice` is `secondary`."
+  }
+}
+
+variable "tfe_vcs_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE version control system (VCS) integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+  validation {
+    condition     = var.tfe_vcs_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_vcs_hostname_choice` is `secondary`."
+  }
+  validation {
+    condition     = var.tfe_vcs_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_vcs_hostname_choice` is `secondary`."
+  }
+}
+
+variable "tfe_run_task_hostname_choice" {
+  type        = string
+  description = "Hostname choice for TFE run task integrations. Supported values are `primary` and `secondary`."
+  default     = "primary"
+
+  validation {
+  validation {
+    condition     = var.tfe_run_task_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_run_task_hostname_choice` is `secondary`."
+  }
+  validation {
+    condition     = var.tfe_run_task_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `tfe_run_task_hostname_choice` is `secondary`."
+  }
 }
 
 variable "tfe_capacity_concurrency" {
@@ -473,6 +569,67 @@ variable "route53_tfe_hosted_zone_is_private" {
   type        = bool
   description = "Boolean indicating if `route53_tfe_hosted_zone_name` is a private hosted zone."
   default     = false
+}
+
+variable "create_secondary_tfe_nlb" {
+  validation {
+    condition     = var.create_secondary_tfe_nlb ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
+    error_message = "`tfe_hostname_secondary` must be set when `create_secondary_tfe_nlb` is `true`."
+  }
+  validation {
+    condition     = var.create_secondary_tfe_nlb ? var.tfe_hostname_secondary != null : true
+    error_message = "`tfe_hostname_secondary` must be set when `create_secondary_tfe_nlb` is `true`."
+  }
+}
+
+variable "secondary_lb_subnet_ids" {
+  type        = list(string)
+  description = "List of public subnet IDs to use for the secondary Network Load Balancer (NLB). Required when `create_secondary_tfe_nlb` is `true`."
+  default     = null
+
+  validation {
+    condition     = var.create_secondary_tfe_nlb ? var.secondary_lb_subnet_ids != null : true
+    error_message = "Value must be set when `create_secondary_tfe_nlb` is `true`."
+  }
+}
+
+variable "cidr_allow_ingress_tfe_secondary_443" {
+  type        = list(string)
+  description = "List of CIDR ranges allowed to access the secondary TFE public Network Load Balancer (NLB) over HTTPS (port 443)."
+  default     = ["0.0.0.0/0"]
+}
+
+variable "create_route53_tfe_secondary_dns_record" {
+  type        = bool
+  description = "Boolean to create a Route53 Alias record for `tfe_hostname_secondary` resolving to the secondary public Network Load Balancer (NLB)."
+  default     = false
+
+  validation {
+    condition     = var.create_route53_tfe_secondary_dns_record ? var.create_secondary_tfe_nlb : true
+    error_message = "`create_secondary_tfe_nlb` must be `true` when `create_route53_tfe_secondary_dns_record` is `true`."
+  }
+}
+
+variable "route53_tfe_secondary_hosted_zone_name" {
+  type        = string
+  description = "Route53 Hosted Zone name to create the `tfe_hostname_secondary` alias record in. Required if `create_route53_tfe_secondary_dns_record` is `true`."
+  default     = null
+
+  validation {
+    condition     = var.create_route53_tfe_secondary_dns_record ? var.route53_tfe_secondary_hosted_zone_name != null : true
+    error_message = "Value must be set when `create_route53_tfe_secondary_dns_record` is `true`."
+  }
+}
+
+variable "route53_tfe_secondary_hosted_zone_is_private" {
+  type        = bool
+  description = "Boolean indicating if `route53_tfe_secondary_hosted_zone_name` is a private hosted zone. Secondary hostname DNS must be public when created by this module."
+  default     = false
+
+  validation {
+    condition     = var.create_route53_tfe_secondary_dns_record ? var.route53_tfe_secondary_hosted_zone_is_private == false : true
+    error_message = "`route53_tfe_secondary_hosted_zone_is_private` must be `false` when `create_route53_tfe_secondary_dns_record` is `true`."
+  }
 }
 
 #------------------------------------------------------------------------------
