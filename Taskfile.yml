@@ -96,14 +96,12 @@ tasks:
       - sh: test -x "$(which gh 2>/dev/null)"
         msg: 'GH CLI required. See https://cli.github.com/.'
       - sh: test -n "{{.MOD_RELEASE}}"
-        msg: 'MOD_RELEASE environment variable required. MOD_RELEASE should be a semver tag like `1.2.3`` and greater than current tag {{.PREV_TAG}}. either pass with `MOD_RELEASE=1.2.3 task release` or set in .env.local file.'
+        msg: 'MOD_RELEASE environment variable required. MOD_RELEASE should be a semver tag like `1.2.3`. Either pass with `MOD_RELEASE=1.2.3 task release` or set in .env.local file.'
     vars:
       MOD_REPO:
         sh: echo "${PWD##*/}"
       REPO_OWNER:
         sh: git config --local remote.origin.url | cut -d':' -f2 | cut -d'/' -f1
-      PREV_TAG:
-        sh: git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || printf '' # Get the latest tag or return empty string if no tags exist
     env:
       MOD_RELEASE: '{{.MOD_RELEASE}}'
     cmds:
@@ -115,31 +113,59 @@ tasks:
       - git checkout -b release/rc-${MOD_RELEASE}
       - |
         python .github/scripts/markdown-url-converter/markdown-url-converter.py --repo="{{.REPO_OWNER}}/{{.MOD_REPO}}" --release="{{.MOD_RELEASE}}" --overwrite .
-      - git commit  --allow-empty -am "Release version ${MOD_RELEASE}"
-      - git tag -a ${MOD_RELEASE} -m "${MOD_RELEASE} release"
-      - git push origin --tags
-      - git revert HEAD --no-edit -n
-      - git commit -m "Revert release commit to retain tag in history"
-      - git push origin release/rc-${MOD_RELEASE}
+      - git commit --allow-empty -am "Release version ${MOD_RELEASE}"
       - |
-        RELEASE_NOTES=$(gh release view {{.MOD_RELEASE}} --repo {{.REPO_OWNER}}/{{.MOD_REPO}} --json body --jq .body)
-        TEMP_FILE=$(mktemp)
-        trap 'rm -f "$TEMP_FILE"' EXIT
-        echo "## v{{.MOD_RELEASE}}" > "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
-        echo "$RELEASE_NOTES" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
-        if [ -f CHANGELOG.md ]; then
-          tail -n +1 CHANGELOG.md >> "$TEMP_FILE"
+        MOD_RELEASE_CLEAN="${MOD_RELEASE#v}"
+        if ! [[ "$MOD_RELEASE_CLEAN" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "MOD_RELEASE must be a semver tag like 1.2.3" >&2
+          exit 1
         fi
-        mv "$TEMP_FILE" CHANGELOG.md
+
+        PREV_TAG=$(printf '%s\n' "$MOD_RELEASE_CLEAN" $(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' ) | sort -V | awk -v target="$MOD_RELEASE_CLEAN" '$0==target{print prev; exit}{prev=$0}')
+        if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" = "$MOD_RELEASE_CLEAN" ]; then
+          echo "MOD_RELEASE must be greater than the previous tag (found: $PREV_TAG)" >&2
+          exit 1
+        fi
+
+        RELEASE_NOTES_FILE=$(mktemp)
+        PR_BODY_FILE=$(mktemp)
+        CHANGELOG_TMP_FILE=$(mktemp)
+        trap 'rm -f "$RELEASE_NOTES_FILE" "$PR_BODY_FILE" "$CHANGELOG_TMP_FILE"' EXIT
+
+        if [ -n "$PREV_TAG" ]; then
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/{{.REPO_OWNER}}/{{.MOD_REPO}}/releases/generate-notes" \
+            -f tag_name="{{.MOD_RELEASE}}" \
+            -f previous_tag_name="$PREV_TAG" \
+            --jq '.body' > "$RELEASE_NOTES_FILE"
+        else
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/{{.REPO_OWNER}}/{{.MOD_REPO}}/releases/generate-notes" \
+            -f tag_name="{{.MOD_RELEASE}}" \
+            --jq '.body' > "$RELEASE_NOTES_FILE"
+        fi
+
+        echo "## v{{.MOD_RELEASE}}" > "$CHANGELOG_TMP_FILE"
+        echo "" >> "$CHANGELOG_TMP_FILE"
+        cat "$RELEASE_NOTES_FILE" >> "$CHANGELOG_TMP_FILE"
+        echo "" >> "$CHANGELOG_TMP_FILE"
+        if [ -f CHANGELOG.md ]; then
+          cat CHANGELOG.md >> "$CHANGELOG_TMP_FILE"
+        fi
+        mv "$CHANGELOG_TMP_FILE" CHANGELOG.md
+
         git add CHANGELOG.md
         git commit -m "chore: update CHANGELOG.md for v{{.MOD_RELEASE}}"
+
+        git tag -a ${MOD_RELEASE} -m "${MOD_RELEASE} release"
         git push origin release/rc-${MOD_RELEASE}
-      - git tag -af ${MOD_RELEASE} -m "${MOD_RELEASE} release"
-      - git push origin refs/tags/${MOD_RELEASE} -f
-      - |
-        # Wait for the updated tag to be visible on the remote before creating the release
+        git push origin refs/tags/${MOD_RELEASE}
+
+        # Wait for the tag to be visible on the remote before creating the release.
         for i in {1..10}; do
           if git ls-remote --tags origin | grep -q "refs/tags/${MOD_RELEASE}$"; then
             echo "Tag ${MOD_RELEASE} is now available on origin."
@@ -149,24 +175,14 @@ tasks:
           sleep 3
         done
 
-        if [ -n "{{.PREV_TAG}}" ]; then
-          gh release create "{{.MOD_RELEASE}}" \
-            --repo "{{.REPO_OWNER}}/{{.MOD_REPO}}" \
-            --title "{{.MOD_RELEASE}}" \
-            --generate-notes \
-            --notes-start-tag "{{.PREV_TAG}}"
-        else
-          gh release create "{{.MOD_RELEASE}}" \
-            --repo "{{.REPO_OWNER}}/{{.MOD_REPO}}" \
-            --title "{{.MOD_RELEASE}}" \
-            --generate-notes
-        fi
-      - |
-        RELEASE_NOTES=$(gh release view {{.MOD_RELEASE}} --repo {{.REPO_OWNER}}/{{.MOD_REPO}} --json body --jq .body)
-        PR_BODY_FILE=$(mktemp)
+        gh release create "{{.MOD_RELEASE}}" \
+          --repo "{{.REPO_OWNER}}/{{.MOD_REPO}}" \
+          --title "{{.MOD_RELEASE}}" \
+          --notes-file "$RELEASE_NOTES_FILE"
+
         echo "Release version {{.MOD_RELEASE}}" > "$PR_BODY_FILE"
         echo "" >> "$PR_BODY_FILE"
-        echo "$RELEASE_NOTES" >> "$PR_BODY_FILE"
+        cat "$RELEASE_NOTES_FILE" >> "$PR_BODY_FILE"
         if ! gh pr create \
           --repo {{.REPO_OWNER}}/{{.MOD_REPO}} \
           --title "Release {{.MOD_RELEASE}}" \
