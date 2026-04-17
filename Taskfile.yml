@@ -122,7 +122,6 @@ tasks:
       - git commit -m "Revert release commit to retain tag in history"
       - git push origin release/rc-${MOD_RELEASE}
       - |
-        RELEASE_NOTES=$(gh release view {{.MOD_RELEASE}} --repo {{.REPO_OWNER}}/{{.MOD_REPO}} --json body --jq .body)
         TEMP_FILE=$(mktemp)
         trap 'rm -f "$TEMP_FILE"' EXIT
         echo "## v{{.MOD_RELEASE}}" > "$TEMP_FILE"
