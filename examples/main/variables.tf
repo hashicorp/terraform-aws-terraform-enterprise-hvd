@@ -14,7 +14,7 @@ variable "friendly_name_prefix" {
   }
 }
 
-variable "common_tags2" {
+variable "common_tags" {
   type        = map(string)
   description = "Map of common tags for all taggable AWS resources."
   default     = {}
