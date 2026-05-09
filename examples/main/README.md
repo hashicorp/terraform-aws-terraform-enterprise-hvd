@@ -7,7 +7,7 @@ Refer to the sections below for details on the key settings and their correspond
 
 ### AWS Region Configuration
 
-You must explicitly set the `region` variable to your target AWS region (e.g., `region = "us-east-1"`) in your `.tfvars` file. This value is required by the AWS provider configuration in `main.tf`. If not set, Terraform will fail with an error since the provider requires a region value.
+You must explicitly set the `region` variable to your target AWS region (e.g., `region = "us-east-1"`) in your `.tfvars` file. This value is required by the [AWS provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#provider-configuration) in `main.tf`. If not set, Terraform will fail with an error since the provider requires a region value.
 
 ## Architectural decisions
 
