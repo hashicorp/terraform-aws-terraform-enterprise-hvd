@@ -89,24 +89,28 @@ One of the following logging destinations:
     .
     └── environments
         ├── production
-        │   ├── backend.tf
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   ├── terraform.tfvars
-        │   └── variables.tf
+        │   ├── backend.tf
+        │   ├── main.tf
+        │   ├── outputs.tf
+        │   ├── terraform.tfvars
+        │   ├── variables.tf
+        │   └── variables_provider.tf
         └── sandbox
             ├── backend.tf
             ├── main.tf
             ├── outputs.tf
             ├── terraform.tfvars
-            └── variables.tf
+            ├── variables.tf
+            └── variables_provider.tf
     ```
 
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
+    >📝 Note: `variables_provider.tf` defines provider configuration variables (not module variables) and must be copied from the examples directory.
+
 3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
-4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
+4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions, the [deployment customizations](./docs/deployment-customizations.md) documentation, or the [example README](./examples/main/README.md) for additional configuration guidance.
 
 5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
 
