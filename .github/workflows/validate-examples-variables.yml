@@ -16,92 +16,99 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    name: Validate examples variables
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate variables sync and standards
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const { execSync } = require('child_process');
+      - name: Check root variables.tf exists
+        id: check_root
+        run: |
+          if [[ ! -f "variables.tf" ]]; then
+            echo "ERROR: Root variables.tf not found!"
+            echo "The root variables.tf file is required for validation."
+            exit 1
+          fi
+          echo "Root variables.tf exists"
 
-            // Check if root variables.tf exists
-            if (!fs.existsSync('variables.tf')) {
-              console.error('❌ ERROR: Root variables.tf not found!');
-              console.error('The root variables.tf file is required for validation.');
-              core.setFailed('Root variables.tf is missing.');
-              return;
-            }
+      - name: Validate examples
+        id: validate
+        run: |
+          has_errors=false
+          out_of_sync=()
+          missing_provider=()
 
-            let outOfSync = [];
-            let missingProviderFile = [];
+          # Find all example directories (exclude hidden directories)
+          for example_dir in examples/*/; do
+            example_name=$(basename "${example_dir}")
 
-            // Get all example directories (exclude hidden directories)
-            const examples = fs.readdirSync('examples', { withFileTypes: true })
-              .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.'))
-              .map(dirent => dirent.name);
+            # Skip hidden directories
+            if [[ "${example_name}" == .* ]]; then
+              continue
+            fi
 
-            console.log(`Found ${examples.length} example(s): ${examples.join(', ')}\n`);
+            example_vars="${example_dir}variables.tf"
+            provider_vars="${example_dir}variables_provider.tf"
 
-            for (const example of examples) {
-              const exampleVarsPath = `examples/${example}/variables.tf`;
-              const providerVarsPath = `examples/${example}/variables_provider.tf`;
+            echo "Checking example: ${example_name}"
 
-              console.log(`Checking example: ${example}`);
+            # Check if variables.tf exists and is in sync
+            if [[ -f "${example_vars}" ]]; then
+              if diff -q variables.tf "${example_vars}" > /dev/null 2>&1; then
+                echo "  variables.tf is in sync"
+              else
+                echo "  variables.tf is out of sync"
+                out_of_sync+=("${example_name}")
+                has_errors=true
+              fi
+            else
+              echo "  variables.tf not found"
+            fi
 
-              // Check variables.tf sync with root
-              if (fs.existsSync(exampleVarsPath)) {
-                try {
-                  execSync(`diff -q variables.tf ${exampleVarsPath}`, { stdio: 'pipe' });
-                  console.log(`  ✅ variables.tf is in sync`);
-                } catch (error) {
-                  console.log(`  ❌ variables.tf is out of sync`);
-                  outOfSync.push(example);
-                }
-              } else {
-                console.log(`  ⚠️  variables.tf not found`);
-              }
+            # Check if variables_provider.tf exists
+            if [[ -f "${provider_vars}" ]]; then
+              echo "  variables_provider.tf exists"
+            else
+              echo "  variables_provider.tf is missing"
+              missing_provider+=("${example_name}")
+              has_errors=true
+            fi
 
-              // Check variables_provider.tf exists
-              if (fs.existsSync(providerVarsPath)) {
-                console.log(`  ✅ variables_provider.tf exists`);
-              } else {
-                console.log(`  ❌ variables_provider.tf is missing`);
-                missingProviderFile.push(example);
-              }
+            echo ""
+          done
 
-              console.log('');
-            }
+          # Report results
+          if [[ ${#out_of_sync[@]} -gt 0 ]]; then
+            echo ""
+            echo "## Variables Sync Check Failed"
+            echo ""
+            echo "The following examples have \`variables.tf\` files that are out of sync with the root module:"
+            echo ""
+            for example in "${out_of_sync[@]}"; do
+              echo "- \`examples/${example}/variables.tf\`"
+            done
+            echo ""
+          fi
 
-            // Build comment if there are issues
-            let hasIssues = false;
-            let comment = '';
+          if [[ ${#missing_provider[@]} -gt 0 ]]; then
+            echo ""
+            echo "## Missing variables_provider.tf"
+            echo ""
+            echo "The following examples are missing the required \`variables_provider.tf\` file:"
+            echo ""
+            for example in "${missing_provider[@]}"; do
+              echo "- \`examples/${example}/variables_provider.tf\`"
+            done
+            echo ""
+          fi
 
-            if (outOfSync.length > 0) {
-              hasIssues = true;
-              comment += `## ⚠️ Variables Sync Check Failed\n\n`;
-              comment += `The following examples have \`variables.tf\` files that are out of sync with the root module:\n\n`;
-              comment += outOfSync.map(e => `- \`examples/${e}/variables.tf\`\n`).join('');
-              comment += `\n`;
-            }
+          if [[ "${has_errors}" == "true" ]]; then
+            echo "Validation checks failed"
+            exit 1
+          else
+            echo "All validation checks passed!"
+            echo "   - All variables.tf files are in sync"
+            echo "   - All examples have variables_provider.tf"
+          fi
 
-            if (missingProviderFile.length > 0) {
-              hasIssues = true;
-              comment += `## ❌ Missing variables_provider.tf\n\n`;
-              comment += `The following examples are missing the required \`variables_provider.tf\` file:\n\n`;
-              comment += missingProviderFile.map(e => `- \`examples/${e}/variables_provider.tf\`\n`).join('');
-              comment += `\n`;
-            }
 
-            if (hasIssues) {
-              // Output to console
-              console.error('\n' + comment);
-
-              core.setFailed('Validation checks failed.');
-            } else {
-              console.log('✅ All validation checks passed!');
-              console.log('   - All variables.tf files are in sync');
-              console.log('   - All examples have variables_provider.tf');
-            }
