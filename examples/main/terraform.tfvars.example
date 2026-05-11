@@ -24,6 +24,10 @@ tfe_metrics_enable     = <false>
 tfe_metrics_http_port  = 9090
 tfe_metrics_https_port = 9091
 
+tfe_admin_https_port = 9443
+tfe_admin_console_disabled = true
+cidr_allow_ingress_tfe_admin_console = ["<10.0.0.0/16>", "1.2.3.4/32"]
+
 # --- Networking --- #
 vpc_id                               = "<my-vpc-id>"
 lb_is_internal                       = true
@@ -69,7 +73,7 @@ redis_multi_az_enabled           = true # requires more than one subnet specifie
 redis_automatic_failover_enabled = true # requires more than one subnet specified in `redis_subnet_ids` when `true`
 
 # --- Log forwarding (optional) --- #
-tfe_log_forwarding_enabled = <true>                      # set to `false` if you have your own 
+tfe_log_forwarding_enabled = <true>                      # set to `false` if you have your own
 log_fwd_destination_type   = "<s3>"                      # either `s3` or `cloudwatch`
 s3_log_fwd_bucket_name     = "<tfe-logging-bucket-name>" # set to `null` or remove when `log_fwd_destination_type` is `cloudwatch`
 #cloudwatch_log_group_name = "<tfe-log-group-name>"      # set to `null` or remove when `log_fwd_destination_type` is `s3`
