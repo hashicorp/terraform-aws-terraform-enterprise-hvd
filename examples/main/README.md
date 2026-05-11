@@ -59,3 +59,13 @@ Supported values:
 - `s3` - sets AWS S3 as the logging destination; specify an existing S3 bucket via `s3_log_fwd_bucket_name`
 - `cloudwatch` - sets AWS CloudWatch as the logging destination; specify an existing CloudWatch log group via `cloudwatch_log_group_name`
 - `custom` - sets a custom logging destination; specify your own custom FluentBit config via `custom_fluent_bit_config`
+
+### Explorer
+
+**Input variable:** `tfe_explorer_enabled` (bool)
+
+Supported values:
+- `true` - enables Terraform Enterprise Explorer
+- `false` - leaves Explorer disabled
+
+When `tfe_explorer_enabled` is `true`, either provide a dedicated Explorer database or leave all `tfe_explorer_database_*` inputs as `null` to reuse the primary TFE database for non-production use. If you enable `tfe_explorer_database_passwordless_aws_use_instance_profile`, the example can reuse the module-managed EC2 instance profile or an existing one supplied with `ec2_iam_instance_profile_name`.

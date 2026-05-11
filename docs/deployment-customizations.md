@@ -127,6 +127,54 @@ tfe_run_pipeline_image = "internal-registry.example.com/tfe-agent:latest"
 
 IMPORTANT: the container registry used to host this image must support anonymous (unathenticated) image pulls, as authenticated image pulls here are currently unsupported.
 
+## Explorer
+
+Terraform Enterprise Explorer can be enabled with the following module inputs:
+
+```hcl
+tfe_explorer_enabled = true
+create_tfe_explorer_db = true
+```
+
+HashiCorp recommends a dedicated PostgreSQL database for Explorer. When `tfe_explorer_enabled` is `true`, this module now creates and uses a dedicated Aurora PostgreSQL Explorer database cluster with a single instance by default.
+
+To use your own dedicated Explorer database instead, set `create_tfe_explorer_db = false` and provide the following inputs:
+
+```hcl
+tfe_explorer_enabled                      = true
+create_tfe_explorer_db                    = false
+tfe_explorer_database_host                = "explorer-db.example.com:5432"
+tfe_explorer_database_name                = "tfe_explorer"
+tfe_explorer_database_user                = "tfe_explorer"
+tfe_explorer_database_password_secret_arn = "<my-explorer-database-password-secret-arn>"
+tfe_explorer_database_parameters          = "sslmode=require"
+```
+
+If Explorer is enabled, `create_tfe_explorer_db = false`, and you leave all `tfe_explorer_database_*` inputs as `null`, the module reuses the primary TFE database connection details and emits the `tfe_explorer_database_warning` output. This fallback is intended for non-production use only.
+
+### Explorer database IAM authentication
+
+To use AWS IAM database authentication for Explorer, set:
+
+```hcl
+tfe_explorer_database_passwordless_aws_use_instance_profile = true
+```
+
+When you do this, the module grants `rds-db:connect` permissions to the EC2 instance profile attached to the TFE instances. By default, that is the module-managed instance profile. If you need to reuse an existing EC2 instance profile instead, set:
+
+```hcl
+ec2_iam_instance_profile_name = "<existing-instance-profile-name>"
+```
+
+If your dedicated Explorer database is outside the Aurora cluster created by this module, also provide the AWS region and database resource ID used for IAM authentication:
+
+```hcl
+tfe_explorer_database_passwordless_aws_region         = "<aws-region>"
+tfe_explorer_database_passwordless_aws_db_resource_id = "<db-resource-id>"
+```
+
+When the module is creating the dedicated Explorer database for you, `tfe_explorer_database_passwordless_aws_db_resource_id` defaults to the module-managed Explorer Aurora DB instance (DBI) resource ID.
+
 ## Custom user_data (startup) script
 
 While not recommended, this module supports the use of custom `user_data` (startup) script to install TFE. To enable this behavior, set the `custom_tfe_startup_script_template` input to the filename of your custom script template.

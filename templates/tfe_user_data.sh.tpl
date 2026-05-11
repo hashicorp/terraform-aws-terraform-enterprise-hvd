@@ -226,6 +226,18 @@ services:
       TFE_DATABASE_USER: ${tfe_database_user}
       TFE_DATABASE_PASSWORD: ${tfe_database_password}
       TFE_DATABASE_PARAMETERS: ${tfe_database_parameters}
+%{ if tfe_explorer_enabled ~}
+      TFE_EXPLORER_DATABASE_HOST: ${tfe_explorer_database_host}
+      TFE_EXPLORER_DATABASE_NAME: ${tfe_explorer_database_name}
+      TFE_EXPLORER_DATABASE_USER: ${tfe_explorer_database_user}
+      TFE_EXPLORER_DATABASE_PARAMETERS: ${tfe_explorer_database_parameters}
+%{ if tfe_explorer_database_passwordless_aws_use_instance_profile ~}
+      TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_USE_INSTANCE_PROFILE: ${tfe_explorer_database_passwordless_aws_use_instance_profile}
+      TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_REGION: ${tfe_explorer_database_passwordless_aws_region}
+%{ else ~}
+      TFE_EXPLORER_DATABASE_PASSWORD: ${tfe_explorer_database_password}
+%{ endif ~}
+%{ endif ~}
 
       # Object storage settings
       TFE_OBJECT_STORAGE_TYPE: ${tfe_object_storage_type}
@@ -397,6 +409,25 @@ spec:
       value: ${tfe_database_password}
     - name: "TFE_DATABASE_USER"
       value: ${tfe_database_user}
+%{ if tfe_explorer_enabled ~}
+    - name: "TFE_EXPLORER_DATABASE_HOST"
+      value: ${tfe_explorer_database_host}
+    - name: "TFE_EXPLORER_DATABASE_NAME"
+      value: ${tfe_explorer_database_name}
+    - name: "TFE_EXPLORER_DATABASE_USER"
+      value: ${tfe_explorer_database_user}
+    - name: "TFE_EXPLORER_DATABASE_PARAMETERS"
+      value: ${tfe_explorer_database_parameters}
+%{ if tfe_explorer_database_passwordless_aws_use_instance_profile ~}
+    - name: "TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_USE_INSTANCE_PROFILE"
+      value: ${tfe_explorer_database_passwordless_aws_use_instance_profile}
+    - name: "TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_REGION"
+      value: ${tfe_explorer_database_passwordless_aws_region}
+%{ else ~}
+    - name: "TFE_EXPLORER_DATABASE_PASSWORD"
+      value: ${tfe_explorer_database_password}
+%{ endif ~}
+%{ endif ~}
 
     # Object storage settings
     - name: "TFE_OBJECT_STORAGE_TYPE"
