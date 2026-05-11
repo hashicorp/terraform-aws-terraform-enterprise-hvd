@@ -1,6 +1,6 @@
 # Terraform Enterprise HVD on AWS EC2
 
-Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes.
+Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraform Enterprise (TFE) on Amazon Web Services (AWS) using EC2 instances with a container runtime. This module defaults to deploying TFE in the `active-active` [operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes), but `external` is also supported. Docker and Podman are the supported container runtimes. Optional secondary-hostname support is included for external integrations such as OIDC, VCS, and run tasks.
 
 ![TFE architecture](https://developer.hashicorp.com/.extracted/hvd/img/terraform/solution-design-guides/tfe/architecture-logical-active-active.png)
 
@@ -20,12 +20,15 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 
 - AWS VPC ID and the following subnets:
   - Load balancer subnet IDs (can be the same as EC2 subnets if desirable)
+  - (Optional) Secondary public load balancer subnet IDs when creating a managed secondary hostname NLB
   - EC2 (compute) subnet IDs
   - RDS (database) subnet IDs
   - Redis subnet IDs (can be the same as RDS subnets if desirable)
 - (Optional) S3 VPC endpoint configured within VPC
 - (Optional) AWS Route53 hosted zone for TFE DNS record creation
+- (Optional) AWS public Route53 hosted zone for a managed secondary TFE DNS record
 - Chosen fully qualified domain name (FQDN) for your TFE instance (_e.g._ `tfe.aws.example.com`)
+- (Optional) Chosen secondary externally resolvable FQDN for TFE integrations (_e.g._ `tfe-external.aws.example.com`)
 
 >📝 Note: It is recommended to specify a minimum of two subnets for each subnet input to enable high availability.
 
@@ -45,6 +48,7 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Terraf
 - TLS certificate authority (CA) bundle (_e.g._ `ca_bundle.pem`) corresponding with the CA that issues your TFE TLS certificates
   - CA bundle must be in PEM format
   - You may include additional certificate chains corresponding to external systems that TFE will make outbound connections to (_e.g._ your self-hosted VCS, if its certificate was issued by a different CA than your TFE certificate).
+- (Optional) Separate TLS certificate, private key, and CA bundle for `tfe_hostname_secondary` when enabling a secondary hostname
 
 >📝 Note: All three of these files will be created as secrets in AWS Secrets Manager per the next section.
 
@@ -59,6 +63,9 @@ The following _bootstrap_ secrets stored in **AWS Secrets Manager** in order to 
 - **TFE TLS certificate** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS certificate private key** - file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 - **TFE TLS CA bundle** - file in PEM format , base64-encoded into a string, and stored as a plaintext secret
+- **Secondary TFE TLS certificate** - optional file in PEM format, base64-encoded into a string, and stored as a plaintext secret
+- **Secondary TFE TLS certificate private key** - optional file in PEM format, base64-encoded into a string, and stored as a plaintext secret
+- **Secondary TFE TLS CA bundle** - optional file in PEM format, base64-encoded into a string, and stored as a plaintext secret
 
 >📝 Note: See the [TFE bootstrap secrets](./docs/tfe-bootstrap-secrets.md) doc for more details on how these secrets should be stored in AWS Secrets Manager.
 
@@ -170,6 +177,12 @@ One of the following logging destinations:
 
 9.  Follow the steps to [create the TFE initial admin user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user).
 
+## Secondary hostname support
+
+This module can optionally configure the Terraform Enterprise runtime with `TFE_HOSTNAME_SECONDARY` plus the documented hostname-choice settings for OIDC, VCS, and run tasks. When you want the module to manage the external endpoint as well, you can also create a dedicated public secondary NLB and Route53 alias record with its own CIDR filtering while leaving the primary hostname path unchanged.
+
+When `tfe_hostname_secondary` is set, provide matching secondary TLS secrets so the TFE instance can serve both hostnames. If you choose to have the module manage the external endpoint, ensure the secondary hostname resolves publicly and that `secondary_lb_subnet_ids` point to public subnets.
+
 ## Docs
 
 Below are links to various docs related to the customization and management of your TFE deployment:
@@ -222,15 +235,19 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_launch_template.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
 | [aws_lb.alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb.nlb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
+| [aws_lb.secondary_nlb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.alb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.lb_nlb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.secondary_nlb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_target_group.alb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_lb_target_group.nlb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.secondary_nlb_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_rds_cluster.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster) | resource |
 | [aws_rds_cluster_instance.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_instance) | resource |
 | [aws_rds_cluster_parameter_group.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_parameter_group) | resource |
 | [aws_rds_global_cluster.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_global_cluster) | resource |
 | [aws_route53_record.alias_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_record.secondary_alias_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_s3_bucket.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_replication_configuration.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_replication_configuration) | resource |
@@ -242,6 +259,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_security_group.lb_allow_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.rds_allow_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.redis_allow_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.secondary_lb_allow_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.secondary_lb_allow_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.ec2_allow_cidr_ingress_tfe_metrics_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_cidr_ingress_tfe_metrics_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -256,12 +275,16 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_security_group_rule.ec2_allow_egress_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_ssh](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_tfe_https_from_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.ec2_allow_ingress_tfe_https_from_secondary_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ec2_allow_ingress_vault](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.lb_allow_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.lb_allow_ingress_tfe_https_from_cidr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.lb_allow_ingress_tfe_https_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.rds_allow_ingress_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.redis_allow_ingress_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.secondary_lb_allow_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.secondary_lb_allow_ingress_tfe_https_from_cidr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.secondary_lb_allow_ingress_tfe_https_from_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_ami.al2023](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.rhel](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.selected](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
@@ -287,12 +310,16 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | [aws_iam_policy_document.tfe_ec2_get_enc_password_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_license_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_rds_password_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secondary_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_tls_ca_bundle_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.tfe_ec2_get_tls_cert_secondary_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_tls_cert_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.tfe_ec2_get_tls_privkey_secondary_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.tfe_ec2_get_tls_privkey_secret](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_route53_zone.tfe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
+| [aws_route53_zone.tfe_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_s3_bucket.log_fwd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_secretsmanager_secret_version.tfe_database_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 | [aws_secretsmanager_secret_version.tfe_redis_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
@@ -325,10 +352,13 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_cidr_allow_ingress_tfe_443"></a> [cidr\_allow\_ingress\_tfe\_443](#input\_cidr\_allow\_ingress\_tfe\_443) | List of CIDR ranges allowed to access the TFE application over HTTPS (port 443). | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_http"></a> [cidr\_allow\_ingress\_tfe\_metrics\_http](#input\_cidr\_allow\_ingress\_tfe\_metrics\_http) | List of CIDR ranges to allow TCP/9090 (HTTP) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
 | <a name="input_cidr_allow_ingress_tfe_metrics_https"></a> [cidr\_allow\_ingress\_tfe\_metrics\_https](#input\_cidr\_allow\_ingress\_tfe\_metrics\_https) | List of CIDR ranges to allow TCP/9091 (HTTPS) inbound to metrics endpoint on TFE EC2 instances. | `list(string)` | `null` | no |
+| <a name="input_cidr_allow_ingress_tfe_secondary_443"></a> [cidr\_allow\_ingress\_tfe\_secondary\_443](#input\_cidr\_allow\_ingress\_tfe\_secondary\_443) | List of CIDR ranges allowed to access the secondary TFE public Network Load Balancer (NLB) over HTTPS (port 443). | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#input\_cloudwatch\_log\_group\_name) | Name of CloudWatch Log Group to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for all taggable AWS resources. | `map(string)` | `{}` | no |
 | <a name="input_container_runtime"></a> [container\_runtime](#input\_container\_runtime) | Container runtime to use for TFE. Supported values are `docker` or `podman`. | `string` | `"docker"` | no |
 | <a name="input_create_route53_tfe_dns_record"></a> [create\_route53\_tfe\_dns\_record](#input\_create\_route53\_tfe\_dns\_record) | Boolean to create Route53 Alias Record for `tfe_hostname` resolving to Load Balancer DNS name. If `true`, `route53_tfe_hosted_zone_name` is also required. | `bool` | `false` | no |
+| <a name="input_create_route53_tfe_secondary_dns_record"></a> [create\_route53\_tfe\_secondary\_dns\_record](#input\_create\_route53\_tfe\_secondary\_dns\_record) | Boolean to create a Route53 Alias record for `tfe_hostname_secondary` resolving to the secondary public Network Load Balancer (NLB). | `bool` | `false` | no |
+| <a name="input_create_secondary_tfe_nlb"></a> [create\_secondary\_tfe\_nlb](#input\_create\_secondary\_tfe\_nlb) | Boolean to create a dedicated public Network Load Balancer (NLB) for `tfe_hostname_secondary`. | `bool` | `false` | no |
 | <a name="input_custom_fluent_bit_config"></a> [custom\_fluent\_bit\_config](#input\_custom\_fluent\_bit\_config) | Custom Fluent Bit configuration for log forwarding. Only valid when `tfe_log_forwarding_enabled` is `true` and `log_fwd_destination_type` is `custom`. | `string` | `null` | no |
 | <a name="input_custom_tfe_startup_script_template"></a> [custom\_tfe\_startup\_script\_template](#input\_custom\_tfe\_startup\_script\_template) | Filename of a custom TFE startup script template to use in place of of the built-in user\_data script. The file must exist within a directory named './templates' in your current working directory. | `string` | `null` | no |
 | <a name="input_docker_version"></a> [docker\_version](#input\_docker\_version) | Version of Docker to install on TFE EC2 instances. Not applicable to Amazon Linux 2023 distribution (when `ec2_os_distro` is `al2023`). | `string` | `"28.0.1"` | no |
@@ -385,6 +415,8 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_redis_transit_encryption_enabled"></a> [redis\_transit\_encryption\_enabled](#input\_redis\_transit\_encryption\_enabled) | Boolean to enable TLS encryption between TFE and the Redis cluster. | `bool` | `true` | no |
 | <a name="input_route53_tfe_hosted_zone_is_private"></a> [route53\_tfe\_hosted\_zone\_is\_private](#input\_route53\_tfe\_hosted\_zone\_is\_private) | Boolean indicating if `route53_tfe_hosted_zone_name` is a private hosted zone. | `bool` | `false` | no |
 | <a name="input_route53_tfe_hosted_zone_name"></a> [route53\_tfe\_hosted\_zone\_name](#input\_route53\_tfe\_hosted\_zone\_name) | Route53 Hosted Zone name to create `tfe_hostname` Alias record in. Required if `create_route53_tfe_dns_record` is `true`. | `string` | `null` | no |
+| <a name="input_route53_tfe_secondary_hosted_zone_is_private"></a> [route53\_tfe\_secondary\_hosted\_zone\_is\_private](#input\_route53\_tfe\_secondary\_hosted\_zone\_is\_private) | Boolean indicating if `route53_tfe_secondary_hosted_zone_name` is a private hosted zone. Secondary hostname DNS must be public when created by this module. | `bool` | `false` | no |
+| <a name="input_route53_tfe_secondary_hosted_zone_name"></a> [route53\_tfe\_secondary\_hosted\_zone\_name](#input\_route53\_tfe\_secondary\_hosted\_zone\_name) | Route53 Hosted Zone name to create the `tfe_hostname_secondary` alias record in. Required if `create_route53_tfe_secondary_dns_record` is `true`. | `string` | `null` | no |
 | <a name="input_s3_destination_bucket_arn"></a> [s3\_destination\_bucket\_arn](#input\_s3\_destination\_bucket\_arn) | ARN of destination S3 bucket for cross-region replication configuration. Bucket should already exist in secondary region. Required when `s3_enable_bucket_replication` is `true`. | `string` | `""` | no |
 | <a name="input_s3_destination_bucket_kms_key_arn"></a> [s3\_destination\_bucket\_kms\_key\_arn](#input\_s3\_destination\_bucket\_kms\_key\_arn) | ARN of KMS key of destination S3 bucket for cross-region replication configuration if it is encrypted with a customer managed key (CMK). | `string` | `null` | no |
 | <a name="input_s3_enable_bucket_replication"></a> [s3\_enable\_bucket\_replication](#input\_s3\_enable\_bucket\_replication) | Boolean to enable cross-region replication for TFE S3 bucket. An `s3_destination_bucket_arn` is required when `true`. | `bool` | `false` | no |
@@ -393,6 +425,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_s3_force_destroy"></a> [s3\_force\_destroy](#input\_s3\_force\_destroy) | Boolean to enable force destruction of S3 bucket and all objects within it. When `true`, the bucket can be destroyed even if it contains objects. | `bool` | `false` | no |
 | <a name="input_s3_kms_key_arn"></a> [s3\_kms\_key\_arn](#input\_s3\_kms\_key\_arn) | ARN of KMS customer managed key (CMK) to encrypt TFE S3 bucket with. | `string` | `null` | no |
 | <a name="input_s3_log_fwd_bucket_name"></a> [s3\_log\_fwd\_bucket\_name](#input\_s3\_log\_fwd\_bucket\_name) | Name of S3 bucket to configure as log forwarding destination. Only valid when `tfe_log_forwarding_enabled` is `true`. | `string` | `null` | no |
+| <a name="input_secondary_lb_subnet_ids"></a> [secondary\_lb\_subnet\_ids](#input\_secondary\_lb\_subnet\_ids) | List of public subnet IDs to use for the secondary Network Load Balancer (NLB). Required when `create_secondary_tfe_nlb` is `true`. | `list(string)` | `null` | no |
 | <a name="input_tfe_admin_https_port"></a> [tfe\_admin\_https\_port](#input\_tfe\_admin\_https\_port) | Port the TFE application container listens on for [system (admin) API endpoints](https://developer.hashicorp.com/terraform/enterprise/api-docs#system-endpoints-overview) HTTPS traffic. This value is used for both the host and container port. | `number` | `9443` | no |
 | <a name="input_tfe_alb_tls_certificate_arn"></a> [tfe\_alb\_tls\_certificate\_arn](#input\_tfe\_alb\_tls\_certificate\_arn) | ARN of existing TFE TLS certificate imported in ACM to be used for application load balancer (ALB) HTTPS listeners. Required when `lb_type` is `alb`. | `string` | `null` | no |
 | <a name="input_tfe_capacity_concurrency"></a> [tfe\_capacity\_concurrency](#input\_tfe\_capacity\_concurrency) | Maximum number of concurrent Terraform runs to allow on a TFE node. | `number` | `10` | no |
@@ -403,6 +436,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_database_parameters"></a> [tfe\_database\_parameters](#input\_tfe\_database\_parameters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
 | <a name="input_tfe_database_user"></a> [tfe\_database\_user](#input\_tfe\_database\_user) | Username for TFE RDS database cluster. | `string` | `"tfe"` | no |
 | <a name="input_tfe_hairpin_addressing"></a> [tfe\_hairpin\_addressing](#input\_tfe\_hairpin\_addressing) | Boolean to enable hairpin addressing for layer 4 load balancer with loopback prevention. Must be `true` when `lb_type` is `nlb` and `lb_is_internal` is `true`. | `bool` | `true` | no |
+| <a name="input_tfe_hostname_secondary"></a> [tfe\_hostname\_secondary](#input\_tfe\_hostname\_secondary) | Secondary externally resolvable fully qualified domain name (FQDN) for TFE integration traffic such as OIDC, VCS, or run tasks. | `string` | `null` | no |
 | <a name="input_tfe_http_port"></a> [tfe\_http\_port](#input\_tfe\_http\_port) | Port the TFE application container listens on for HTTP traffic. This is not the host port. | `number` | `8080` | no |
 | <a name="input_tfe_https_port"></a> [tfe\_https\_port](#input\_tfe\_https\_port) | Port the TFE application container listens on for HTTPS traffic. This is not the host port. | `number` | `8443` | no |
 | <a name="input_tfe_iact_subnets"></a> [tfe\_iact\_subnets](#input\_tfe\_iact\_subnets) | Comma-separated list of subnets in CIDR notation (e.g., `10.0.0.0/8,192.168.0.0/24`) that are allowed to retrieve the TFE initial admin creation token (IACT) via the API or web browser. Leave as `null` to disable IACT retrieval via the API from external clients. | `string` | `null` | no |
@@ -423,13 +457,19 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_tfe_object_storage_s3_access_key_id"></a> [tfe\_object\_storage\_s3\_access\_key\_id](#input\_tfe\_object\_storage\_s3\_access\_key\_id) | Access key ID for S3 bucket. Required when `tfe_object_storage_s3_use_instance_profile` is `false`. | `string` | `null` | no |
 | <a name="input_tfe_object_storage_s3_secret_access_key"></a> [tfe\_object\_storage\_s3\_secret\_access\_key](#input\_tfe\_object\_storage\_s3\_secret\_access\_key) | Secret access key for S3 bucket. Required when `tfe_object_storage_s3_use_instance_profile` is `false`. | `string` | `null` | no |
 | <a name="input_tfe_object_storage_s3_use_instance_profile"></a> [tfe\_object\_storage\_s3\_use\_instance\_profile](#input\_tfe\_object\_storage\_s3\_use\_instance\_profile) | Boolean to use TFE instance profile for S3 bucket access. If `false`, `tfe_object_storage_s3_access_key_id` and `tfe_object_storage_s3_secret_access_key` are required. | `bool` | `true` | no |
+| <a name="input_tfe_oidc_hostname_choice"></a> [tfe\_oidc\_hostname\_choice](#input\_tfe\_oidc\_hostname\_choice) | Hostname choice for TFE OIDC workload federation integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
 | <a name="input_tfe_operational_mode"></a> [tfe\_operational\_mode](#input\_tfe\_operational\_mode) | [Operational mode](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/operation-modes) for TFE. Valid values are `active-active` or `external`. | `string` | `"active-active"` | no |
 | <a name="input_tfe_redis_password_secret_arn"></a> [tfe\_redis\_password\_secret\_arn](#input\_tfe\_redis\_password\_secret\_arn) | ARN of AWS Secrets Manager secret for the TFE Redis password used to create Redis (Elasticache Replication Group) cluster. Secret type should be plaintext. Value of secret must be from 16 to 128 alphanumeric characters or symbols (excluding `@`, `"`, and `/`). | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_docker_network"></a> [tfe\_run\_pipeline\_docker\_network](#input\_tfe\_run\_pipeline\_docker\_network) | Docker network where the containers that execute Terraform runs will be created. The network must already exist, it will not be created automatically. Leave as `null` to use the default network created by TFE. | `string` | `null` | no |
 | <a name="input_tfe_run_pipeline_image"></a> [tfe\_run\_pipeline\_image](#input\_tfe\_run\_pipeline\_image) | Fully qualified container image reference for the Terraform default agent container (e.g., 'internal-registry.example.com/tfe-agent:latest'). This is referred to as the [TFE\_RUN\_PIPELINE\_IMAGE](https://developer.hashicorp.com/terraform/enterprise/deploy/reference/configuration#tfe_run_pipeline_image) and is the image that is used to execute Terraform runs when execution mode is set to remote. The container registry hosting this image must allow anonymous (unauthenticated) pulls. | `string` | `null` | no |
+| <a name="input_tfe_run_task_hostname_choice"></a> [tfe\_run\_task\_hostname\_choice](#input\_tfe\_run\_task\_hostname\_choice) | Hostname choice for TFE run task integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
+| <a name="input_tfe_tls_ca_bundle_secret_arn_secondary"></a> [tfe\_tls\_ca\_bundle\_secret\_arn\_secondary](#input\_tfe\_tls\_ca\_bundle\_secret\_arn\_secondary) | ARN of AWS Secrets Manager secret for the secondary TFE TLS certificate authority bundle in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | `null` | no |
+| <a name="input_tfe_tls_cert_secret_arn_secondary"></a> [tfe\_tls\_cert\_secret\_arn\_secondary](#input\_tfe\_tls\_cert\_secret\_arn\_secondary) | ARN of AWS Secrets Manager secret for the secondary TFE TLS certificate in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | `null` | no |
 | <a name="input_tfe_tls_enforce"></a> [tfe\_tls\_enforce](#input\_tfe\_tls\_enforce) | Boolean to enforce TLS. | `bool` | `false` | no |
+| <a name="input_tfe_tls_privkey_secret_arn_secondary"></a> [tfe\_tls\_privkey\_secret\_arn\_secondary](#input\_tfe\_tls\_privkey\_secret\_arn\_secondary) | ARN of AWS Secrets Manager secret for the secondary TFE TLS private key in PEM format. Secret must be stored as a base64-encoded string. Secret type should be plaintext. | `string` | `null` | no |
 | <a name="input_tfe_usage_reporting_opt_out"></a> [tfe\_usage\_reporting\_opt\_out](#input\_tfe\_usage\_reporting\_opt\_out) | Boolean to opt out of reporting TFE usage information to HashiCorp. | `bool` | `false` | no |
 | <a name="input_tfe_vault_disable_mlock"></a> [tfe\_vault\_disable\_mlock](#input\_tfe\_vault\_disable\_mlock) | Boolean to disable mlock for internal Vault. | `bool` | `false` | no |
+| <a name="input_tfe_vcs_hostname_choice"></a> [tfe\_vcs\_hostname\_choice](#input\_tfe\_vcs\_hostname\_choice) | Hostname choice for TFE version control system (VCS) integrations. Supported values are `primary` and `secondary`. | `string` | `"primary"` | no |
 
 ## Outputs
 
@@ -446,7 +486,9 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | ARN of TFE S3 bucket. |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | Name of TFE S3 bucket. |
 | <a name="output_s3_crr_iam_role_arn"></a> [s3\_crr\_iam\_role\_arn](#output\_s3\_crr\_iam\_role\_arn) | ARN of S3 cross-region replication IAM role. |
+| <a name="output_secondary_lb_dns_name"></a> [secondary\_lb\_dns\_name](#output\_secondary\_lb\_dns\_name) | DNS name of the secondary public Network Load Balancer (NLB). |
 | <a name="output_tfe_create_initial_admin_user_url"></a> [tfe\_create\_initial\_admin\_user\_url](#output\_tfe\_create\_initial\_admin\_user\_url) | URL to create TFE initial admin user. |
 | <a name="output_tfe_database_host"></a> [tfe\_database\_host](#output\_tfe\_database\_host) | PostgreSQL server endpoint in the format that TFE will connect to. |
+| <a name="output_tfe_secondary_url"></a> [tfe\_secondary\_url](#output\_tfe\_secondary\_url) | URL to access TFE external integrations based on value of `tfe_hostname_secondary` input. |
 | <a name="output_tfe_url"></a> [tfe\_url](#output\_tfe\_url) | URL to access TFE application based on value of `tfe_fqdn` input. |
 <!-- END_TF_DOCS -->
