@@ -491,12 +491,12 @@ variable "container_runtime" {
 
 variable "ec2_os_distro" {
   type        = string
-  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`."
+  description = "Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel` (RHEL9), `rhel10` (RHEL 10), `centos`."
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["ubuntu", "rhel", "al2023", "centos"], var.ec2_os_distro)
-    error_message = "Valid values are `ubuntu`, `rhel`, `al2023`, or `centos`."
+    condition     = contains(["ubuntu", "rhel", "rhel10", "al2023", "centos"], var.ec2_os_distro)
+    error_message = "Valid values are `ubuntu`, `rhel`, `rhel10`, `al2023`, or `centos`."
   }
 
   validation {
