@@ -473,14 +473,14 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_https" {
 #------------------------------------------------------------------------------
 
 resource "aws_security_group_rule" "ec2_allow_ingress_tfe_admin_console" {
-  count = !var.tfe_admin_console_disabled ? 1 : 0
+  count = !var.tfe_admin_console_disabled && var.cidr_allow_ingress_tfe_admin_console != null && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]) > 0 ? 1 : 0
 
   type        = "ingress"
   from_port   = var.tfe_admin_https_port
   to_port     = var.tfe_admin_https_port
   protocol    = "tcp"
-  cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
-  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified CIDR ranges."
+  cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]
+  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified IPv4 CIDR ranges."
 
   security_group_id = aws_security_group.ec2_allow_ingress.id
 }
@@ -504,11 +504,11 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_admin_console" {
   count = var.cidr_allow_egress_ec2_proxy != null && local.https_proxy_port != null ? 1 : 0
 
   type        = "egress"
-  from_port   = local.https_proxy_port
-  to_port     = local.https_proxy_port
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_proxy
-  description = "Allow TCP/${local.https_proxy_port} (HTTPS proxy) outbound to specified CIDR ranges from TFE EC2 instances."
+  description = "Allow TCP/${var.tfe_admin_https_port} (HTTPS proxy) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
@@ -519,7 +519,7 @@ resource "aws_security_group_rule" "ec2_allow_egress_tfe_admin_console" {
   to_port     = var.tfe_admin_https_port
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_http
-  description = "Allow TCP/443 (HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
+  description = "Allow TCP (HTTPS) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }

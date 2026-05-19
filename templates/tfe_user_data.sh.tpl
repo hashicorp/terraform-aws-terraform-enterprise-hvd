@@ -503,7 +503,6 @@ spec:
     - name: "TFE_ADMIN_HTTPS_PORT"
       value: ${tfe_admin_https_port}
 %{ if tfe_admin_console_disabled ~}
-    # Admin Console settings defaults to false, so only set environment variable to disable Admin Console if 'tfe_admin_console_disabled' is set to true
     - name: "TFE_ADMIN_CONSOLE_DISABLED"
       value: "true"
 %{ endif ~}
