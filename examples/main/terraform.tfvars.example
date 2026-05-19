@@ -26,7 +26,7 @@ tfe_metrics_https_port = 9091
 
 tfe_admin_https_port = 9443
 tfe_admin_console_disabled = true
-cidr_allow_ingress_tfe_admin_console = ["<10.0.0.0/16>", "1.2.3.4/32"]
+# cidr_allow_ingress_tfe_admin_console = ["<10.0.0.0/16>", "1.2.3.4/32>"] # Only set when `tfe_admin_console_disabled = false`
 
 # --- Networking --- #
 vpc_id                               = "<my-vpc-id>"
