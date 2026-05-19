@@ -308,14 +308,27 @@ resource "aws_security_group_rule" "lb_allow_egress_all" {
 
 # Admin Console ingress rules for load balancer
 resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_cidr" {
-  count = !var.tfe_admin_console_disabled ? 1 : 0
+  count = !var.tfe_admin_console_disabled && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]) > 0 ? 1 : 0
 
   type        = "ingress"
   from_port   = var.tfe_admin_https_port
   to_port     = var.tfe_admin_https_port
   protocol    = "tcp"
-  cidr_blocks = var.cidr_allow_ingress_tfe_admin_console
+  cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]
   description = "Allow TCP (Admin Console HTTPS) inbound to TFE load balancer from specified CIDR ranges."
+
+  security_group_id = aws_security_group.lb_allow_ingress.id
+}
+
+resource "aws_security_group_rule" "lb_allow_ingress_admin_console_from_ipv6_cidr" {
+  count = !var.tfe_admin_console_disabled && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]) > 0 ? 1 : 0
+
+  type             = "ingress"
+  from_port        = var.tfe_admin_https_port
+  to_port          = var.tfe_admin_https_port
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]
+  description      = "Allow TCP (Admin Console HTTPS) inbound to TFE load balancer from specified IPv6 CIDR ranges."
 
   security_group_id = aws_security_group.lb_allow_ingress.id
 }
