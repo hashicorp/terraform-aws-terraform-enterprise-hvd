@@ -47,7 +47,7 @@ route53_tfe_hosted_zone_is_private = <true> # must be `true` when `lb_is_interna
 
 # --- Compute --- #
 container_runtime  = "docker"                 # either `docker` or `podman`
-ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel`, `al2023`, or `centos`
+ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel` (RHEL9), `rhel10` (RHEL10), `al2023`, or `centos`
 ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` or remove if you do not want to use SSH for shell access
 ec2_allow_ssm      = false                    # set to `true` if you want to use SSM Session Manager for shell access
 ec2_instance_size  = "m7i.xlarge"

@@ -89,24 +89,28 @@ One of the following logging destinations:
     .
     └── environments
         ├── production
-        │   ├── backend.tf
-        │   ├── main.tf
-        │   ├── outputs.tf
-        │   ├── terraform.tfvars
-        │   └── variables.tf
+        │   ├── backend.tf
+        │   ├── main.tf
+        │   ├── outputs.tf
+        │   ├── terraform.tfvars
+        │   ├── variables.tf
+        │   └── variables_provider.tf
         └── sandbox
             ├── backend.tf
             ├── main.tf
             ├── outputs.tf
             ├── terraform.tfvars
-            └── variables.tf
+            ├── variables.tf
+            └── variables_provider.tf
     ```
 
     >📝 Note: In this example, the user will have two separate TFE deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
+    >📝 Note: `variables_provider.tf` defines [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#provider-configuration) variables (not module variables) and must be copied from the examples directory.
+
 3. (Optional) Uncomment and update the [S3 remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your TFE deployment.
 
-4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions or the [deployment customizations](./docs/deployment-customizations.md) documentation.
+4. Copy the provided `terraform.tfvars.example` file and rename it to `terraform.tfvars`. Then, replace or validate all of the variable values enclosed in the `< >` characters with your own custom values. Inline helper comments are included with some of the variables to help guide you in setting appropriate values. For detailed information about each input variable, as well as additional optional inputs, refer to the variable descriptions, the [deployment customizations](./docs/deployment-customizations.md) documentation, or the [example README](./examples/main/README.md) for additional configuration guidance.
 
 5. Ensure the module `source` meta-argument within your `main.tf` accurately reflects the location from which you are calling this module. We recommend calling the module directly from its [Terraform registry](https://registry.terraform.io/modules/hashicorp/terraform-enterprise-hvd/aws/latest) location as shown below:
 
@@ -193,14 +197,14 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.100 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.100 |
 
 ## Resources
@@ -312,7 +316,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_ec2_subnet_ids"></a> [ec2\_subnet\_ids](#input\_ec2\_subnet\_ids) | List of subnet IDs to use for the EC2 instance. Private subnets is the best practice here. | `list(string)` | n/a | yes |
 | <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix used for uniquely naming all AWS resources for this deployment. Most commonly set to either an environment (e.g. 'sandbox', 'prod'), a team name, or a project name. | `string` | n/a | yes |
 | <a name="input_lb_subnet_ids"></a> [lb\_subnet\_ids](#input\_lb\_subnet\_ids) | List of subnet IDs to use for the load balancer. If `lb_is_internal` is `false`, then these should be public subnets. Otherwise, these should be private subnets. | `list(string)` | n/a | yes |
@@ -355,7 +359,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_ec2_allow_ssm"></a> [ec2\_allow\_ssm](#input\_ec2\_allow\_ssm) | Boolean to attach the `AmazonSSMManagedInstanceCore` policy to the TFE instance role, allowing the SSM agent (if present) to function. | `bool` | `false` | no |
 | <a name="input_ec2_ami_id"></a> [ec2\_ami\_id](#input\_ec2\_ami\_id) | Custom AMI ID for TFE EC2 launch template. If specified, value of `ec2_os_distro` must coincide with this custom AMI OS distro. | `string` | `null` | no |
 | <a name="input_ec2_instance_size"></a> [ec2\_instance\_size](#input\_ec2\_instance\_size) | EC2 instance type for TFE EC2 launch template. | `string` | `"m7i.xlarge"` | no |
-| <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel`, `centos`. | `string` | `"ubuntu"` | no |
+| <a name="input_ec2_os_distro"></a> [ec2\_os\_distro](#input\_ec2\_os\_distro) | Linux OS distribution type for TFE EC2 instance. Choose from `al2023`, `ubuntu`, `rhel` (RHEL9), `rhel10` (RHEL 10), `centos`. | `string` | `"ubuntu"` | no |
 | <a name="input_ec2_ssh_key_pair"></a> [ec2\_ssh\_key\_pair](#input\_ec2\_ssh\_key\_pair) | Name of existing SSH key pair to attach to TFE EC2 instance. | `string` | `null` | no |
 | <a name="input_http_proxy"></a> [http\_proxy](#input\_http\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTP requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
 | <a name="input_https_proxy"></a> [https\_proxy](#input\_https\_proxy) | Proxy address (including port number) for TFE to use for outbound HTTPS requests (e.g. `http://proxy.example.com:3128`). | `string` | `null` | no |
@@ -448,7 +452,7 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_elasticache_replication_group_arn"></a> [elasticache\_replication\_group\_arn](#output\_elasticache\_replication\_group\_arn) | ARN of ElastiCache Replication Group (Redis) cluster. |
 | <a name="output_elasticache_replication_group_id"></a> [elasticache\_replication\_group\_id](#output\_elasticache\_replication\_group\_id) | ID of ElastiCache Replication Group (Redis) cluster. |
 | <a name="output_elasticache_replication_group_primary_endpoint_address"></a> [elasticache\_replication\_group\_primary\_endpoint\_address](#output\_elasticache\_replication\_group\_primary\_endpoint\_address) | Primary endpoint address of ElastiCache Replication Group (Redis) cluster. |

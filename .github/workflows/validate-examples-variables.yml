@@ -1,0 +1,114 @@
+name: Validate Examples Variables
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate examples variables
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check root variables.tf exists
+        id: check_root
+        run: |
+          if [[ ! -f "variables.tf" ]]; then
+            echo "ERROR: Root variables.tf not found!"
+            echo "The root variables.tf file is required for validation."
+            exit 1
+          fi
+          echo "Root variables.tf exists"
+
+      - name: Validate examples
+        id: validate
+        run: |
+          has_errors=false
+          out_of_sync=()
+          missing_provider=()
+
+          # Find all example directories (exclude hidden directories)
+          for example_dir in examples/*/; do
+            example_name=$(basename "${example_dir}")
+
+            # Skip hidden directories
+            if [[ "${example_name}" == .* ]]; then
+              continue
+            fi
+
+            example_vars="${example_dir}variables.tf"
+            provider_vars="${example_dir}variables_provider.tf"
+
+            echo "Checking example: ${example_name}"
+
+            # Check if variables.tf exists and is in sync
+            if [[ -f "${example_vars}" ]]; then
+              if diff -q variables.tf "${example_vars}" > /dev/null 2>&1; then
+                echo "  variables.tf is in sync"
+              else
+                echo "  variables.tf is out of sync"
+                out_of_sync+=("${example_name}")
+                has_errors=true
+              fi
+            else
+              echo "  variables.tf not found"
+            fi
+
+            # Check if variables_provider.tf exists
+            if [[ -f "${provider_vars}" ]]; then
+              echo "  variables_provider.tf exists"
+            else
+              echo "  variables_provider.tf is missing"
+              missing_provider+=("${example_name}")
+              has_errors=true
+            fi
+
+            echo ""
+          done
+
+          # Report results
+          if [[ ${#out_of_sync[@]} -gt 0 ]]; then
+            echo ""
+            echo "## Variables Sync Check Failed"
+            echo ""
+            echo "The following examples have \`variables.tf\` files that are out of sync with the root module:"
+            echo ""
+            for example in "${out_of_sync[@]}"; do
+              echo "- \`examples/${example}/variables.tf\`"
+            done
+            echo ""
+          fi
+
+          if [[ ${#missing_provider[@]} -gt 0 ]]; then
+            echo ""
+            echo "## Missing variables_provider.tf"
+            echo ""
+            echo "The following examples are missing the required \`variables_provider.tf\` file:"
+            echo ""
+            for example in "${missing_provider[@]}"; do
+              echo "- \`examples/${example}/variables_provider.tf\`"
+            done
+            echo ""
+          fi
+
+          if [[ "${has_errors}" == "true" ]]; then
+            echo "Validation checks failed"
+            exit 1
+          else
+            echo "All validation checks passed!"
+            echo "   - All variables.tf files are in sync"
+            echo "   - All examples have variables_provider.tf"
+          fi
+
+
