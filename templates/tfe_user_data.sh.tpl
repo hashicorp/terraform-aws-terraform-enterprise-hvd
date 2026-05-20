@@ -29,7 +29,12 @@ function detect_os_distro {
       OS_DISTRO_DETECTED="centos"
       ;;
     "Red Hat"*)
-      OS_DISTRO_DETECTED="rhel"
+      local RHEL_VERSION_ID=$(grep "^VERSION_ID=" /etc/os-release | cut -d"\"" -f2 | cut -d"." -f1)
+      if [[ "$RHEL_VERSION_ID" == "10" ]]; then
+        OS_DISTRO_DETECTED="rhel10"
+      else
+        OS_DISTRO_DETECTED="rhel"
+      fi
       ;;
     "Amazon Linux"*)
       OS_DISTRO_DETECTED="al2023"
@@ -60,7 +65,7 @@ function install_awscli {
       if [[ "$OS_DISTRO" == "ubuntu" || "$OS_DISTRO" == "debian" ]]; then
         apt-get update -y
         apt-get install unzip -y
-      elif [[ "$OS_DISTRO" == "centos" || "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "al2023" ]]; then
+      elif [[ "$OS_DISTRO" == "centos" || "$OS_DISTRO" == rhel* || "$OS_DISTRO" == "al2023" ]]; then
         yum install unzip -y
       else
         log "ERROR" "Unable to install required 'unzip' utility. Exiting."
@@ -90,6 +95,9 @@ function install_docker {
       apt-get update -y
       DOCKER_VERSION="5:${docker_version}-1~ubuntu.$(lsb_release -r | awk '{print $2}')~$(lsb_release -cs)"
       apt-get install -y docker-ce="$${DOCKER_VERSION}" docker-ce-cli=$${DOCKER_VERSION} containerd.io docker-compose-plugin
+    elif [[ "$OS_DISTRO" == "rhel10" ]]; then
+      log "ERROR" "Docker is not officially supported on RHEL 10. Please use podman or provide a custom AMI with Docker pre-installed."
+      exit_script 6
     elif [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
       # https://docs.docker.com/engine/install/rhel/ or https://docs.docker.com/engine/install/centos/
       log "Warning" "Docker is no longer supported on RHEL 8 and beyond. Installing Docker CE..."
@@ -125,13 +133,13 @@ function install_podman {
   local OS_DISTRO="$1"
   local OS_MAJOR_VERSION="$2"
 
-  if command -v podman > /dev/null; then
-    log "INFO" "Detected 'podman' is already installed. Skipping."
+  if command -v podman > /dev/null && [[ -S /var/run/docker.sock ]]; then
+    log "INFO" "Detected 'podman' is already installed and docker.sock exists. Skipping."
   else
-    if [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
+    if [[ "$OS_DISTRO" == rhel* || "$OS_DISTRO" == "centos" ]]; then
       log "INFO" "Installing Podman for RHEL $OS_MAJOR_VERSION."
       dnf update -y
-      if [[ "$OS_MAJOR_VERSION" == "9" ]]; then
+      if [[ "$OS_MAJOR_VERSION" == "9" || "$OS_MAJOR_VERSION" == "10" ]]; then
         dnf install -y container-tools
       elif [[ "$OS_MAJOR_VERSION" == "8" ]]; then
         dnf module install -y container-tools

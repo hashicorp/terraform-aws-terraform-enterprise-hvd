@@ -43,7 +43,7 @@ route53_tfe_hosted_zone_is_private = <true> # must be `true` when `lb_is_interna
 
 # --- Compute --- #
 container_runtime  = "docker"                 # either `docker` or `podman`
-ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel`, `al2023`, or `centos`
+ec2_os_distro      = "ubuntu"                 # either `ubuntu`, `rhel` (RHEL9), `rhel10` (RHEL10), `al2023`, or `centos`
 ec2_ssh_key_pair   = "<my-ec2-key-pair-name>" # set to `null` or remove if you do not want to use SSH for shell access
 ec2_allow_ssm      = false                    # set to `true` if you want to use SSM Session Manager for shell access
 ec2_instance_size  = "m7i.xlarge"
@@ -69,7 +69,7 @@ redis_multi_az_enabled           = true # requires more than one subnet specifie
 redis_automatic_failover_enabled = true # requires more than one subnet specified in `redis_subnet_ids` when `true`
 
 # --- Log forwarding (optional) --- #
-tfe_log_forwarding_enabled = <true>                      # set to `false` if you have your own 
+tfe_log_forwarding_enabled = <true>                      # set to `false` if you have your own
 log_fwd_destination_type   = "<s3>"                      # either `s3` or `cloudwatch`
 s3_log_fwd_bucket_name     = "<tfe-logging-bucket-name>" # set to `null` or remove when `log_fwd_destination_type` is `cloudwatch`
 #cloudwatch_log_group_name = "<tfe-log-group-name>"      # set to `null` or remove when `log_fwd_destination_type` is `s3`
