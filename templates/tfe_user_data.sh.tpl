@@ -210,6 +210,7 @@ services:
   tfe:
     image: ${tfe_image_repository_url}/${tfe_image_name}:${tfe_image_tag}
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       # Application settings
       TFE_HOSTNAME: ${tfe_hostname}
