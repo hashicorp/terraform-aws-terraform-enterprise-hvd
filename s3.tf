@@ -5,9 +5,9 @@
 # S3 bucket
 #------------------------------------------------------------------------------
 resource "aws_s3_bucket" "tfe" {
-  bucket = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}"
   force_destroy = var.s3_force_destroy
-  
+
   tags = merge(
     { "Name" = "${var.friendly_name_prefix}-tfe-app-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}" },
     var.common_tags

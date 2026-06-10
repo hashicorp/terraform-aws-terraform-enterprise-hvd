@@ -4,18 +4,22 @@ One of the required prerequisites to deploying this module is storing base64-enc
 
 ## Secrets
 
-| Certificate file    | Module input variable        |
-|---------------------|------------------------------|
-| TFE TLS certificate | `tfe_tls_cert_secret_arn`    |
-| TFE TLS private key | `tfe_tls_privkey_secret_arn` |
+| Certificate file              | Module input variable                 |
+|-------------------------------|---------------------------------------|
+| TFE TLS certificate           | `tfe_tls_cert_secret_arn`             |
+| TFE TLS private key           | `tfe_tls_privkey_secret_arn`          |
+| TFE TLS CA bundle             | `tfe_tls_ca_bundle_secret_arn`        |
+| Secondary TFE TLS certificate | `tfe_tls_cert_secret_arn_secondary`   |
+| Secondary TFE TLS private key | `tfe_tls_privkey_secret_arn_secondary` |
+| Secondary TFE TLS CA bundle   | `tfe_tls_ca_bundle_secret_arn_secondary` |
 
 ## Procedure
 
-Follow these steps to rotate the certificates for your TFE instance.
+Follow these steps to rotate the certificates for your TFE instance. If `tfe_hostname_secondary` is configured, rotate the secondary certificate materials during the same maintenance window.
 
-1. Obtain your new TFE TLS certificate file and private key file, both in PEM format.
+1. Obtain your new TFE TLS certificate file and private key file, both in PEM format. If applicable, also obtain the replacement CA bundle and the secondary hostname certificate materials.
 
-1. Update the values of the existing secrets in AWS Secrets Manager (`tfe_tls_cert_secret_arn` and `tfe_tls_privkey_secret_arn`, respectively). If you need assistance base64-encoding the files into strings prior to updating the secrets, see the examples below:
+1. Update the values of the existing secrets in AWS Secrets Manager (`tfe_tls_cert_secret_arn`, `tfe_tls_privkey_secret_arn`, and any applicable secondary or CA bundle secrets). If you need assistance base64-encoding the files into strings prior to updating the secrets, see the examples below:
 
     On Linux (bash):
 
@@ -52,8 +56,12 @@ Follow these steps to rotate the certificates for your TFE instance.
     > When you update the value of an AWS Secrets Manager secret, the secret ARN should not change, so **no action should be needed** in terms of updating any input variable values. If the secret ARNs _were_ to change due to other circumstances, you would need to update the following input variable values with the new ARNs, and subsequently run `terraform apply` to update the TFE EC2 launch template:
     >
     >```hcl
-    >tfe_tls_cert_secret_arn    = "<new-tfe-tls-cert-secret-arn>"
-    >tfe_tls_privkey_secret_arn = "<new-tfe-tls-privkey-secret-arn>"
+    >tfe_tls_cert_secret_arn             = "<new-tfe-tls-cert-secret-arn>"
+    >tfe_tls_privkey_secret_arn          = "<new-tfe-tls-privkey-secret-arn>"
+    >tfe_tls_ca_bundle_secret_arn        = "<new-tfe-tls-ca-bundle-secret-arn>"
+    >tfe_tls_cert_secret_arn_secondary   = "<new-secondary-tfe-tls-cert-secret-arn>"
+    >tfe_tls_privkey_secret_arn_secondary = "<new-secondary-tfe-tls-privkey-secret-arn>"
+    >tfe_tls_ca_bundle_secret_arn_secondary = "<new-secondary-tfe-tls-ca-bundle-secret-arn>"
     >```
 
 1. During a maintenance window, terminate the running TFE EC2 instance(s) which will trigger the autoscaling group to spawn new instance(s) from the latest version of the TFE EC2 launch template. This process will effectively re-install TFE on the new instance(s), including the retrieval of the latest certificates from the AWS Secrets Manager secrets.
