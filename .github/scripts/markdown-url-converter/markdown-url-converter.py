@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright IBM Corp. 2024, 2026
+# SPDX-License-Identifier: MPL-2.0
+
 import re
 import sys
 import os
