@@ -277,10 +277,9 @@ services:
       TFE_TLS_CA_BUNDLE_FILE_SECONDARY: ${tfe_tls_ca_bundle_file_secondary}
 %{ else ~}
       TFE_HOSTNAME_SECONDARY: ""
-	    TFE_OIDC_HOSTNAME_CHOICE: ""
-	    TFE_VCS_HOSTNAME_CHOICE: ""
-	    TFE_RUN_TASK_HOSTNAME_CHOICE: ""
-%{ endif ~}
+     TFE_OIDC_HOSTNAME_CHOICE: ""
+     TFE_VCS_HOSTNAME_CHOICE: ""
+     TFE_RUN_TASK_HOSTNAME_CHOICE: ""
 %{ endif ~}
       TFE_TLS_CA_BUNDLE_FILE: ${tfe_tls_ca_bundle_file}
       TFE_TLS_CIPHERS: ${tfe_tls_ciphers}
