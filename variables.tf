@@ -165,7 +165,7 @@ variable "tfe_hostname_secondary" {
   default     = null
 
   validation {
-    condition     = var.tfe_hostname_secondary == null || trim(var.tfe_hostname_secondary) != ""
+    condition     = var.tfe_hostname_secondary == null || trimspace(var.tfe_hostname_secondary) != ""
     error_message = "`tfe_hostname_secondary` must be either null or a non-empty string."
   }
 }
