@@ -169,10 +169,6 @@ variable "tfe_hostname_secondary" {
     error_message = "`tfe_hostname_secondary` must be either null or a non-empty string."
   }
 }
-		condition = var.tfe_hostname_secondary is null || var.tfe_hostname_secondary != ""
-		error_message = "Secondary hostname must be a non-empty string if specified."
-	}
-}
 
 variable "tfe_oidc_hostname_choice" {
   type        = string
@@ -180,12 +176,7 @@ variable "tfe_oidc_hostname_choice" {
   default     = "primary"
 
   validation {
-  validation {
     condition     = var.tfe_oidc_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
-    error_message = "`tfe_hostname_secondary` must be set when `tfe_oidc_hostname_choice` is `secondary`."
-  }
-  validation {
-    condition     = var.tfe_oidc_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
     error_message = "`tfe_hostname_secondary` must be set when `tfe_oidc_hostname_choice` is `secondary`."
   }
 }
@@ -196,12 +187,7 @@ variable "tfe_vcs_hostname_choice" {
   default     = "primary"
 
   validation {
-  validation {
     condition     = var.tfe_vcs_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
-    error_message = "`tfe_hostname_secondary` must be set when `tfe_vcs_hostname_choice` is `secondary`."
-  }
-  validation {
-    condition     = var.tfe_vcs_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
     error_message = "`tfe_hostname_secondary` must be set when `tfe_vcs_hostname_choice` is `secondary`."
   }
 }
@@ -212,12 +198,7 @@ variable "tfe_run_task_hostname_choice" {
   default     = "primary"
 
   validation {
-  validation {
     condition     = var.tfe_run_task_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
-    error_message = "`tfe_hostname_secondary` must be set when `tfe_run_task_hostname_choice` is `secondary`."
-  }
-  validation {
-    condition     = var.tfe_run_task_hostname_choice == "secondary" ? var.tfe_hostname_secondary != null : true
     error_message = "`tfe_hostname_secondary` must be set when `tfe_run_task_hostname_choice` is `secondary`."
   }
 }
@@ -581,12 +562,12 @@ variable "route53_tfe_hosted_zone_is_private" {
 }
 
 variable "create_secondary_tfe_nlb" {
+  type        = bool
+  description = "Boolean indicating whether to create a secondary Network Load Balancer (NLB) for TFE secondary hostname traffic."
+  default     = false
+
   validation {
     condition     = var.create_secondary_tfe_nlb ? var.tfe_hostname_secondary != null && var.tfe_hostname_secondary != "" : true
-    error_message = "`tfe_hostname_secondary` must be set when `create_secondary_tfe_nlb` is `true`."
-  }
-  validation {
-    condition     = var.create_secondary_tfe_nlb ? var.tfe_hostname_secondary != null : true
     error_message = "`tfe_hostname_secondary` must be set when `create_secondary_tfe_nlb` is `true`."
   }
 }
