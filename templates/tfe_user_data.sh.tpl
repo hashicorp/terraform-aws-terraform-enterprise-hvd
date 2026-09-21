@@ -301,9 +301,11 @@ services:
 %{ if tfe_hairpin_addressing && tfe_hostname_secondary != "" ~}
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
       TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS: ${tfe_hostname}:$VM_PRIVATE_IP,${tfe_hostname_secondary}:$VM_PRIVATE_IP
-%{ else ~}%{ if tfe_hairpin_addressing ~}
+%{ else ~}
+%{ if tfe_hairpin_addressing ~}
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
       TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS: ${tfe_hostname}:$VM_PRIVATE_IP
+%{ endif ~}
 %{ endif ~}
 
       # Initial admin creation token settings
@@ -522,10 +524,12 @@ spec:
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
     - name: "TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS"
       value: ${tfe_hostname}:$VM_PRIVATE_IP,${tfe_hostname_secondary}:$VM_PRIVATE_IP
-%{ else ~}%{ if tfe_hairpin_addressing ~}
+%{ else ~}
+%{ if tfe_hairpin_addressing ~}
       # Prevent loopback with Layer 4 load balancer with hairpinning TFE agent traffic
     - name: "TFE_RUN_PIPELINE_DOCKER_EXTRA_HOSTS"
       value: ${tfe_hostname}:$VM_PRIVATE_IP
+%{ endif ~}
 %{ endif ~}
     - name: "TFE_RUN_PIPELINE_DOCKER_NETWORK"
       value: ${tfe_run_pipeline_docker_network}
