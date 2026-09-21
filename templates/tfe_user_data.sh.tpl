@@ -214,10 +214,6 @@ services:
     environment:
       # Application settings
       TFE_HOSTNAME: ${tfe_hostname}
-      TFE_HOSTNAME_SECONDARY: ${tfe_hostname_secondary}
-      TFE_OIDC_HOSTNAME_CHOICE: ${tfe_oidc_hostname_choice}
-      TFE_VCS_HOSTNAME_CHOICE: ${tfe_vcs_hostname_choice}
-      TFE_RUN_TASK_HOSTNAME_CHOICE: ${tfe_run_task_hostname_choice}
       TFE_LICENSE: $TFE_LICENSE
       TFE_LICENSE_PATH: ""
       TFE_OPERATIONAL_MODE: ${tfe_operational_mode}
