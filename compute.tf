@@ -115,14 +115,15 @@ locals {
     tfe_redis_use_tls  = var.tfe_operational_mode == "active-active" && var.redis_transit_encryption_enabled ? true : false
 
     # TLS settings
-    tfe_tls_cert_file           = "/etc/ssl/private/terraform-enterprise/cert.pem"
-    tfe_tls_key_file            = "/etc/ssl/private/terraform-enterprise/key.pem"
-    tfe_tls_cert_file_secondary = "/etc/ssl/private/terraform-enterprise/ext_cert.pem"
-    tfe_tls_key_file_secondary  = "/etc/ssl/private/terraform-enterprise/ext_key.pem"
-    tfe_tls_ca_bundle_file      = "/etc/ssl/private/terraform-enterprise/bundle.pem"
-    tfe_tls_enforce             = var.tfe_tls_enforce
-    tfe_tls_ciphers             = "" # Leave blank to use the default ciphers
-    tfe_tls_version             = "" # Leave blank to use both TLS v1.2 and TLS v1.3
+    tfe_tls_cert_file                = "/etc/ssl/private/terraform-enterprise/cert.pem"
+    tfe_tls_key_file                 = "/etc/ssl/private/terraform-enterprise/key.pem"
+    tfe_tls_cert_file_secondary      = "/etc/ssl/private/terraform-enterprise/ext_cert.pem"
+    tfe_tls_key_file_secondary       = "/etc/ssl/private/terraform-enterprise/ext_key.pem"
+    tfe_tls_ca_bundle_file_secondary = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_ca_bundle_file           = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_enforce                  = var.tfe_tls_enforce
+    tfe_tls_ciphers                  = "" # Leave blank to use the default ciphers
+    tfe_tls_version                  = "" # Leave blank to use both TLS v1.2 and TLS v1.3
 
     # Observability settings
     tfe_log_forwarding_enabled = var.tfe_log_forwarding_enabled
