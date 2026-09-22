@@ -1,4 +1,4 @@
-# Copyright IBM Corp. 2024, 2025
+# Copyright IBM Corp. 2024, 2026
 # SPDX-License-Identifier: MPL-2.0
 
 #------------------------------------------------------------------------------
@@ -51,14 +51,14 @@ data "aws_ami" "ubuntu" {
 }
 
 data "aws_ami" "rhel" {
-  count = var.ec2_os_distro == "rhel" && var.ec2_ami_id == null ? 1 : 0
+  count = (var.ec2_os_distro == "rhel" || var.ec2_os_distro == "rhel10") && var.ec2_ami_id == null ? 1 : 0
 
   owners      = ["309956199498"]
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["RHEL-9.*_HVM-*-x86_64-*-Hourly2-GP3"]
+    values = [var.ec2_os_distro == "rhel10" ? "RHEL-10.*_HVM-*-x86_64-*-Hourly2-GP3" : "RHEL-9.*_HVM-*-x86_64-*-Hourly2-GP3"]
   }
 
   filter {

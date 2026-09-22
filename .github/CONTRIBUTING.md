@@ -90,29 +90,73 @@ The release process will do the following.
 1. Create a tagged release
 1. Generate release notes
 1. Create a GitHub release
-1. Clean up the temporary release branch
+1. Update CHANGELOG
+1. Create PR
 
 ```
-MOD_RELEASE=0.1.2 task release -n
-task: [release] export MOD_REPO="terraform-<provider>-<product>-hvd"
-export MOD_RELEASE="0.1.2"
+ MOD_RELEASE=1.2.3 task release -vn
+task: dynamic variable: "echo \"${PWD##*/}\"" result: "hvd-module-template"
+task: dynamic variable: "git config --local remote.origin.url | cut -d':' -f2 | cut -d'/' -f1" result: "hashicorp"
+task: dynamic variable: "git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo \"\"" result: ""
+task: "release" started
+task: [release] export MOD_REPO="hvd-module-template"
+export MOD_RELEASE="1.2.3"
 export REPO_OWNER="hashicorp"
-echo "Releasing hashicorp/terraform-<provider>-<product>-hvd version 0.1.2"
+echo "Releasing hashicorp/hvd-module-template version 1.2.3"
 
-task: [release] git checkout -b rel-${MOD_RELEASE}
-task: [release] python .github/scripts/markdown-url-converter/markdown-url-converter.py --repo="hashicorp/terraform-<provider>-<product>-hvd" --release="0.1.2" --overwrite .
+task: [release] git checkout -b release/rc-${MOD_RELEASE}
+task: [release] python .github/scripts/markdown-url-converter/markdown-url-converter.py --repo="hashicorp/hvd-module-template" --release="1.2.3" --overwrite .
 
 task: [release] git commit  --allow-empty -am "Release version ${MOD_RELEASE}"
 task: [release] git tag -a ${MOD_RELEASE} -m "${MOD_RELEASE} release"
-task: [release] git revert HEAD --no-edit
 task: [release] git push origin --tags
-task: [release] git push origin rel-${MOD_RELEASE}
-task: [release] gh release create 0.1.2 \
---repo hashicorp/terraform-<provider>-<product>-hvd \
---title "0.1.2" \
---generate-notes --verify-tag
+task: [release] git revert HEAD --no-edit -n
+task: [release] git commit -m "Revert release commit to retain tag in history"
+task: [release] git push origin release/rc-${MOD_RELEASE}
+task: [release] RELEASE_NOTES=$(gh release view 1.2.3 --repo hashicorp/hvd-module-template --json body --jq .body)
+TEMP_FILE=$(mktemp)
 
-task: [release] git push origin --delete rel-${MOD_RELEASE}
+echo "## v1.2.3" > "$TEMP_FILE"
+echo "" >> "$TEMP_FILE"
+echo "$RELEASE_NOTES" >> "$TEMP_FILE"
+echo "" >> "$TEMP_FILE"
+tail -n +1 CHANGELOG.md >> "$TEMP_FILE"
+mv "$TEMP_FILE" CHANGELOG.md
+git add CHANGELOG.md
+git commit -m "chore: update CHANGELOG.md for v1.2.3"
+git push origin release/rc-${MOD_RELEASE}
+
+task: [release] git tag -af ${MOD_RELEASE} -m "${MOD_RELEASE} release"
+task: [release] git push origin --tags -f
+task: [release] # Wait for the updated tag to be visible on the remote before creating the release
+for i in {1..10}; do
+  if git ls-remote --tags origin | grep -q "refs/tags/${MOD_RELEASE}$"; then
+    echo "Tag ${MOD_RELEASE} is now available on origin."
+    break
+  fi
+  echo "Waiting for tag ${MOD_RELEASE} to propagate to origin (attempt ${i}/10)..."
+  sleep 3
+done
+gh release create 1.2.3 \
+--repo hashicorp/hvd-module-template \
+--title "1.2.3" \
+--generate-notes --notes-start-tag
+
+task: [release] RELEASE_NOTES=$(gh release view 1.2.3 --repo hashicorp/hvd-module-template --json body --jq .body)
+PR_BODY_FILE=$(mktemp)
+echo "Release version 1.2.3" > "$PR_BODY_FILE"
+echo "" >> "$PR_BODY_FILE"
+echo "$RELEASE_NOTES" >> "$PR_BODY_FILE"
+gh pr create \
+--repo hashicorp/hvd-module-template \
+--title "Release 1.2.3" \
+--body-file "$PR_BODY_FILE" \
+--base main \
+--head release/rc-${MOD_RELEASE} || true
+
+task: [release] git checkout main
+task: "release" finished
+
 ```
 
 > You can also set the `MOD_RELEASE` variable in a `.env.local` file for convenience.

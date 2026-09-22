@@ -77,14 +77,16 @@ By default, the [tfe_user_data](../templates/tfe_user_data.sh.tpl) (cloud-init) 
 - `aws-cli` - used to fetch the required bootstrap secrets from AWS Secrets Manager
 - `docker` or `podman` (depending on the value of the `container_runtime` input) - used to run the TFE application
 
+> **Note:** RHEL 10 does not officially support Docker. When using `ec2_os_distro = "rhel10"`, `podman` is the supported container runtime. To use Docker on RHEL 10, provide a custom AMI with Docker pre-installed via `ec2_ami_id` and set `container_runtime = "docker"`.
+
 If your TFE environment lacks egress connectivity to the official Linux package repositories, you should bake those dependencies into a custom image before deploying TFE. See the [Custom AMI](#custom-ami) section below for details.
 
 ## Custom AMI
 
-By default, this module uses the standard AWS Marketplace image based on the value of the `ec2_os_distro` input (either `ubuntu`, `rhel`, or `al2023`). If you prefer to override this behavior and use a custom AMI, set the `ec2_ami_id` input accordingly:
+By default, this module uses the standard AWS Marketplace image based on the value of the `ec2_os_distro` input (either `ubuntu`, `rhel`, `rhel10`, or `al2023`). If you prefer to override this behavior and use a custom AMI, set the `ec2_ami_id` input accordingly:
 
 ```hcl
-ec2_os_distro = "<os-distro>" # either 'ubuntu', 'rhel', 'al2023', or 'centos'
+ec2_os_distro = "<os-distro>" # either 'ubuntu', 'rhel' (RHEL 9), 'rhel10' (RHEL 10), 'al2023', or 'centos'
 ec2_ami_id    = "<custom-ami-id>"
 ```
 
