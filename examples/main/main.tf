@@ -35,11 +35,13 @@ module "tfe" {
 
   # --- TFE configuration settings --- #
   tfe_fqdn                     = var.tfe_fqdn
+  tfe_operational_mode         = var.tfe_operational_mode
+  tfe_explorer_enabled         = var.tfe_explorer_enabled
+  create_tfe_explorer_db       = var.create_tfe_explorer_db
   tfe_hostname_secondary       = var.tfe_hostname_secondary
   tfe_oidc_hostname_choice     = var.tfe_oidc_hostname_choice
   tfe_vcs_hostname_choice      = var.tfe_vcs_hostname_choice
   tfe_run_task_hostname_choice = var.tfe_run_task_hostname_choice
-  tfe_operational_mode         = var.tfe_operational_mode
   tfe_metrics_enable           = var.tfe_metrics_enable
   tfe_metrics_http_port        = var.tfe_metrics_http_port
   tfe_metrics_https_port       = var.tfe_metrics_https_port
@@ -67,23 +69,32 @@ module "tfe" {
   secondary_lb_subnet_ids  = var.secondary_lb_subnet_ids
 
   # --- Compute --- #
-  container_runtime  = var.container_runtime
-  ec2_os_distro      = var.ec2_os_distro
-  ec2_ssh_key_pair   = var.ec2_ssh_key_pair
-  ec2_allow_ssm      = var.ec2_allow_ssm
-  ec2_instance_size  = var.ec2_instance_size
-  asg_instance_count = var.asg_instance_count
+  container_runtime             = var.container_runtime
+  ec2_os_distro                 = var.ec2_os_distro
+  ec2_ssh_key_pair              = var.ec2_ssh_key_pair
+  ec2_allow_ssm                 = var.ec2_allow_ssm
+  ec2_iam_instance_profile_name = var.ec2_iam_instance_profile_name
+  ec2_instance_size             = var.ec2_instance_size
+  asg_instance_count            = var.asg_instance_count
 
   # --- Database --- #
-  tfe_database_password_secret_arn = var.tfe_database_password_secret_arn
-  tfe_database_name                = var.tfe_database_name
-  tfe_database_user                = var.tfe_database_user
-  tfe_database_parameters          = var.tfe_database_parameters
-  rds_aurora_engine_version        = var.rds_aurora_engine_version
-  rds_parameter_group_family       = var.rds_parameter_group_family
-  rds_aurora_instance_class        = var.rds_aurora_instance_class
-  rds_aurora_replica_count         = var.rds_aurora_replica_count
-  rds_skip_final_snapshot          = var.rds_skip_final_snapshot
+  tfe_database_password_secret_arn                            = var.tfe_database_password_secret_arn
+  tfe_database_name                                           = var.tfe_database_name
+  tfe_database_user                                           = var.tfe_database_user
+  tfe_database_parameters                                     = var.tfe_database_parameters
+  tfe_explorer_database_host                                  = var.tfe_explorer_database_host
+  tfe_explorer_database_name                                  = var.tfe_explorer_database_name
+  tfe_explorer_database_user                                  = var.tfe_explorer_database_user
+  tfe_explorer_database_password_secret_arn                   = var.tfe_explorer_database_password_secret_arn
+  tfe_explorer_database_parameters                            = var.tfe_explorer_database_parameters
+  tfe_explorer_database_passwordless_aws_use_instance_profile = var.tfe_explorer_database_passwordless_aws_use_instance_profile
+  tfe_explorer_database_passwordless_aws_region               = var.tfe_explorer_database_passwordless_aws_region
+  tfe_explorer_database_passwordless_aws_db_resource_id       = var.tfe_explorer_database_passwordless_aws_db_resource_id
+  rds_aurora_engine_version                                   = var.rds_aurora_engine_version
+  rds_parameter_group_family                                  = var.rds_parameter_group_family
+  rds_aurora_instance_class                                   = var.rds_aurora_instance_class
+  rds_aurora_replica_count                                    = var.rds_aurora_replica_count
+  rds_skip_final_snapshot                                     = var.rds_skip_final_snapshot
 
   # --- Redis --- #
   tfe_redis_password_secret_arn    = var.tfe_redis_password_secret_arn
