@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 terraform {
+  required_version = ">= 1.9"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -22,21 +23,28 @@ module "tfe" {
   common_tags          = var.common_tags
 
   # --- Bootstrap --- #
-  tfe_license_secret_arn             = var.tfe_license_secret_arn
-  tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
-  tfe_tls_cert_secret_arn            = var.tfe_tls_cert_secret_arn
-  tfe_tls_privkey_secret_arn         = var.tfe_tls_privkey_secret_arn
-  tfe_tls_ca_bundle_secret_arn       = var.tfe_tls_ca_bundle_secret_arn
-  tfe_image_tag                      = var.tfe_image_tag
+  tfe_license_secret_arn                 = var.tfe_license_secret_arn
+  tfe_encryption_password_secret_arn     = var.tfe_encryption_password_secret_arn
+  tfe_tls_cert_secret_arn                = var.tfe_tls_cert_secret_arn
+  tfe_tls_privkey_secret_arn             = var.tfe_tls_privkey_secret_arn
+  tfe_tls_ca_bundle_secret_arn           = var.tfe_tls_ca_bundle_secret_arn
+  tfe_tls_cert_secret_arn_secondary      = var.tfe_tls_cert_secret_arn_secondary
+  tfe_tls_privkey_secret_arn_secondary   = var.tfe_tls_privkey_secret_arn_secondary
+  tfe_tls_ca_bundle_secret_arn_secondary = var.tfe_tls_ca_bundle_secret_arn_secondary
+  tfe_image_tag                          = var.tfe_image_tag
 
   # --- TFE configuration settings --- #
-  tfe_fqdn               = var.tfe_fqdn
-  tfe_operational_mode   = var.tfe_operational_mode
-  tfe_metrics_enable     = var.tfe_metrics_enable
-  tfe_metrics_http_port  = var.tfe_metrics_http_port
-  tfe_metrics_https_port = var.tfe_metrics_https_port
-  tfe_explorer_enabled   = var.tfe_explorer_enabled
-  create_tfe_explorer_db = var.create_tfe_explorer_db
+  tfe_fqdn                     = var.tfe_fqdn
+  tfe_operational_mode         = var.tfe_operational_mode
+  tfe_explorer_enabled         = var.tfe_explorer_enabled
+  create_tfe_explorer_db       = var.create_tfe_explorer_db
+  tfe_hostname_secondary       = var.tfe_hostname_secondary
+  tfe_oidc_hostname_choice     = var.tfe_oidc_hostname_choice
+  tfe_vcs_hostname_choice      = var.tfe_vcs_hostname_choice
+  tfe_run_task_hostname_choice = var.tfe_run_task_hostname_choice
+  tfe_metrics_enable           = var.tfe_metrics_enable
+  tfe_metrics_http_port        = var.tfe_metrics_http_port
+  tfe_metrics_https_port       = var.tfe_metrics_https_port
 
   # --- Networking --- #
   vpc_id                               = var.vpc_id
@@ -51,9 +59,14 @@ module "tfe" {
   cidr_allow_ingress_tfe_metrics_https = var.cidr_allow_ingress_tfe_metrics_https
 
   # --- DNS (optional) --- #
-  create_route53_tfe_dns_record      = var.create_route53_tfe_dns_record
-  route53_tfe_hosted_zone_name       = var.route53_tfe_hosted_zone_name
-  route53_tfe_hosted_zone_is_private = var.route53_tfe_hosted_zone_is_private
+  create_route53_tfe_dns_record           = var.create_route53_tfe_dns_record
+  route53_tfe_hosted_zone_name            = var.route53_tfe_hosted_zone_name
+  route53_tfe_hosted_zone_is_private      = var.route53_tfe_hosted_zone_is_private
+  create_route53_tfe_secondary_dns_record = var.create_route53_tfe_secondary_dns_record
+
+  # --- Secondary NLB (optional) --- #
+  create_secondary_tfe_nlb = var.create_secondary_tfe_nlb
+  secondary_lb_subnet_ids  = var.secondary_lb_subnet_ids
 
   # --- Compute --- #
   container_runtime             = var.container_runtime

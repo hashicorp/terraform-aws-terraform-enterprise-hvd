@@ -14,9 +14,19 @@ output "tfe_create_initial_admin_user_url" {
   description = "URL to create TFE initial admin user."
 }
 
+output "tfe_secondary_url" {
+  value       = var.tfe_hostname_secondary == null ? null : "https://${var.tfe_hostname_secondary}"
+  description = "URL to access TFE external integrations based on value of `tfe_hostname_secondary` input."
+}
+
 output "lb_dns_name" {
   value       = var.lb_type == "alb" ? aws_lb.alb[0].dns_name : aws_lb.nlb[0].dns_name
   description = "DNS name of the Load Balancer."
+}
+
+output "secondary_lb_dns_name" {
+  value       = try(aws_lb.secondary_nlb[0].dns_name, null)
+  description = "DNS name of the secondary public Network Load Balancer (NLB)."
 }
 
 #------------------------------------------------------------------------------
@@ -88,4 +98,13 @@ output "elasticache_replication_group_id" {
 output "elasticache_replication_group_primary_endpoint_address" {
   value       = try(aws_elasticache_replication_group.redis_cluster[0].primary_endpoint_address, null)
   description = "Primary endpoint address of ElastiCache Replication Group (Redis) cluster."
+}
+
+#------------------------------------------------------------------------------
+# Admin Console
+#------------------------------------------------------------------------------
+
+output "tfe_admin_console_url_pattern" {
+  value       = !var.tfe_admin_console_disabled ? "https://${var.tfe_fqdn}:${var.tfe_admin_https_port}" : null
+  description = "URL pattern to access the TFE Admin Console. Only applicable if `tfe_admin_console_disabled` is set to false."
 }

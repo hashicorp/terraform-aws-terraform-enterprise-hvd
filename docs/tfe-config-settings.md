@@ -16,6 +16,21 @@ Within the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) script there is
 
 Explorer configuration follows the same pattern. The module computes the final Explorer database settings in `compute.tf`, then renders `TFE_EXPLORER_DATABASE_*` environment variables into both the Docker Compose and Podman manifests. When `tfe_explorer_enabled` is `true`, the module creates and uses a dedicated Explorer Aurora database by default. If `create_tfe_explorer_db` is set to `false` and no dedicated Explorer database inputs are provided, the module falls back to the primary TFE database connection values and emits a warning output so that this non-production configuration is visible in Terraform.
 
+## Secondary hostname settings
+
+This module supports the documented secondary-hostname settings for Terraform Enterprise:
+
+- `TFE_HOSTNAME_SECONDARY`
+- `TFE_OIDC_HOSTNAME_CHOICE`
+- `TFE_VCS_HOSTNAME_CHOICE`
+- `TFE_RUN_TASK_HOSTNAME_CHOICE`
+- `TFE_TLS_CERT_FILE_SECONDARY`
+- `TFE_TLS_KEY_FILE_SECONDARY`
+
+The corresponding Terraform inputs are surfaced in [variables.tf](../variables.tf). The runtime values are assembled in [compute.tf](../compute.tf) and rendered into both the Docker Compose and Podman manifests by [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl).
+
+When `tfe_hostname_secondary` is configured, the cloud-init script retrieves the secondary TLS materials from AWS Secrets Manager and writes them alongside the primary TLS files before starting Terraform Enterprise.
+
 ## Procedure
 
 1. Determine which [configuration setting](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) you would like to add/modify/update.

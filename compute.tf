@@ -42,14 +42,15 @@ locals {
   s3_no_proxy              = "${aws_s3_bucket.tfe.bucket_domain_name},${aws_s3_bucket.tfe.bucket_regional_domain_name}"
   secrets_manager_no_proxy = "secretsmanager.${data.aws_region.current.name}.${data.aws_partition.current.dns_suffix}"
 
-  addl_no_proxy_base = join(",", [
+  addl_no_proxy_base = join(",", compact([
     "localhost",
     "127.0.0.1",
     "169.254.169.254",
     var.tfe_fqdn,
+    var.tfe_hostname_secondary,
     local.s3_no_proxy,
     local.secrets_manager_no_proxy
-  ])
+  ]))
 
   tfe_explorer_database_is_module_managed               = var.tfe_explorer_enabled && var.create_tfe_explorer_db && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
   tfe_explorer_database_uses_tfe_database               = var.tfe_explorer_enabled && !local.tfe_explorer_database_is_module_managed && var.tfe_explorer_database_host == null && var.tfe_explorer_database_name == null && var.tfe_explorer_database_user == null
@@ -66,23 +67,30 @@ locals {
 
   user_data_args = {
     # Bootstrap
-    aws_region                         = data.aws_region.current.name
-    tfe_license_secret_arn             = var.tfe_license_secret_arn
-    tfe_tls_cert_secret_arn            = var.tfe_tls_cert_secret_arn
-    tfe_tls_privkey_secret_arn         = var.tfe_tls_privkey_secret_arn
-    tfe_tls_ca_bundle_secret_arn       = var.tfe_tls_ca_bundle_secret_arn
-    tfe_encryption_password_secret_arn = var.tfe_encryption_password_secret_arn
-    tfe_image_repository_url           = var.tfe_image_repository_url
-    tfe_image_name                     = var.tfe_image_name
-    tfe_image_tag                      = var.tfe_image_tag
-    tfe_image_repository_username      = var.tfe_image_repository_username
-    tfe_image_repository_password      = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
-    container_runtime                  = var.container_runtime
-    docker_version                     = var.docker_version
+    aws_region                             = data.aws_region.current.name
+    tfe_license_secret_arn                 = var.tfe_license_secret_arn
+    tfe_tls_cert_secret_arn                = var.tfe_tls_cert_secret_arn
+    tfe_tls_privkey_secret_arn             = var.tfe_tls_privkey_secret_arn
+    tfe_tls_ca_bundle_secret_arn           = var.tfe_tls_ca_bundle_secret_arn
+    tfe_tls_cert_secret_arn_secondary      = var.tfe_tls_cert_secret_arn_secondary == null ? "" : var.tfe_tls_cert_secret_arn_secondary
+    tfe_tls_privkey_secret_arn_secondary   = var.tfe_tls_privkey_secret_arn_secondary == null ? "" : var.tfe_tls_privkey_secret_arn_secondary
+    tfe_tls_ca_bundle_secret_arn_secondary = var.tfe_tls_ca_bundle_secret_arn_secondary == null ? "" : var.tfe_tls_ca_bundle_secret_arn_secondary
+    tfe_encryption_password_secret_arn     = var.tfe_encryption_password_secret_arn
+    tfe_image_repository_url               = var.tfe_image_repository_url
+    tfe_image_name                         = var.tfe_image_name
+    tfe_image_tag                          = var.tfe_image_tag
+    tfe_image_repository_username          = var.tfe_image_repository_username
+    tfe_image_repository_password          = var.tfe_image_repository_password == null ? "" : var.tfe_image_repository_password
+    container_runtime                      = var.container_runtime
+    docker_version                         = var.docker_version
 
     # https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration
     # Application settings
     tfe_hostname                  = var.tfe_fqdn
+    tfe_hostname_secondary        = var.tfe_hostname_secondary == null ? "" : var.tfe_hostname_secondary
+    tfe_oidc_hostname_choice      = var.tfe_oidc_hostname_choice
+    tfe_vcs_hostname_choice       = var.tfe_vcs_hostname_choice
+    tfe_run_task_hostname_choice  = var.tfe_run_task_hostname_choice
     tfe_operational_mode          = var.tfe_operational_mode
     tfe_capacity_concurrency      = var.tfe_capacity_concurrency
     tfe_capacity_cpu              = var.tfe_capacity_cpu
@@ -128,12 +136,15 @@ locals {
     tfe_redis_use_tls  = var.tfe_operational_mode == "active-active" && var.redis_transit_encryption_enabled ? true : false
 
     # TLS settings
-    tfe_tls_cert_file      = "/etc/ssl/private/terraform-enterprise/cert.pem"
-    tfe_tls_key_file       = "/etc/ssl/private/terraform-enterprise/key.pem"
-    tfe_tls_ca_bundle_file = "/etc/ssl/private/terraform-enterprise/bundle.pem"
-    tfe_tls_enforce        = var.tfe_tls_enforce
-    tfe_tls_ciphers        = "" # Leave blank to use the default ciphers
-    tfe_tls_version        = "" # Leave blank to use both TLS v1.2 and TLS v1.3
+    tfe_tls_cert_file                = "/etc/ssl/private/terraform-enterprise/cert.pem"
+    tfe_tls_key_file                 = "/etc/ssl/private/terraform-enterprise/key.pem"
+    tfe_tls_cert_file_secondary      = "/etc/ssl/private/terraform-enterprise/ext_cert.pem"
+    tfe_tls_key_file_secondary       = "/etc/ssl/private/terraform-enterprise/ext_key.pem"
+    tfe_tls_ca_bundle_file_secondary = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_ca_bundle_file           = "/etc/ssl/private/terraform-enterprise/bundle.pem"
+    tfe_tls_enforce                  = var.tfe_tls_enforce
+    tfe_tls_ciphers                  = "" # Leave blank to use the default ciphers
+    tfe_tls_version                  = "" # Leave blank to use both TLS v1.2 and TLS v1.3
 
     # Observability settings
     tfe_log_forwarding_enabled = var.tfe_log_forwarding_enabled
@@ -163,6 +174,8 @@ locals {
     no_proxy             = var.additional_no_proxy != null ? "${var.additional_no_proxy},${local.addl_no_proxy_base}" : local.addl_no_proxy_base
     tfe_ipv6_enabled     = var.tfe_ipv6_enabled
     tfe_admin_https_port = var.tfe_admin_https_port
+    # Admin Console settings
+    tfe_admin_console_disabled = var.tfe_admin_console_disabled
   }
 
   tfe_startup_script_tpl      = var.custom_tfe_startup_script_template != null ? "${path.cwd}/templates/${var.custom_tfe_startup_script_template}" : "${path.module}/templates/tfe_user_data.sh.tpl"
@@ -261,7 +274,10 @@ resource "aws_autoscaling_group" "tfe" {
     version = "$Latest"
   }
 
-  target_group_arns = [var.lb_type == "alb" ? aws_lb_target_group.alb_443[0].arn : aws_lb_target_group.nlb_443[0].arn]
+  target_group_arns = concat(
+    [var.lb_type == "alb" ? aws_lb_target_group.alb_443[0].arn : aws_lb_target_group.nlb_443[0].arn],
+    local.secondary_lb_target_group_arns
+  )
 
   tag {
     key                 = "Name"
@@ -483,6 +499,51 @@ resource "aws_security_group_rule" "ec2_allow_egress_proxy_https" {
   protocol    = "tcp"
   cidr_blocks = var.cidr_allow_egress_ec2_proxy
   description = "Allow TCP/${local.https_proxy_port} (HTTPS proxy port) outbound to specified CIDR ranges from TFE EC2 instances."
+
+  security_group_id = aws_security_group.ec2_allow_egress.id
+}
+
+#------------------------------------------------------------------------------
+# Admin console ingress rules
+#------------------------------------------------------------------------------
+
+resource "aws_security_group_rule" "ec2_allow_ingress_tfe_admin_console" {
+  count = !var.tfe_admin_console_disabled && var.cidr_allow_ingress_tfe_admin_console != null && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]) > 0 ? 1 : 0
+
+  type        = "ingress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if !can(regex(":", cidr))]
+  description = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified IPv4 CIDR ranges."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+
+
+
+resource "aws_security_group_rule" "ec2_allow_ingress_tfe_admin_console_ipv6" {
+  count = !var.tfe_admin_console_disabled && var.cidr_allow_ingress_tfe_admin_console != null && length([for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]) > 0 ? 1 : 0
+
+  type             = "ingress"
+  from_port        = var.tfe_admin_https_port
+  to_port          = var.tfe_admin_https_port
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [for cidr in var.cidr_allow_ingress_tfe_admin_console : cidr if can(regex(":", cidr))]
+  description      = "Allow TCP/${var.tfe_admin_https_port} (Admin Console HTTPS) inbound to TFE EC2 instances from specified IPv6 CIDR ranges."
+
+  security_group_id = aws_security_group.ec2_allow_ingress.id
+}
+
+resource "aws_security_group_rule" "ec2_allow_egress_proxy_admin_console" {
+  count = var.cidr_allow_egress_ec2_proxy != null && local.https_proxy_port != null ? 1 : 0
+
+  type        = "egress"
+  from_port   = var.tfe_admin_https_port
+  to_port     = var.tfe_admin_https_port
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_allow_egress_ec2_proxy
+  description = "Allow TCP/${var.tfe_admin_https_port} (HTTPS proxy) outbound to specified CIDR ranges from TFE EC2 instances."
 
   security_group_id = aws_security_group.ec2_allow_egress.id
 }
