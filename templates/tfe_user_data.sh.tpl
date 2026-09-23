@@ -468,7 +468,7 @@ spec:
       value: ${tfe_explorer_database_parameters}
 %{ if tfe_explorer_database_passwordless_aws_use_instance_profile ~}
     - name: "TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_USE_INSTANCE_PROFILE"
-      value: ${tfe_explorer_database_passwordless_aws_use_instance_profile}
+      value: "${tfe_explorer_database_passwordless_aws_use_instance_profile}"
     - name: "TFE_EXPLORER_DATABASE_PASSWORDLESS_AWS_REGION"
       value: ${tfe_explorer_database_passwordless_aws_region}
 %{ else ~}
