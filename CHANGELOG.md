@@ -1,3 +1,26 @@
+## v0.5.0
+
+## What's Changed
+* upstream merge template repository by @github-actions[bot] in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/54
+* Release 0.4.0 by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/53
+* [COMPLIANCE] Add/Update Copyright Headers by @hashicorp-copywrite[bot] in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/57
+* feat: implement var.region automation required for AWS mods by @minsikl in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/56
+* add RHEL 10 as an ec2_os_distro value by @minsikl in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/55
+* [COMPLIANCE] Add/Update Copyright Headers by @hashicorp-copywrite[bot] in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/58
+* feat(user_data): add stop_grace_period to tfe docker-compose service by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/61
+* feat(variables): add validation to tfe_image_tag variable by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/60
+* upstream merge template repository by @github-actions[bot] in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/62
+* upstream merge template repository by @github-actions[bot] in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/63
+* add tfe admin capability and resources. by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/46
+* feat(secondary-hostname): add secondary hostname support by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/48
+* feat: add Terraform Enterprise Explorer support by @abuxton in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/47
+
+## New Contributors
+* @hashicorp-copywrite[bot] made their first contribution in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/57
+* @minsikl made their first contribution in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/56
+
+**Full Changelog**: https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/compare/0.4.0...0.5.0
+
 ## v0.4.0
 
 ## What's Changed
