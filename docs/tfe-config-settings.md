@@ -1,18 +1,18 @@
 # TFE configuration settings
 
-In order to bootstrap and automate the TFE install, the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) (cloud-init) script dynamically generates a `docker-compose.yaml` file containing all of the TFE configuration settings required to start and run the application. Some of these configuration settings values are derived from interpolated values from other resources that this module creates, others are derived from module input variable values, and several are automatically computed by this module.
+In order to bootstrap and automate the TFE install, the [tfe_user_data.sh](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/templates/tfe_user_data.sh.tpl) (cloud-init) script dynamically generates a `docker-compose.yaml` file containing all of the TFE configuration settings required to start and run the application. Some of these configuration settings values are derived from interpolated values from other resources that this module creates, others are derived from module input variable values, and several are automatically computed by this module.
 
 Since the TFE installation/configuration is managed as code in this way, and the persistent data is external to the compute, you can view your TFE EC2 instance(s) as stateless, ephemeral, and immutable. If you need to add, modify, or update a configuration setting, you should do so in the Terraform code managing your TFE deployment. You should not update or modify settings in-place on your running TFE EC2 instance(s), unless it is to temporarily test or troubleshoot something prior to making a code change.
 
 ## Configuration settings reference
 
-The [Terraform Enterprise Flexible Deployment Options configuration reference](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) page contains all of the available settings, their descriptions, and their default values. If you would like to configure one of these settings for your TFE deployment with a non-default value, then find the corresponding variable in the [variables.tf](../variables.tf) file of this module. You can specify the module input and desired value within your TFE module block.
+The [Terraform Enterprise Flexible Deployment Options configuration reference](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) page contains all of the available settings, their descriptions, and their default values. If you would like to configure one of these settings for your TFE deployment with a non-default value, then find the corresponding variable in the [variables.tf](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/variables.tf) file of this module. You can specify the module input and desired value within your TFE module block.
 
 ## Where to look in the code
 
-Within the [compute.tf](../compute.tf) file, you will see a `locals` block with a map inside of it called `user_data_args`. Almost all of the TFE configuration settings are passed from here as arguments into the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) (cloud-init) script.
+Within the [compute.tf](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/compute.tf) file, you will see a `locals` block with a map inside of it called `user_data_args`. Almost all of the TFE configuration settings are passed from here as arguments into the [tfe_user_data.sh](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/templates/tfe_user_data.sh.tpl) (cloud-init) script.
 
-Within the [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl) script there is a function named `generate_tfe_docker_compose_config()` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this file can be found in `/etc/tfe/docker-compose.yaml` on your TFE EC2 instance(s).
+Within the [tfe_user_data.sh](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/templates/tfe_user_data.sh.tpl) script there is a function named `generate_tfe_docker_compose_config()` that is responsible for receiving all of those inputs and dynamically generating the `docker-compose.yaml` file. After a successful install process, this file can be found in `/etc/tfe/docker-compose.yaml` on your TFE EC2 instance(s).
 
 Explorer configuration follows the same pattern. The module computes the final Explorer database settings in `compute.tf`, then renders `TFE_EXPLORER_DATABASE_*` environment variables into both the Docker Compose and Podman manifests. When `tfe_explorer_enabled` is `true`, the module creates and uses a dedicated Explorer Aurora database by default. If `create_tfe_explorer_db` is set to `false` and no dedicated Explorer database inputs are provided, the module falls back to the primary TFE database connection values and emits a warning output so that this non-production configuration is visible in Terraform.
 
@@ -27,7 +27,7 @@ This module supports the documented secondary-hostname settings for Terraform En
 - `TFE_TLS_CERT_FILE_SECONDARY`
 - `TFE_TLS_KEY_FILE_SECONDARY`
 
-The corresponding Terraform inputs are surfaced in [variables.tf](../variables.tf). The runtime values are assembled in [compute.tf](../compute.tf) and rendered into both the Docker Compose and Podman manifests by [tfe_user_data.sh](../templates/tfe_user_data.sh.tpl).
+The corresponding Terraform inputs are surfaced in [variables.tf](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/variables.tf). The runtime values are assembled in [compute.tf](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/compute.tf) and rendered into both the Docker Compose and Podman manifests by [tfe_user_data.sh](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/templates/tfe_user_data.sh.tpl).
 
 When `tfe_hostname_secondary` is configured, the cloud-init script retrieves the secondary TLS materials from AWS Secrets Manager and writes them alongside the primary TLS files before starting Terraform Enterprise.
 
@@ -35,7 +35,7 @@ When `tfe_hostname_secondary` is configured, the cloud-init script retrieves the
 
 1. Determine which [configuration setting](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/configuration) you would like to add/modify/update.
 
-1. Find the corresponding variable in the [variables.tf](../variables.tf) file.
+1. Find the corresponding variable in the [variables.tf](https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/blob/0.5.0/variables.tf) file.
 
 1. Specify the input within your TFE module block. For example, if you want to modify the `TFE_CAPACITY_CONCURRENCY` setting to a value different from the default value of `10`:
 
