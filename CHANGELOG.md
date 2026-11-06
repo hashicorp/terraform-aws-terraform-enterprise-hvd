@@ -1,3 +1,13 @@
+## v0.5.1
+
+## What's Changed
+* Proposed fix to indent typo on tfe_user_data.sh.tpl file on lines 288… by @luis-roset in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/65
+
+## New Contributors
+* @luis-roset made their first contribution in https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/pull/65
+
+**Full Changelog**: https://github.com/hashicorp/terraform-aws-terraform-enterprise-hvd/compare/0.5.0...0.5.1
+
 ## v0.4.0
 
 ## What's Changed
