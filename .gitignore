@@ -49,3 +49,5 @@ local_*.yaml
 
 # Ignore module-generated Helm overrides file
 module_generated_helm_overrides.yaml
+
+**/tmp/*

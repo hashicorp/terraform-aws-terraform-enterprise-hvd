@@ -157,6 +157,30 @@ tfe_run_pipeline_image = "internal-registry.example.com/tfe-agent:latest"
 
 IMPORTANT: the container registry used to host this image must support anonymous (unathenticated) image pulls, as authenticated image pulls here are currently unsupported.
 
+## Database encryption in transit
+
+Encryption in transit between TFE and the RDS Aurora PostgreSQL cluster is enforced at two levels:
+
+| Level | Setting | Default | Purpose |
+|---|---|---|---|
+| Client (TFE) | `tfe_database_parameters` | `sslmode=require` | TFE connects to PostgreSQL over TLS. Rendered into `TFE_DATABASE_PARAMETERS` in the TFE configuration. |
+| Server (Aurora) | `rds_force_ssl` | `true` | Sets the `rds.force_ssl` cluster parameter to `1`. Aurora rejects any connection that does not use SSL/TLS. |
+
+Aurora PostgreSQL 16 and earlier default `rds.force_ssl` to `0` (off); version 17 and later default to `1` (on). The module sets the value explicitly so the behavior is the same regardless of engine version.
+
+```hcl
+rds_force_ssl           = true
+tfe_database_parameters = "sslmode=require"
+```
+
+### Considerations
+
+- **Other clients:** any other client of the cluster (bastion hosts, `psql`, migration or admin tooling) must connect with SSL (for example `sslmode=require`). Non-SSL connections are rejected with `no pg_hba.conf entry for host ..., SSL off`.
+- **Existing deployments:** `rds.force_ssl` is a dynamic parameter and the module applies it with `apply_method = "immediate"`, so no reboot is expected. This is a behavior change for clusters on engine version 16 and earlier. Review the plan and confirm no non-TLS clients depend on the cluster before applying.
+- **Secondary region:** the cluster parameter group is created in each region, so the setting applies to the secondary region cluster of a global database as well.
+- **Opting out:** set `rds_force_ssl = false` to keep the previous behavior (not recommended).
+- **Certificate validation:** `sslmode=require` encrypts traffic but does not verify the server certificate. Validating it (`verify-full`) requires the RDS CA bundle to be available to the TFE container and is not configured by this module.
+
 ## Explorer
 
 Terraform Enterprise Explorer can be enabled with the following module inputs:

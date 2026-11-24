@@ -92,6 +92,7 @@ module "tfe" {
   tfe_explorer_database_passwordless_aws_db_resource_id       = var.tfe_explorer_database_passwordless_aws_db_resource_id
   rds_aurora_engine_version                                   = var.rds_aurora_engine_version
   rds_parameter_group_family                                  = var.rds_parameter_group_family
+  rds_force_ssl                                               = var.rds_force_ssl
   rds_aurora_instance_class                                   = var.rds_aurora_instance_class
   rds_aurora_replica_count                                    = var.rds_aurora_replica_count
   rds_skip_final_snapshot                                     = var.rds_skip_final_snapshot

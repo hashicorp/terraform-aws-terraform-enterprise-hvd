@@ -159,6 +159,14 @@ resource "aws_rds_cluster_parameter_group" "tfe" {
   name        = "${var.friendly_name_prefix}-tfe-rds-cluster-parameter-group-${data.aws_region.current.name}"
   family      = var.rds_parameter_group_family
   description = "TFE RDS Aurora PostgreSQL database cluster parameter group."
+
+  # Require encryption in transit. Default is off for Aurora PostgreSQL 16 and earlier.
+  # https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Security.html
+  parameter {
+    name         = "rds.force_ssl"
+    value        = var.rds_force_ssl ? "1" : "0"
+    apply_method = "immediate"
+  }
 }
 
 resource "aws_db_parameter_group" "tfe" {
