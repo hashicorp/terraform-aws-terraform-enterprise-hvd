@@ -71,6 +71,7 @@ tfe_explorer_database_passwordless_aws_region = null
 tfe_explorer_database_passwordless_aws_db_resource_id = null
 rds_aurora_engine_version        = "16.4"
 rds_parameter_group_family       = "aurora-postgresql16"
+rds_force_ssl                    = true # sets rds.force_ssl=1; set to false to allow non-TLS connections
 rds_aurora_instance_class        = "db.r6i.xlarge"
 rds_aurora_replica_count         = 1 # set to 0 to deploy no "reader" instances
 rds_skip_final_snapshot          = false

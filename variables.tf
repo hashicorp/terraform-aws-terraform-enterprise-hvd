@@ -1087,6 +1087,12 @@ variable "rds_parameter_group_family" {
   default     = "aurora-postgresql16"
 }
 
+variable "rds_force_ssl" {
+  type        = bool
+  description = "Boolean to require SSL/TLS for all connections to the RDS Aurora cluster by setting the `rds.force_ssl` cluster parameter. Clients connecting without SSL are rejected when `true`."
+  default     = true
+}
+
 variable "rds_aurora_replica_count" {
   type        = number
   description = "Number of replica (reader) cluster instances to create within the RDS Aurora database cluster (within the same region)."
